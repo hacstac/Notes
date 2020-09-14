@@ -69,7 +69,9 @@ $ docker version --format '{{json .}}'
 
 # Running Docker without sudo
 $ sudo usermod -aG docker username
+
 or
+
 $ sudo addgroup -a username docker
 # restart docker
 ```
@@ -123,7 +125,7 @@ $ sudo addgroup -a username docker
 
 ---
 
-##### 3.2.1 List Images
+#### 3.2.1 List Images
 
 ```bash
 docker images // show images
@@ -131,7 +133,7 @@ docker ps -a
 docker ps // shows started containers -a = all containers
 ```
 
-##### 3.2.2 Start/Stop/Restart
+#### 3.2.2 Start/Stop/Restart
 
 ```bash
 docker stop/start/restart
@@ -140,25 +142,25 @@ docker stop/start/restart
 **Note** : If you want to detach from a running container, use Ctrl + P, Ctrl + Q.
 If you want to integrate a container with a host process manager, start the daemon with -r=false then use docker start -a.
 
-##### 3.2.3 Logs
+#### 3.2.3 Logs
 
 ```bash
 docker logs {Name_of_container}
 ```
 
-##### 3.2.4 Rename
+#### 3.2.4 Rename
 
 ```bash
 docker rename new_name current_name // rename container
 ```
 
-##### 3.2.5 Create container
+#### 3.2.5 Create container
 
 ```bash
 docker create nginx // will only create a container
 ```
 
-##### 3.2.6 Example Run
+#### 3.2.6 Example Run
 
 ```bash
 $ docker run --interactive --tty \
@@ -173,10 +175,11 @@ $ docker run --interactive --tty \
  --link = link to other container
  --name = name of docker container
  ---
+
 $ docker exec web_test ps // show extra process run with this containers
 ```
 
-##### 3.2.7 Docker Run with SHELL Variables
+#### 3.2.7 Docker Run with SHELL Variables
 
 ```bash
 ---
@@ -189,7 +192,7 @@ $ docker start $AGENT_CID
 $ docker start $WEB_CID
 ```
 
-##### 3.2.8 Env Variables
+#### 3.2.8 Env Variables
 
 ```bash
 $ docker run -d --name wpdb \
@@ -200,13 +203,13 @@ $ docker run --env MY_ENVIRONMENT_VAR="this is a test" \ busybox:1.29 \ env
 # --env flag, or -e for short, can be used to inject any environment variable.
 ```
 
-##### 3.2.9 With Read Only Option
+#### 3.2.9 With Read Only Option
 
 ```bash
 docker run -d --name wp --read-only wordpress:5.0.0-php7.2-apache  // create a container with only readonly options
 ```
 
-##### 3.2.10 Inspect
+#### 3.2.10 Inspect
 
 ```bash
 #  The docker inspect command will display all the metadata(JSON)
@@ -214,7 +217,7 @@ $ docker inspect --format "{{.State.Running}}" wp // Prints true if container is
 $ docker inspect --format "{{.NetworkSettings.IPAddress}}" Id/name // Show ip of container
 ```
 
-##### 3.2.11 Diff ( Filesystem check )
+#### 3.2.11 Diff ( Filesystem check )
 
 ```bash
 $ docker run -d --name wp_writable wordpress:5.0.0-php7.2-apache
@@ -225,6 +228,7 @@ $ docker container diff wp_writable
 A - A file or directory was added
 D - A file or directory was deleted
 C - A file or directory was changed
+
 ---
 C /run
 C /run/apache2
@@ -232,7 +236,7 @@ A /run/apache2/apache2.pid
 ---
 ```
 
-##### 3.2.12 Clean Up
+#### 3.2.12 Clean Up
 
 ```bash
 docker rm -f {container_ID)
@@ -240,7 +244,7 @@ docker rm -vf $(docker ps -a -q)
 docker rmi [name] // Remove an image
 ```
 
-##### 3.2.13 Executing Commands
+#### 3.2.13 Executing Commands
 
 ```bash
 # docker exec to execute a command in container.
@@ -261,7 +265,7 @@ find / -ctime 7 -name '*log' -exec rm {} \;
 $ docker exec -it ubuntu /bin/bash
 ```
 
-##### 3.2.15 Linking containers for port isolation
+#### 3.2.15 Linking containers for port isolation
 
 **Note** : This is an older method of declaring container communication—Docker’s link flag. This isn’t the recommended way of working anymore.
 
@@ -272,7 +276,7 @@ $ docker run --name wp-mysql -e MYSQL_ROOT_PASSWORD=yoursecretpassword -d mysql
 $ docker run --name wordpress --link wp-mysql:mysql -p 10003:80 -d  wordpress
 ```
 
-##### 3.2.16 Search a Docker Image
+#### 3.2.16 Search a Docker Image
 
 ```bash
 docker search node
@@ -280,7 +284,7 @@ docker pull node // Pull the Image by Name ( on Hub )
 docker run -it node /bin/bash ( Start Node Container )
 ```
 
-##### 3.2.17 Cleanly Kill Containers
+#### 3.2.17 Cleanly Kill Containers
 
 ```bash
 # Always use docker stop ( it actually stops the containers ).
@@ -292,7 +296,7 @@ docker stop    Term     15
 ---
 ```
 
-##### 3.2.18 Docker Prune
+#### 3.2.18 Docker Prune
 
 ```bash
 # Prune commands
@@ -325,7 +329,7 @@ $ docker volume ls
 $ docker volume prune
 ```
 
-##### 3.2.19 Space Occupied By docker System
+#### 3.2.19 Space Occupied By docker System
 
 ```bash
 $ docker system df
@@ -336,20 +340,20 @@ Local Volumes       2                   1                   242.4MB             
 Build Cache         0                   0                   0B                  0B
 ```
 
-##### 3.2.20 Container Stats
+#### 3.2.20 Container Stats
 
 ```bash
 $ docker stats ID
 CONTAINER ID        NAME                CPU %               MEM USAGE / LIMIT    MEM %               NET I/O             BLOCK I/O           PIDS
 ```
 
-##### 3.2.21 Tag
+#### 3.2.21 Tag
 
 ```bash
 docker image tag ubuntu-git:latest ubuntu-git:2.7
 ```
 
-##### 3.2.22 Commit
+#### 3.2.22 Commit
 
 ```bash
 $ docker container commit -a "@dockerinaction" -m "Added git" \
@@ -361,7 +365,7 @@ $ docker container commit -a "@dockerinaction" -m "Added git" \
 $ docker container run -d ubuntu-git
 ```
 
-##### 3.2.23 Set an EntryPoint
+#### 3.2.23 Set an EntryPoint
 
 ```bash
 docker container run --name cmd-git --entrypoint git ubuntu-git
@@ -369,7 +373,7 @@ docker container run --name cmd-git --entrypoint git ubuntu-git
 
 ---
 
-##### 3.2.24 Versioning Best Practice
+#### 3.2.24 Versioning Best Practice
 
 ```bash
 # Docker official Repo's are the best example of tagging an image
@@ -405,7 +409,7 @@ docker container run --name cmd-git --entrypoint git ubuntu-git
 - **Dead** : A container that the daemon tried and failed to stop (usually due to a busy device or resource used by the container)
 - **Restarting** : A container that is in the process of being restarted
 
-##### 3.3.1 Restart State
+#### 3.3.1 Restart State
 
 Using the `--restart` flag at container-creation time, you can tell Docker to do any of the following:
 
@@ -414,7 +418,8 @@ Using the `--restart` flag at container-creation time, you can tell Docker to do
 - Attempt for some predetermined time to restart when a failure is detected
 - Always restart the container regardless of the condition
 
-* **Methods**
+- **Methods**
+
   - no = = Don’t restart when the container exits
   - always == Always restart when the container exits
   - unless-stopped == Always restart, but remember explicitly stopping
@@ -466,7 +471,7 @@ Note : - Keep in mind for Tags with images [latest, stable, alpha, Beta]
 - Download image from another regestry instead of docker hub : `docker pull quay.io/dockerinaction/ch3_hello_registry:latest`
 - `[REGISTRYHOST:PORT/][USERNAME/]NAME[:TAG]`
 
-##### 3.5.1 Installing Images using dockerfile
+#### 3.5.1 Installing Images using dockerfile
 
 ```bash
 git clone https://github.com/dockerinaction/ch3_dockerfile.git
@@ -482,9 +487,9 @@ docker build -t dia_ch3/dockerfile:latest ch3_dockerfile
 - `docker load` loads an image from a tar archive as STDIN, including images and tags (as of 0.7).
 - `docker save` saves an image to a tar archive stream to STDOUT with all parent layers, tags & versions (as of 0.7).
 
-##### 3.6.1 Comparison
+#### 3.6.1 Comparison
 
-```
+```bash
 Docker export : Container To TAR
 Docker Import : TAR to Image
 Docker save   : Image To TAR
@@ -500,7 +505,6 @@ $ docker save -o myfile.tar image_name:latest // saves tar file in current direc
 $ docker load –i myfile.tar
 
 # Load/Save image
-
 - Load an image from file:
 $ docker load < my_image.tar.gz
 
@@ -567,7 +571,7 @@ $ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock dockerinpractice/
 
 ### 3.8 Tricks for Making an Image Smaller
 
-##### 3.8.1 Method 1 : Reduce the size of Third Party Image
+#### 3.8.1 Method 1 : Reduce the size of Third Party Image
 
 ```bash
 # Step 1 : Remove Unnecessary file
@@ -583,7 +587,7 @@ $ find /var | grep '\.log$' | xargs rm -v
 # Step 8 : Commit The Image ( These Steps Creates a Much Smaller Image )
 ```
 
-##### 3.8.2 Method 2 : Tiny Docker Images with BusyBox and Alpine
+#### 3.8.2 Method 2 : Tiny Docker Images with BusyBox and Alpine
 
 Small, usable OSs that can be embedded onto a low-power or cheap computer have existed since Linux began.
 
@@ -609,7 +613,7 @@ ENTRYPOINT ["mysql"]
 list of packages : https://pkgs.alpinelinux.org/packages
 ```
 
-##### 3.8.3 Method 3 : The GO model of minimal containers
+#### 3.8.3 Method 3 : The GO model of minimal containers
 
 ```bash
 # we can minimal Web server with go [ 5 MB Web Server ]
@@ -670,11 +674,11 @@ The three most common types of storage mounted into containers:
 - In-memory storage
 - Docker volumes
 
-##### 4.2.1 Bind Mounts
+#### 4.2.1 Bind Mounts
 
 Bind mounts are mount points used to remount parts of a filesystem tree onto other locations. When working with containers, bind mounts attach a user-specified location on the host filesystem to a specific point in a container file tree.
 
-```
+```bash
 ---
 CONF_SRC=~/example.conf; \
 CONF_DST=/etc/nginx/conf.d/default.conf;\
@@ -689,7 +693,7 @@ nginx:latest
 ---
 ```
 
-##### 4.2.2 In-Memory Storage
+#### 4.2.2 In-Memory Storage
 
 Most service software and web applications use private key files, database passwords,
 API key files, or other sensitive configuration files, and need upload buffering space.
@@ -697,7 +701,7 @@ In these cases, it is important that you never include those types of files in a
 write them to disk. Instead, you should use in-memory storage. You can add in-memory
 storage to containers with a special type of mount.
 
-```
+```bash
 # 1777 permissions in octal
 # tmpfs-size=16k
 ---
@@ -708,13 +712,11 @@ alpine:latest -v
 ---
 ```
 
-##### 4.2.3 Docker Volumes
+#### 4.2.3 Docker Volumes
 
 Docker volumes are named filesystem trees managed by Docker. They can be implemented with disk storage on the host filesystem, or another more exotic backend such as cloud storage. All operations on Docker volumes can be accomplished using the docker volume subcommand set.
 
-[![](http://wiki.hacstac.com:8080/uploads/images/gallery/2020-03/scaled-1680-/image-1585322379221.png)](http://wiki.hacstac.com:8080/uploads/images/gallery/2020-03/image-1585322379221.png)
-
-```
+```bash
 ---
 docker volume create \
 --driver local \
@@ -830,7 +832,6 @@ $ docker run -it --name nfs-client --privileged -v /mnt:/mnt busybox /bin/true
 
 # Mount on other container
 $ docker run -it --volumes-from nfs-client debian /bin/bash
-
 ```
 
 ---
@@ -854,7 +855,7 @@ $ docker run -it --volumes-from nfs-client debian /bin/bash
 
 ### 5.2 Examples
 
-##### 5.2.1 To list all networks
+#### 5.2.1 To list all networks
 
 ```bash
 $ docker network ls
@@ -866,7 +867,7 @@ f32f6d51e8c8        bridge              bridge              local
 b726554d155b        none                null                local
 ```
 
-##### 5.2.2 To Create a New Network
+#### 5.2.2 To Create a New Network
 
 ```bash
 $ docker network create \
@@ -896,7 +897,7 @@ $ docker run -it --network my_network ubuntu:16.04 bash [ Now this ubuntu contai
 $ ip -f inet -4 -o addr // this will list loopback and assign ip subnet address
 ```
 
-##### 5.2.3 Create a another bridge network
+#### 5.2.3 Create a another bridge network
 
 ```bash
 $ docker network create \
@@ -919,7 +920,7 @@ $ docker network connect \
 $ nmap -sn 10.0.42.* -sn 10.0.43.* -oG /dev/stdout | grep Status
 ```
 
-##### 5.2.4 With Network - none : Means container with no external excess
+#### 5.2.4 With Network - none : Means container with no external excess
 
 ```bash
 $ docker run --rm \
@@ -934,7 +935,7 @@ $ docker run -d -p 8080 --name listener alpine:3.8
 $ docker port listener // To view port of running container
 ```
 
-##### 5.2.5 DNS with docker
+#### 5.2.5 DNS with docker
 
 ```bash
 # Feature 1 : --hostname will add hostname : so we open with DN
@@ -985,7 +986,7 @@ $ docker run --rm \
 ---
 ```
 
-##### 5.2.6 You can specify a specific IP address for a container
+#### 5.2.6 You can specify a specific IP address for a container
 
 ```bash
 # create a new bridge network with your subnet and gateway for your ip block
@@ -998,7 +999,7 @@ $ docker run --rm -it --net iptastic --ip 203.0.113.2 nginx
 $ curl 203.0.113.2
 ```
 
-##### 5.2.7 Open a Docker Daemon to the World
+#### 5.2.7 Open a Docker Daemon to the World
 
 ```bash
 # first of stop the docker service
@@ -1015,7 +1016,7 @@ $ sudo docker daemon -H tcp://0.0.0.0:2375
 $ docker -H tcp://<your host's ip>:2375 <subcommand>
 ```
 
-##### 5.2.8 Get an IP & Ports of a Docker Container
+#### 5.2.8 Get an IP & Ports of a Docker Container
 
 ```bash
 $ alias dl='docker ps -l -q'  ( latest container ID )
@@ -1175,7 +1176,6 @@ $ docker container run --rm -it \
     ubuntu:16.04 sh
 
 # For Linux Security Modules ( LSM )
-
 ---
 The LSM security option values are specified in one of seven formats:
 
@@ -1259,8 +1259,8 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 CMD env
 ---
-$ $ docker build -t encoding .
 
+$ $ docker build -t encoding .
 ```
 
 ---

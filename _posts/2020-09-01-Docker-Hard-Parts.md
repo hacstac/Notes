@@ -389,7 +389,7 @@ $ docker history new_secret
 
 ## 8.0 Registry & Repository
 
-![Registry.png](s3://akash.r/Devops_Notes_screenshots/Docker/Docker_Hard_Parts/Repository.png)
+![Registry.png](https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Docker/Docker_Hard_Parts/Repository.png)
 
 A repository is a *hosted* collection of tagged images that together create the file system for a container.
 
@@ -774,7 +774,7 @@ $ docker run -it -p 8080:80 chef-example
 
 CI : Continious Integration
 
-![Image_pipeline.png](s3://akash.r/Devops_Notes_screenshots/Docker/Docker_Hard_Parts/CIoperations.png)
+![Image_pipeline.png](https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Docker/Docker_Hard_Parts/CIoperations.png)
 
 ##### 10.6.1 Steps
 
