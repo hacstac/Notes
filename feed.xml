@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://hacstac.github.io/Notes/feed.xml" rel="self" type="application/atom+xml" /><link href="https://hacstac.github.io/Notes/" rel="alternate" type="text/html" /><updated>2020-09-14T04:05:37-05:00</updated><id>https://hacstac.github.io/Notes/feed.xml</id><title type="html">fastpages</title><subtitle>An easy to use blogging platform with support for Jupyter Notebooks.</subtitle><entry><title type="html">Docker Hard Parts</title><link href="https://hacstac.github.io/Notes/markdown/2020/09/01/Docker-Hard-Parts.html" rel="alternate" type="text/html" title="Docker Hard Parts" /><published>2020-09-01T00:00:00-05:00</published><updated>2020-09-01T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/markdown/2020/09/01/Docker-Hard-Parts</id><content type="html" xml:base="https://hacstac.github.io/Notes/markdown/2020/09/01/Docker-Hard-Parts.html">&lt;h2 id=&quot;70-building-images-automatically-with-dockerfiles&quot;&gt;7.0 Building Images automatically with DockerFiles&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://hacstac.github.io/Notes/feed.xml" rel="self" type="application/atom+xml" /><link href="https://hacstac.github.io/Notes/" rel="alternate" type="text/html" /><updated>2020-09-14T04:30:34-05:00</updated><id>https://hacstac.github.io/Notes/feed.xml</id><title type="html">NoteBook</title><subtitle>An easy to use blogging platform with support for Jupyter Notebooks.</subtitle><entry><title type="html">Docker Hard Parts</title><link href="https://hacstac.github.io/Notes/markdown/2020/09/01/Docker-Hard-Parts.html" rel="alternate" type="text/html" title="Docker Hard Parts" /><published>2020-09-01T00:00:00-05:00</published><updated>2020-09-01T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/markdown/2020/09/01/Docker-Hard-Parts</id><content type="html" xml:base="https://hacstac.github.io/Notes/markdown/2020/09/01/Docker-Hard-Parts.html">&lt;h2 id=&quot;70-building-images-automatically-with-dockerfiles&quot;&gt;7.0 Building Images automatically with DockerFiles&lt;/h2&gt;
 
 &lt;hr /&gt;
 
@@ -380,7 +380,7 @@ and &lt;span class=&quot;k&quot;&gt;then &lt;/span&gt;re-import and tag the resu
 
 &lt;h2 id=&quot;80-registry--repository&quot;&gt;8.0 Registry &amp;amp; Repository&lt;/h2&gt;
 
-&lt;p&gt;&lt;img src=&quot;s3://akash.r/Devops_Notes_screenshots/Docker/Docker_Hard_Parts/Repository.png&quot; alt=&quot;Registry.png&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Docker/Docker_Hard_Parts/Repository.png&quot; alt=&quot;Registry.png&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;A repository is a &lt;em&gt;hosted&lt;/em&gt; collection of tagged images that together create the file system for a container.&lt;/p&gt;
 
@@ -777,7 +777,7 @@ upgrade : Upgrades the Docker version on the host to the latest
 
 &lt;p&gt;CI : Continious Integration&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;s3://akash.r/Devops_Notes_screenshots/Docker/Docker_Hard_Parts/CIoperations.png&quot; alt=&quot;Image_pipeline.png&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Docker/Docker_Hard_Parts/CIoperations.png&quot; alt=&quot;Image_pipeline.png&quot; /&gt;&lt;/p&gt;
 
 &lt;h5 id=&quot;1061-steps&quot;&gt;10.6.1 Steps&lt;/h5&gt;
 
@@ -1144,7 +1144,9 @@ daemon; the daemon is a server that receives requests and returns responses from
 
 &lt;span class=&quot;c&quot;&gt;# Running Docker without sudo&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;usermod &lt;span class=&quot;nt&quot;&gt;-aG&lt;/span&gt; docker username
+
 or
+
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;addgroup &lt;span class=&quot;nt&quot;&gt;-a&lt;/span&gt; username docker
 &lt;span class=&quot;c&quot;&gt;# restart docker&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
@@ -1202,14 +1204,14 @@ or
 
 &lt;hr /&gt;
 
-&lt;h5 id=&quot;321-list-images&quot;&gt;3.2.1 List Images&lt;/h5&gt;
+&lt;h4 id=&quot;321-list-images&quot;&gt;3.2.1 List Images&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker images // show images
 docker ps &lt;span class=&quot;nt&quot;&gt;-a&lt;/span&gt;
 docker ps // shows started containers &lt;span class=&quot;nt&quot;&gt;-a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; all containers
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;322-startstoprestart&quot;&gt;3.2.2 Start/Stop/Restart&lt;/h5&gt;
+&lt;h4 id=&quot;322-startstoprestart&quot;&gt;3.2.2 Start/Stop/Restart&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker stop/start/restart
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
@@ -1217,22 +1219,22 @@ docker ps // shows started containers &lt;span class=&quot;nt&quot;&gt;-a&lt;/sp
 &lt;p&gt;&lt;strong&gt;Note&lt;/strong&gt; : If you want to detach from a running container, use Ctrl + P, Ctrl + Q.
 If you want to integrate a container with a host process manager, start the daemon with -r=false then use docker start -a.&lt;/p&gt;
 
-&lt;h5 id=&quot;323-logs&quot;&gt;3.2.3 Logs&lt;/h5&gt;
+&lt;h4 id=&quot;323-logs&quot;&gt;3.2.3 Logs&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker logs &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;Name_of_container&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;324-rename&quot;&gt;3.2.4 Rename&lt;/h5&gt;
+&lt;h4 id=&quot;324-rename&quot;&gt;3.2.4 Rename&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker rename new_name current_name // rename container
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;325-create-container&quot;&gt;3.2.5 Create container&lt;/h5&gt;
+&lt;h4 id=&quot;325-create-container&quot;&gt;3.2.5 Create container&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker create nginx // will only create a container
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;326-example-run&quot;&gt;3.2.6 Example Run&lt;/h5&gt;
+&lt;h4 id=&quot;326-example-run&quot;&gt;3.2.6 Example Run&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker run &lt;span class=&quot;nt&quot;&gt;--interactive&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--tty&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
  &lt;span class=&quot;nt&quot;&gt;--link&lt;/span&gt; web:web &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
@@ -1246,10 +1248,11 @@ If you want to integrate a container with a host process manager, start the daem
  &lt;span class=&quot;nt&quot;&gt;--link&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;link &lt;/span&gt;to other container
  &lt;span class=&quot;nt&quot;&gt;--name&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; name of docker container
  &lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
+
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker &lt;span class=&quot;nb&quot;&gt;exec &lt;/span&gt;web_test ps // show extra process run with this containers
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;327-docker-run-with-shell-variables&quot;&gt;3.2.7 Docker Run with SHELL Variables&lt;/h5&gt;
+&lt;h4 id=&quot;327-docker-run-with-shell-variables&quot;&gt;3.2.7 Docker Run with SHELL Variables&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
  &lt;span class=&quot;nv&quot;&gt;CID&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;docker create nginx:latest&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
@@ -1261,7 +1264,7 @@ If you want to integrate a container with a host process manager, start the daem
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker start &lt;span class=&quot;nv&quot;&gt;$WEB_CID&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;328-env-variables&quot;&gt;3.2.8 Env Variables&lt;/h5&gt;
+&lt;h4 id=&quot;328-env-variables&quot;&gt;3.2.8 Env Variables&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker run &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--name&lt;/span&gt; wpdb &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
  &lt;span class=&quot;nt&quot;&gt;-e&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;MYSQL_ROOT_PASSWORD&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;ch2demo &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
@@ -1271,19 +1274,19 @@ If you want to integrate a container with a host process manager, start the daem
 &lt;span class=&quot;c&quot;&gt;# --env flag, or -e for short, can be used to inject any environment variable.&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;329-with-read-only-option&quot;&gt;3.2.9 With Read Only Option&lt;/h5&gt;
+&lt;h4 id=&quot;329-with-read-only-option&quot;&gt;3.2.9 With Read Only Option&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker run &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--name&lt;/span&gt; wp &lt;span class=&quot;nt&quot;&gt;--read-only&lt;/span&gt; wordpress:5.0.0-php7.2-apache  // create a container with only &lt;span class=&quot;nb&quot;&gt;readonly &lt;/span&gt;options
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;3210-inspect&quot;&gt;3.2.10 Inspect&lt;/h5&gt;
+&lt;h4 id=&quot;3210-inspect&quot;&gt;3.2.10 Inspect&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;#  The docker inspect command will display all the metadata(JSON)&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker inspect &lt;span class=&quot;nt&quot;&gt;--format&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&quot;&lt;/span&gt; wp // Prints &lt;span class=&quot;nb&quot;&gt;true &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;if &lt;/span&gt;container is running
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker inspect &lt;span class=&quot;nt&quot;&gt;--format&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&quot;&lt;/span&gt; Id/name // Show ip of container
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;3211-diff--filesystem-check-&quot;&gt;3.2.11 Diff ( Filesystem check )&lt;/h5&gt;
+&lt;h4 id=&quot;3211-diff--filesystem-check-&quot;&gt;3.2.11 Diff ( Filesystem check )&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker run &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--name&lt;/span&gt; wp_writable wordpress:5.0.0-php7.2-apache
 
@@ -1293,6 +1296,7 @@ If you want to integrate a container with a host process manager, start the daem
 A - A file or directory was added
 D - A file or directory was deleted
 C - A file or directory was changed
+
 &lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
 C /run
 C /run/apache2
@@ -1300,14 +1304,14 @@ A /run/apache2/apache2.pid
 &lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;3212-clean-up&quot;&gt;3.2.12 Clean Up&lt;/h5&gt;
+&lt;h4 id=&quot;3212-clean-up&quot;&gt;3.2.12 Clean Up&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker &lt;span class=&quot;nb&quot;&gt;rm&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;container_ID&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
 docker &lt;span class=&quot;nb&quot;&gt;rm&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-vf&lt;/span&gt; &lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;docker ps &lt;span class=&quot;nt&quot;&gt;-a&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-q&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
 docker rmi &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;name] // Remove an image
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;3213-executing-commands&quot;&gt;3.2.13 Executing Commands&lt;/h5&gt;
+&lt;h4 id=&quot;3213-executing-commands&quot;&gt;3.2.13 Executing Commands&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# docker exec to execute a command in container.&lt;/span&gt;
 
@@ -1327,7 +1331,7 @@ find / &lt;span class=&quot;nt&quot;&gt;-ctime&lt;/span&gt; 7 &lt;span class=&qu
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker &lt;span class=&quot;nb&quot;&gt;exec&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-it&lt;/span&gt; ubuntu /bin/bash
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;3215-linking-containers-for-port-isolation&quot;&gt;3.2.15 Linking containers for port isolation&lt;/h5&gt;
+&lt;h4 id=&quot;3215-linking-containers-for-port-isolation&quot;&gt;3.2.15 Linking containers for port isolation&lt;/h4&gt;
 
 &lt;p&gt;&lt;strong&gt;Note&lt;/strong&gt; : This is an older method of declaring container communication—Docker’s link flag. This isn’t the recommended way of working anymore.&lt;/p&gt;
 
@@ -1337,14 +1341,14 @@ find / &lt;span class=&quot;nt&quot;&gt;-ctime&lt;/span&gt; 7 &lt;span class=&qu
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker run &lt;span class=&quot;nt&quot;&gt;--name&lt;/span&gt; wordpress &lt;span class=&quot;nt&quot;&gt;--link&lt;/span&gt; wp-mysql:mysql &lt;span class=&quot;nt&quot;&gt;-p&lt;/span&gt; 10003:80 &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt;  wordpress
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;3216-search-a-docker-image&quot;&gt;3.2.16 Search a Docker Image&lt;/h5&gt;
+&lt;h4 id=&quot;3216-search-a-docker-image&quot;&gt;3.2.16 Search a Docker Image&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker search node
 docker pull node // Pull the Image by Name &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt; on Hub &lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
 docker run &lt;span class=&quot;nt&quot;&gt;-it&lt;/span&gt; node /bin/bash &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt; Start Node Container &lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;3217-cleanly-kill-containers&quot;&gt;3.2.17 Cleanly Kill Containers&lt;/h5&gt;
+&lt;h4 id=&quot;3217-cleanly-kill-containers&quot;&gt;3.2.17 Cleanly Kill Containers&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# Always use docker stop ( it actually stops the containers ).&lt;/span&gt;
 &lt;span class=&quot;c&quot;&gt;# Docker kill will send immediate signal which will kill process while running ( so they can create temp files )&lt;/span&gt;
@@ -1355,7 +1359,7 @@ docker stop    Term     15
 &lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;3218-docker-prune&quot;&gt;3.2.18 Docker Prune&lt;/h5&gt;
+&lt;h4 id=&quot;3218-docker-prune&quot;&gt;3.2.18 Docker Prune&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# Prune commands&lt;/span&gt;
 
@@ -1387,7 +1391,7 @@ xargs &lt;span class=&quot;nt&quot;&gt;--no-run-if-empty&lt;/span&gt; docker ins
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker volume prune
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;3219-space-occupied-by-docker-system&quot;&gt;3.2.19 Space Occupied By docker System&lt;/h5&gt;
+&lt;h4 id=&quot;3219-space-occupied-by-docker-system&quot;&gt;3.2.19 Space Occupied By docker System&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker system &lt;span class=&quot;nb&quot;&gt;df
 &lt;/span&gt;TYPE                TOTAL               ACTIVE              SIZE                RECLAIMABLE
@@ -1397,18 +1401,18 @@ Local Volumes       2                   1                   242.4MB             
 Build Cache         0                   0                   0B                  0B
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;3220-container-stats&quot;&gt;3.2.20 Container Stats&lt;/h5&gt;
+&lt;h4 id=&quot;3220-container-stats&quot;&gt;3.2.20 Container Stats&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker stats ID
 CONTAINER ID        NAME                CPU %               MEM USAGE / LIMIT    MEM %               NET I/O             BLOCK I/O           PIDS
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;3221-tag&quot;&gt;3.2.21 Tag&lt;/h5&gt;
+&lt;h4 id=&quot;3221-tag&quot;&gt;3.2.21 Tag&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker image tag ubuntu-git:latest ubuntu-git:2.7
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;3222-commit&quot;&gt;3.2.22 Commit&lt;/h5&gt;
+&lt;h4 id=&quot;3222-commit&quot;&gt;3.2.22 Commit&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker container commit &lt;span class=&quot;nt&quot;&gt;-a&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;@dockerinaction&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-m&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Added git&quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
   image-dev ubuntu-git
@@ -1419,14 +1423,14 @@ CONTAINER ID        NAME                CPU %               MEM USAGE / LIMIT   
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker container run &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt; ubuntu-git
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;3223-set-an-entrypoint&quot;&gt;3.2.23 Set an EntryPoint&lt;/h5&gt;
+&lt;h4 id=&quot;3223-set-an-entrypoint&quot;&gt;3.2.23 Set an EntryPoint&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker container run &lt;span class=&quot;nt&quot;&gt;--name&lt;/span&gt; cmd-git &lt;span class=&quot;nt&quot;&gt;--entrypoint&lt;/span&gt; git ubuntu-git
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;hr /&gt;
 
-&lt;h5 id=&quot;3224-versioning-best-practice&quot;&gt;3.2.24 Versioning Best Practice&lt;/h5&gt;
+&lt;h4 id=&quot;3224-versioning-best-practice&quot;&gt;3.2.24 Versioning Best Practice&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# Docker official Repo's are the best example of tagging an image&lt;/span&gt;
 &lt;span class=&quot;c&quot;&gt;# Example for go lang&lt;/span&gt;
@@ -1465,7 +1469,7 @@ CONTAINER ID        NAME                CPU %               MEM USAGE / LIMIT   
   &lt;li&gt;&lt;strong&gt;Restarting&lt;/strong&gt; : A container that is in the process of being restarted&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h5 id=&quot;331-restart-state&quot;&gt;3.3.1 Restart State&lt;/h5&gt;
+&lt;h4 id=&quot;331-restart-state&quot;&gt;3.3.1 Restart State&lt;/h4&gt;
 
 &lt;p&gt;Using the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;--restart&lt;/code&gt; flag at container-creation time, you can tell Docker to do any of the following:&lt;/p&gt;
 
@@ -1476,7 +1480,9 @@ CONTAINER ID        NAME                CPU %               MEM USAGE / LIMIT   
   &lt;li&gt;
     &lt;p&gt;Always restart the container regardless of the condition&lt;/p&gt;
   &lt;/li&gt;
-  &lt;li&gt;&lt;strong&gt;Methods&lt;/strong&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Methods&lt;/strong&gt;&lt;/p&gt;
+
     &lt;ul&gt;
       &lt;li&gt;no = = Don’t restart when the container exits&lt;/li&gt;
       &lt;li&gt;always == Always restart when the container exits&lt;/li&gt;
@@ -1536,7 +1542,7 @@ CONTAINER ID        NAME                CPU %               MEM USAGE / LIMIT   
   &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;[REGISTRYHOST:PORT/][USERNAME/]NAME[:TAG]&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h5 id=&quot;351-installing-images-using-dockerfile&quot;&gt;3.5.1 Installing Images using dockerfile&lt;/h5&gt;
+&lt;h4 id=&quot;351-installing-images-using-dockerfile&quot;&gt;3.5.1 Installing Images using dockerfile&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git clone https://github.com/dockerinaction/ch3_dockerfile.git
 docker build &lt;span class=&quot;nt&quot;&gt;-t&lt;/span&gt; dia_ch3/dockerfile:latest ch3_dockerfile
@@ -1553,9 +1559,9 @@ docker build &lt;span class=&quot;nt&quot;&gt;-t&lt;/span&gt; dia_ch3/dockerfile
   &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;docker save&lt;/code&gt; saves an image to a tar archive stream to STDOUT with all parent layers, tags &amp;amp; versions (as of 0.7).&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h5 id=&quot;361-comparison&quot;&gt;3.6.1 Comparison&lt;/h5&gt;
+&lt;h4 id=&quot;361-comparison&quot;&gt;3.6.1 Comparison&lt;/h4&gt;
 
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Docker export : Container To TAR
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Docker &lt;span class=&quot;nb&quot;&gt;export&lt;/span&gt; : Container To TAR
 Docker Import : TAR to Image
 Docker save   : Image To TAR
 Docker load   : TAR to Image
@@ -1569,7 +1575,6 @@ Docker load   : TAR to Image
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker load –i myfile.tar
 
 &lt;span class=&quot;c&quot;&gt;# Load/Save image&lt;/span&gt;
-
 - Load an image from file:
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker load &amp;lt; my_image.tar.gz
 
@@ -1635,7 +1640,7 @@ FROM 8eaa4ff06b53
 
 &lt;h3 id=&quot;38-tricks-for-making-an-image-smaller&quot;&gt;3.8 Tricks for Making an Image Smaller&lt;/h3&gt;
 
-&lt;h5 id=&quot;381-method-1--reduce-the-size-of-third-party-image&quot;&gt;3.8.1 Method 1 : Reduce the size of Third Party Image&lt;/h5&gt;
+&lt;h4 id=&quot;381-method-1--reduce-the-size-of-third-party-image&quot;&gt;3.8.1 Method 1 : Reduce the size of Third Party Image&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# Step 1 : Remove Unnecessary file&lt;/span&gt;
 &lt;span class=&quot;c&quot;&gt;# Step 2 : Flatten the Image ( describe in this book )&lt;/span&gt;
@@ -1650,7 +1655,7 @@ FROM 8eaa4ff06b53
 &lt;span class=&quot;c&quot;&gt;# Step 8 : Commit The Image ( These Steps Creates a Much Smaller Image )&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;382-method-2--tiny-docker-images-with-busybox-and-alpine&quot;&gt;3.8.2 Method 2 : Tiny Docker Images with BusyBox and Alpine&lt;/h5&gt;
+&lt;h4 id=&quot;382-method-2--tiny-docker-images-with-busybox-and-alpine&quot;&gt;3.8.2 Method 2 : Tiny Docker Images with BusyBox and Alpine&lt;/h4&gt;
 
 &lt;p&gt;Small, usable OSs that can be embedded onto a low-power or cheap computer have existed since Linux began.&lt;/p&gt;
 
@@ -1675,7 +1680,7 @@ ENTRYPOINT &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2
 list of packages : https://pkgs.alpinelinux.org/packages
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;383-method-3--the-go-model-of-minimal-containers&quot;&gt;3.8.3 Method 3 : The GO model of minimal containers&lt;/h5&gt;
+&lt;h4 id=&quot;383-method-3--the-go-model-of-minimal-containers&quot;&gt;3.8.3 Method 3 : The GO model of minimal containers&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# we can minimal Web server with go [ 5 MB Web Server ]&lt;/span&gt;
 https://github.com/docker-in-practice/go-web-server
@@ -1739,25 +1744,25 @@ Many small container are request internet ( so they consume bandwidth more &amp;
   &lt;li&gt;Docker volumes&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h5 id=&quot;421-bind-mounts&quot;&gt;4.2.1 Bind Mounts&lt;/h5&gt;
+&lt;h4 id=&quot;421-bind-mounts&quot;&gt;4.2.1 Bind Mounts&lt;/h4&gt;
 
 &lt;p&gt;Bind mounts are mount points used to remount parts of a filesystem tree onto other locations. When working with containers, bind mounts attach a user-specified location on the host filesystem to a specific point in a container file tree.&lt;/p&gt;
 
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;---
-CONF_SRC=~/example.conf; \
-CONF_DST=/etc/nginx/conf.d/default.conf;\
-LOG_SRC=~/example.log; \
-LOG_DST=/var/log/nginx/custom.host.access.log; \
-docker run -d --name diaweb \
---mount type=bind,src=${CONF_SRC},dst=${CONF_DST} \
---mount type=bind,src=${LOG_SRC},dst=${LOG_DST} \
--p 80:80 \
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;CONF_SRC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;~/example.conf&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;CONF_DST&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/etc/nginx/conf.d/default.conf&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;LOG_SRC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;~/example.log&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;LOG_DST&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/var/log/nginx/custom.host.access.log&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+docker run &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--name&lt;/span&gt; diaweb &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;--mount&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;bind&lt;/span&gt;,src&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;CONF_SRC&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;,dst&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;CONF_DST&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;--mount&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;bind&lt;/span&gt;,src&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;LOG_SRC&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;,dst&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;LOG_DST&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;-p&lt;/span&gt; 80:80 &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
 nginx:latest
 
----
+&lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;422-in-memory-storage&quot;&gt;4.2.2 In-Memory Storage&lt;/h5&gt;
+&lt;h4 id=&quot;422-in-memory-storage&quot;&gt;4.2.2 In-Memory Storage&lt;/h4&gt;
 
 &lt;p&gt;Most service software and web applications use private key files, database passwords,
 API key files, or other sensitive configuration files, and need upload buffering space.
@@ -1765,31 +1770,29 @@ In these cases, it is important that you never include those types of files in a
 write them to disk. Instead, you should use in-memory storage. You can add in-memory
 storage to containers with a special type of mount.&lt;/p&gt;
 
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 1777 permissions in octal
-# tmpfs-size=16k
----
-memory-based filesystem into a containerdocker run --rm \
---mount type=tmpfs,dst=/tmp,tmpfs-size=16k,tmpfs-mode=1770 \
---entrypoint mount \
-alpine:latest -v
----
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# 1777 permissions in octal&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# tmpfs-size=16k&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
+memory-based filesystem into a containerdocker run &lt;span class=&quot;nt&quot;&gt;--rm&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;--mount&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;tmpfs,dst&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/tmp,tmpfs-size&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;16k,tmpfs-mode&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;1770 &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;--entrypoint&lt;/span&gt; mount &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+alpine:latest &lt;span class=&quot;nt&quot;&gt;-v&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;423-docker-volumes&quot;&gt;4.2.3 Docker Volumes&lt;/h5&gt;
+&lt;h4 id=&quot;423-docker-volumes&quot;&gt;4.2.3 Docker Volumes&lt;/h4&gt;
 
 &lt;p&gt;Docker volumes are named filesystem trees managed by Docker. They can be implemented with disk storage on the host filesystem, or another more exotic backend such as cloud storage. All operations on Docker volumes can be accomplished using the docker volume subcommand set.&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&quot;http://wiki.hacstac.com:8080/uploads/images/gallery/2020-03/image-1585322379221.png&quot;&gt;&lt;img src=&quot;http://wiki.hacstac.com:8080/uploads/images/gallery/2020-03/scaled-1680-/image-1585322379221.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;---
-docker volume create \
---driver local \
---label example=location \
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
+docker volume create &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;--driver&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;local&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;--label&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;example&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;location &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
 location-example
-docker volume inspect \
---format &quot;&quot; \
+docker volume inspect &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;--format&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
 location-example
----
+&lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;hr /&gt;
@@ -1891,7 +1894,6 @@ location-example
 
 &lt;span class=&quot;c&quot;&gt;# Mount on other container&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker run &lt;span class=&quot;nt&quot;&gt;-it&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--volumes-from&lt;/span&gt; nfs-client debian /bin/bash
-
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;hr /&gt;
@@ -1917,7 +1919,7 @@ location-example
 
 &lt;h3 id=&quot;52-examples&quot;&gt;5.2 Examples&lt;/h3&gt;
 
-&lt;h5 id=&quot;521-to-list-all-networks&quot;&gt;5.2.1 To list all networks&lt;/h5&gt;
+&lt;h4 id=&quot;521-to-list-all-networks&quot;&gt;5.2.1 To list all networks&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker network &lt;span class=&quot;nb&quot;&gt;ls
 
@@ -1928,7 +1930,7 @@ f32f6d51e8c8        bridge              bridge              &lt;span class=&quot
 &lt;/span&gt;b726554d155b        none                null                &lt;span class=&quot;nb&quot;&gt;local&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;522-to-create-a-new-network&quot;&gt;5.2.2 To Create a New Network&lt;/h5&gt;
+&lt;h4 id=&quot;522-to-create-a-new-network&quot;&gt;5.2.2 To Create a New Network&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker network create &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
   &lt;span class=&quot;nt&quot;&gt;--driver&lt;/span&gt; bridge &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
@@ -1957,7 +1959,7 @@ f32f6d51e8c8        bridge              bridge              &lt;span class=&quot
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;ip &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; inet &lt;span class=&quot;nt&quot;&gt;-4&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-o&lt;/span&gt; addr // this will list loopback and assign ip subnet address
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;523-create-a-another-bridge-network&quot;&gt;5.2.3 Create a another bridge network&lt;/h5&gt;
+&lt;h4 id=&quot;523-create-a-another-bridge-network&quot;&gt;5.2.3 Create a another bridge network&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker network create &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
   &lt;span class=&quot;nt&quot;&gt;--driver&lt;/span&gt; bridge &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
@@ -1979,7 +1981,7 @@ f32f6d51e8c8        bridge              bridge              &lt;span class=&quot
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;nmap &lt;span class=&quot;nt&quot;&gt;-sn&lt;/span&gt; 10.0.42.&lt;span class=&quot;k&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-sn&lt;/span&gt; 10.0.43.&lt;span class=&quot;k&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-oG&lt;/span&gt; /dev/stdout | &lt;span class=&quot;nb&quot;&gt;grep &lt;/span&gt;Status
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;524-with-network---none--means-container-with-no-external-excess&quot;&gt;5.2.4 With Network - none : Means container with no external excess&lt;/h5&gt;
+&lt;h4 id=&quot;524-with-network---none--means-container-with-no-external-excess&quot;&gt;5.2.4 With Network - none : Means container with no external excess&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker run &lt;span class=&quot;nt&quot;&gt;--rm&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
     &lt;span class=&quot;nt&quot;&gt;--network&lt;/span&gt; none &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
@@ -1993,7 +1995,7 @@ f32f6d51e8c8        bridge              bridge              &lt;span class=&quot
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker port listener // To view port of running container
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;525-dns-with-docker&quot;&gt;5.2.5 DNS with docker&lt;/h5&gt;
+&lt;h4 id=&quot;525-dns-with-docker&quot;&gt;5.2.5 DNS with docker&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# Feature 1 : --hostname will add hostname : so we open with DN&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker run &lt;span class=&quot;nt&quot;&gt;--rm&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
@@ -2043,7 +2045,7 @@ Address 1: 172.17.0.22 barker
 &lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;526-you-can-specify-a-specific-ip-address-for-a-container&quot;&gt;5.2.6 You can specify a specific IP address for a container&lt;/h5&gt;
+&lt;h4 id=&quot;526-you-can-specify-a-specific-ip-address-for-a-container&quot;&gt;5.2.6 You can specify a specific IP address for a container&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# create a new bridge network with your subnet and gateway for your ip block&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker network create &lt;span class=&quot;nt&quot;&gt;--subnet&lt;/span&gt; 203.0.113.0/24 &lt;span class=&quot;nt&quot;&gt;--gateway&lt;/span&gt; 203.0.113.254 iptastic
@@ -2055,7 +2057,7 @@ Address 1: 172.17.0.22 barker
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;curl 203.0.113.2
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;527-open-a-docker-daemon-to-the-world&quot;&gt;5.2.7 Open a Docker Daemon to the World&lt;/h5&gt;
+&lt;h4 id=&quot;527-open-a-docker-daemon-to-the-world&quot;&gt;5.2.7 Open a Docker Daemon to the World&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# first of stop the docker service&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;service docker stop / or
@@ -2071,7 +2073,7 @@ Address 1: 172.17.0.22 barker
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt; tcp://&amp;lt;your host&lt;span class=&quot;s1&quot;&gt;'s ip&amp;gt;:2375 &amp;lt;subcommand&amp;gt;
 &lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h5 id=&quot;528-get-an-ip--ports-of-a-docker-container&quot;&gt;5.2.8 Get an IP &amp;amp; Ports of a Docker Container&lt;/h5&gt;
+&lt;h4 id=&quot;528-get-an-ip--ports-of-a-docker-container&quot;&gt;5.2.8 Get an IP &amp;amp; Ports of a Docker Container&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;alias &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;dl&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'docker ps -l -q'&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt; latest container ID &lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker inspect &lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;dl&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;grep&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-wm1&lt;/span&gt; IPAddress | &lt;span class=&quot;nb&quot;&gt;cut&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'&quot;'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; 4
@@ -2223,7 +2225,6 @@ SYS_ADMIN — Catchall &lt;span class=&quot;k&quot;&gt;for &lt;/span&gt;administ
     ubuntu:16.04 sh
 
 &lt;span class=&quot;c&quot;&gt;# For Linux Security Modules ( LSM )&lt;/span&gt;
-
 &lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
 The LSM security option values are specified &lt;span class=&quot;k&quot;&gt;in &lt;/span&gt;one of seven formats:
 
@@ -2304,8 +2305,8 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 CMD &lt;span class=&quot;nb&quot;&gt;env&lt;/span&gt;
 &lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
-&lt;span class=&quot;nv&quot;&gt;$ $ &lt;/span&gt;docker build &lt;span class=&quot;nt&quot;&gt;-t&lt;/span&gt; encoding &lt;span class=&quot;nb&quot;&gt;.&lt;/span&gt;
 
+&lt;span class=&quot;nv&quot;&gt;$ $ &lt;/span&gt;docker build &lt;span class=&quot;nt&quot;&gt;-t&lt;/span&gt; encoding &lt;span class=&quot;nb&quot;&gt;.&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;hr /&gt;
