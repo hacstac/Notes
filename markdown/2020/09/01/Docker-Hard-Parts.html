@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Docker Hard Parts | fastpages</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Docker Hard Parts" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Introduction to Docker Deep Concepts" />
+<meta property="og:description" content="Introduction to Docker Deep Concepts" />
+<link rel="canonical" href="https://hacstac.github.io/Notes/markdown/2020/09/01/Docker-Hard-Parts.html" />
+<meta property="og:url" content="https://hacstac.github.io/Notes/markdown/2020/09/01/Docker-Hard-Parts.html" />
+<meta property="og:site_name" content="fastpages" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-09-01T00:00:00-05:00" />
+<script type="application/ld+json">
+{"description":"Introduction to Docker Deep Concepts","url":"https://hacstac.github.io/Notes/markdown/2020/09/01/Docker-Hard-Parts.html","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://hacstac.github.io/Notes/markdown/2020/09/01/Docker-Hard-Parts.html"},"headline":"Docker Hard Parts","dateModified":"2020-09-01T00:00:00-05:00","datePublished":"2020-09-01T00:00:00-05:00","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/Notes/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://hacstac.github.io/Notes/feed.xml" title="fastpages" /><link rel="shortcut icon" type="image/x-icon" href="/Notes/images/favicon.ico"><link href="https://unpkg.com/@primer/css/dist/primer.css" rel="stylesheet" />
+<link rel="stylesheet" href="//use.fontawesome.com/releases/v5.0.7/css/all.css">
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/Notes/">fastpages</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/Notes/about/">About Me</a><a class="page-link" href="/Notes/search/">Search</a><a class="page-link" href="/Notes/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Docker Hard Parts</h1><p class="page-description">Introduction to Docker Deep Concepts</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2020-09-01T00:00:00-05:00" itemprop="datePublished">
+        Sep 1, 2020
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      29 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/Notes/categories/#markdown">markdown</a>
+        
+      
+      </p>
+    
+
+    </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul class="section-nav">
+<li class="toc-entry toc-h2"><a href="#70-building-images-automatically-with-dockerfiles">7.0 Building Images automatically with DockerFiles</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#71-instructions">7.1 Instructions</a></li>
+<li class="toc-entry toc-h3"><a href="#72-getting-practical">7.2 Getting Practical</a>
+<ul>
+<li class="toc-entry toc-h5"><a href="#721-packaging-git-with-dockerfile">7.2.1 Packaging Git with Dockerfile</a></li>
+<li class="toc-entry toc-h5"><a href="#722-dockerignore">7.2.2 Dockerignore</a></li>
+<li class="toc-entry toc-h5"><a href="#723-file-system-instructions">7.2.3 File System Instructions</a></li>
+<li class="toc-entry toc-h5"><a href="#724-create-a-maintainable-dockerfiles">7.2.4 Create a Maintainable Dockerfiles</a></li>
+<li class="toc-entry toc-h5"><a href="#725-init-system-for-docker">7.2.5 Init System for Docker</a></li>
+<li class="toc-entry toc-h5"><a href="#726-health-check-in-docker">7.2.6 Health Check In Docker</a></li>
+<li class="toc-entry toc-h5"><a href="#727-hardening-application-images">7.2.7 Hardening Application Images</a></li>
+<li class="toc-entry toc-h5"><a href="#728-complete-story-of-cache">7.2.8 Complete Story of Cache</a></li>
+<li class="toc-entry toc-h5"><a href="#729-flattening-images">7.2.9 Flattening Images</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h3"><a href="#73-refer">7.3 Refer</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#80-registry--repository">8.0 Registry &amp; Repository</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#81-enviornment">8.1 Enviornment</a></li>
+<li class="toc-entry toc-h3"><a href="#82-setup-local-docker-registry">8.2 Setup Local Docker Registry</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#90-docker-compose">9.0 Docker Compose</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#91-yaml-basics">9.1 YAML Basics</a></li>
+<li class="toc-entry toc-h3"><a href="#92-docker-compose-basics">9.2 Docker Compose Basics</a>
+<ul>
+<li class="toc-entry toc-h5"><a href="#921-example-yml">9.2.1 Example yml</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#100-devops-operations-with-docker">10.0 DevOps Operations With Docker</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#101-convert-your-virtual-box-vm-to-docker-container">10.1 Convert Your Virtual Box VM To Docker Container</a></li>
+<li class="toc-entry toc-h3"><a href="#102-host-like-container">10.2 Host Like Container</a></li>
+<li class="toc-entry toc-h3"><a href="#103-running-gui-in-containers">10.3 Running GUI in Containers</a></li>
+<li class="toc-entry toc-h3"><a href="#104-using-docker-machine-to-provision-docker-hosts">10.4 Using Docker Machine to Provision Docker Hosts</a></li>
+<li class="toc-entry toc-h3"><a href="#105-build-images-using-a-chef-solo">10.5 Build Images using a Chef Solo</a></li>
+<li class="toc-entry toc-h3"><a href="#106-ci-operations-with-docker">10.6 CI Operations With Docker</a>
+<ul>
+<li class="toc-entry toc-h5"><a href="#1061-steps">10.6.1 Steps</a></li>
+<li class="toc-entry toc-h5"><a href="#1062-method-1--builds-a-image-using-dockerhub-workflow--test-and-push-images-">10.6.2 Method 1 : Builds a Image Using DockerHub Workflow ( Test and Push Images )</a></li>
+<li class="toc-entry toc-h5"><a href="#1063-method-2--setting-up-a-package-cache-for-faster-builds">10.6.3 Method 2 : Setting up a package cache for faster Builds</a></li>
+<li class="toc-entry toc-h5"><a href="#1063-method-3--running-the-jenkins-master-withing-the-docker-container">10.6.3 Method 3 : Running the Jenkins Master Withing the Docker Container</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h3"><a href="#107-cd-operations-with-docker">10.7 CD Operations with Docker</a></li>
+<li class="toc-entry toc-h3"><a href="#108-cordination-between-containers">10.8 Cordination Between Containers</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#110-security-with-docker">11.0 Security With Docker</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#111-security-tips">11.1 Security Tips</a></li>
+<li class="toc-entry toc-h3"><a href="#112-security-videos">11.2 Security Videos</a></li>
+<li class="toc-entry toc-h3"><a href="#113-security-roadmap">11.3 Security Roadmap</a></li>
+<li class="toc-entry toc-h3"><a href="#path-to-complete">Path to Complete</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#120-monitoring-docker">12.0 Monitoring Docker</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#121-monitoring">12.1 Monitoring</a></li>
+<li class="toc-entry toc-h3"><a href="#122-resource-control">12.2 Resource Control</a></li>
+<li class="toc-entry toc-h3"><a href="#123-some-advance-approches">12.3 Some Advance Approches</a></li>
+</ul>
+</li>
+</ul><h2 id="70-building-images-automatically-with-dockerfiles">
+<a class="anchor" href="#70-building-images-automatically-with-dockerfiles" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.0 Building Images automatically with DockerFiles</h2>
+
+<hr>
+
+<h3 id="71-instructions">
+<a class="anchor" href="#71-instructions" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.1 Instructions</h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">.dockerignore</code></li>
+  <li>
+<code class="language-plaintext highlighter-rouge">FROM</code> Sets the Base Image for subsequent instructions.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">MAINTAINER</code> (deprecated - use LABEL instead) Set the Author field of the generated images.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">RUN</code> execute any commands in a new layer on top of the current image and commit the results.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">CMD</code> provide defaults for an executing container.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">EXPOSE</code> informs Docker that the container listens on the specified network ports at runtime. NOTE: does not actually make ports accessible.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">ENV</code> sets environment variable.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">ADD</code> copies new files, directories or remote file to container. Invalidates caches. Avoid ADD and use COPY instead.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">COPY</code> copies new files or directories to container. By default this copies as root regardless of the USER/WORKDIR settings. Use <code class="language-plaintext highlighter-rouge">--chown=&lt;user&gt;:&lt;group&gt;</code> to give ownership to another user/group. (Same for ADD.)</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">ENTRYPOINT</code> configures a container that will run as an executable.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">VOLUME</code> creates a mount point for externally mounted volumes or other containers.*   USER sets the user name for following RUN / CMD / ENTRYPOINT commands.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">WORKDIR</code> sets the working directory.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">ARG</code> defines a build-time variable.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">ONBUILD</code> adds a trigger instruction when the image is used as the base for another build.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">STOPSIGNAL</code> sets the system call signal that will be sent to the container to exit.</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">LABEL</code> apply key/value metadata to your images, containers, or daemons.</li>
+</ul>
+
+<p><strong>NOTE</strong> : If your running dangerous commands ( add a logic that it fails if your shell is outside docker )</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#  Shell script fails if it’s run outside a container</span>
+<span class="c">#!/bin/bash</span>
+<span class="k">if</span> <span class="o">!</span> <span class="o">[</span> <span class="nt">-f</span> /.dockerenv <span class="o">]</span>
+<span class="k">then
+    </span><span class="nb">echo</span> <span class="s1">'Not in a Docker container, exiting.'</span>
+    <span class="nb">exit </span>1
+<span class="k">fi</span>
+</code></pre></div></div>
+
+<hr>
+
+<h3 id="72-getting-practical">
+<a class="anchor" href="#72-getting-practical" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2 Getting Practical</h3>
+
+<h5 id="721-packaging-git-with-dockerfile">
+<a class="anchor" href="#721-packaging-git-with-dockerfile" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.1 Packaging Git with Dockerfile</h5>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Create a file name Dockerfile</span>
+<span class="nt">---</span>
+FROM ubuntu:latest
+LABEL <span class="nv">maintainer</span><span class="o">=</span><span class="s2">"dia@allingeek.com"</span>
+RUN apt-get update <span class="o">&amp;&amp;</span> apt-get <span class="nb">install</span> <span class="nt">-y</span> git
+ENTRYPOINT <span class="o">[</span><span class="s2">"git"</span><span class="o">]</span>
+<span class="nt">---</span>
+
+<span class="c"># Instantly Create Dockerfile Images</span>
+<span class="nv">$ </span>docker build <span class="nt">-t</span> htop - <span class="o">&lt;&lt;</span> <span class="no">EOF</span><span class="sh">
+FROM alpine
+RUN apk --no-cache add htop
+</span><span class="no">EOF
+
+</span><span class="nv">$ </span>docker image build <span class="nt">--tage</span> ubuntu-git:auto  <span class="nb">.</span>
+
+<span class="nt">---</span>
+FROM ubuntu:latest — Tells Docker to start from the latest Ubuntu image just as
+you did when creating the image manually.
+
+LABEL maintainer — Sets the maintainer name and email <span class="k">for </span>the image. Provid-
+ing this information helps people know whom to contact <span class="k">if </span>there’s a problem
+with the image. This was accomplished earlier when you invoked
+commit.
+
+RUN apt-get update <span class="o">&amp;&amp;</span> apt-get <span class="nb">install</span> <span class="nt">-y</span> git — Tells the builder to run the
+provided commands to <span class="nb">install </span>Git.
+
+ENTRYPOINT <span class="o">[</span><span class="s2">"git"</span><span class="o">]</span> — Sets the entrypoint <span class="k">for </span>the image to  git.
+<span class="nt">---</span>
+<span class="c"># --file or -f will read from diff file like 'BuildScript or anything'</span>
+<span class="c"># --quiet or -q will run in quiet mode</span>
+</code></pre></div></div>
+
+<hr>
+
+<h5 id="722-dockerignore">
+<a class="anchor" href="#722-dockerignore" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.2 Dockerignore</h5>
+
+<ul>
+  <li>.dockerignore file will help us to exclude some files to add to the image during the build</li>
+  <li>CLI modifies the context to exclude files and directories that match patterns in it. This helps to avoid unnecessarily sending large or sensitive files and directories to the daemon and potentially adding them to images using ADD or COPY.</li>
+</ul>
+
+<hr>
+
+<h5 id="723-file-system-instructions">
+<a class="anchor" href="#723-file-system-instructions" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.3 File System Instructions</h5>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- COPY : Will copy files from the filesystem where the image is being built.
+- VOLUME : Same as <span class="nt">--volume</span> flag <span class="o">(</span> bound mount volume <span class="o">)</span>
+- CMD : This is a closely related to ENTRYPOINT
+- ADD : This operates similarly to the COPY instruction with two imp differences:
+           - fetch remote sources files <span class="k">if </span>a Url is specified
+           - Extract the files of any <span class="nb">source </span>determined to be an archive file
+- ONBUILD : This instruction <span class="nb">let </span>the other instructions to execute <span class="o">(</span> <span class="k">if </span>resulting image is used as base img <span class="k">for </span>another build <span class="o">)</span>
+
+<span class="c"># Example</span>
+
+<span class="c"># ADD : We can ADD large no of files to a container without any problem</span>
+<span class="c"># Docker will unpack tarfiles of most standard types (.gz, .bz2, .xz, .tar).</span>
+<span class="c"># some.tar</span>
+<span class="nt">---</span>
+FROM Debian
+RUN <span class="nb">mkdir</span> <span class="nt">-p</span> /opt/libeatmydata
+ADD some.tar.gz /opt/libeatmydata/
+RUN <span class="nb">ls</span> <span class="nt">-lRt</span> /opt/libeatmydata
+<span class="nt">---</span>
+
+<span class="c"># ONBUILD : Use the ONBUILD command to automate and encapsulate the building of an image.</span>
+<span class="c"># GO Example  ( Outyet : Simple Go App )</span>
+<span class="nt">---</span>
+<span class="nv">$ </span>git clone https://github.com/golang/example
+<span class="nv">$ </span><span class="nb">cd </span>example/outyet
+<span class="nv">$ </span>docker build <span class="nt">-t</span> outyet <span class="nb">.</span>
+<span class="nv">$ </span>docker run <span class="nt">--publish</span> 8080:8080 <span class="nt">--name</span> outyet1 <span class="nt">-d</span> outyet
+<span class="nt">---</span>
+
+With ONBUILD
+<span class="nt">---</span>
+FROM golang:onbuild
+EXPOSE 8080
+<span class="nt">---</span>
+
+golang:onbuild Dockerfile
+<span class="nt">---</span>
+FROM golang:1.7
+RUN <span class="nb">mkdir</span> <span class="nt">-p</span> /go/src/app
+WORKDIR /go/src/app
+CMD <span class="o">[</span><span class="s2">"go-wrapper"</span>, <span class="s2">"run"</span><span class="o">]</span>
+ONBUILD COPY <span class="nb">.</span> /go/src/app
+ONBUILD RUN go-wrapper download
+ONBUILD RUN go-wrapper <span class="nb">install</span>
+<span class="nt">---</span>
+The result of this technique is that you have an easy way to build an image that only contains  the  code  required  to  run  it, and no more.
+There are also other examples of ONBUILD exists : node:onbuild , python:onbuild
+
+
+<span class="c"># ENTRYPOINT : Sets the entrypoint for the image</span>
+<span class="c"># Basic Shell Script for clean logs</span>
+<span class="nt">---</span>
+<span class="c">#!/bin/bash</span>
+<span class="nb">echo</span> <span class="s2">"Cleaning logs over </span><span class="nv">$1</span><span class="s2"> days old"</span>
+find /log_dir <span class="nt">-ctime</span> <span class="s2">"</span><span class="nv">$1</span><span class="s2">"</span> <span class="nt">-name</span> <span class="s1">'*log'</span> <span class="nt">-exec</span> <span class="nb">rm</span> <span class="o">{}</span> <span class="se">\;</span>
+<span class="nt">---</span>
+
+<span class="c"># Create a DockerFile ( Create a container with clean_log script )</span>
+<span class="nt">---</span>
+FROM ubuntu:17.04
+ADD clean_log /usr/bin/clean_log
+RUN <span class="nb">chmod</span> +x /usr/bin/clean_log
+ENTRYPOINT <span class="o">[</span><span class="s2">"/usr/bin/clean_log"</span><span class="o">]</span>
+CMD <span class="o">[</span><span class="s2">"7"</span><span class="o">]</span>
+<span class="nt">---</span>
+
+<span class="nv">$ </span>docker build <span class="nt">-t</span> log-cleaner <span class="nb">.</span>
+<span class="nv">$ </span>docker run <span class="nt">-v</span> /var/log/myapplogs:/log_dir log-cleaner 365
+<span class="c"># Clean The logs of over a year ( default 7 days if no arg given )</span>
+</code></pre></div></div>
+
+<hr>
+
+<h5 id="724-create-a-maintainable-dockerfiles">
+<a class="anchor" href="#724-create-a-maintainable-dockerfiles" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.4 Create a Maintainable Dockerfiles</h5>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- ARG : arg defines a variable thta <span class="nb">users </span>can provide to docker when building and a image.
+Ex: Dockerfile
+ARG <span class="nv">VERSION</span><span class="o">=</span>unknown
+ENV <span class="nv">VERSION</span><span class="o">=</span><span class="s2">"</span><span class="k">${</span><span class="nv">VERSION</span><span class="k">}</span><span class="s2">"</span>
+LABEL base.version<span class="o">=</span><span class="s2">"</span><span class="k">${</span><span class="nv">VERSION</span><span class="k">}</span><span class="s2">"</span>
+
+<span class="nv">$ version</span><span class="o">=</span>0.6<span class="p">;</span> docker image build <span class="nt">-t</span> dockerinaction/mailer-base:<span class="k">${</span><span class="nv">version</span><span class="k">}</span> <span class="se">\</span>
+<span class="nt">-f</span> mailer-base.df <span class="se">\</span>
+<span class="nt">--build-arg</span> <span class="nv">VERSION</span><span class="o">=</span><span class="k">${</span><span class="nv">version</span><span class="k">}</span> <span class="se">\</span>
+<span class="nb">.</span>
+
+<span class="nv">$ </span>docker image inspect <span class="nt">--format</span> <span class="s1">''</span> <span class="se">\</span>
+dockerinaction/mailer-base:0.6
+
+<span class="o">{</span>  <span class="s2">"base.name"</span>: <span class="s2">"Mailer Archetype"</span>,
+   <span class="s2">"base.version"</span>: <span class="s2">"0.6"</span>,
+   <span class="s2">"maintainer"</span>: <span class="s2">"dia@allingeek.com"</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<hr>
+
+<h5 id="725-init-system-for-docker">
+<a class="anchor" href="#725-init-system-for-docker" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.5 Init System for Docker</h5>
+
+<ul>
+  <li>Most Popular init systems are : runit, tini, BusyBox init, Supervisord, and DAEMON</li>
+  <li>By Default docker comes with tini init system</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>docker container run <span class="nt">-it</span> <span class="nt">--init</span> alpine:3.6 nc <span class="nt">-l</span> <span class="nt">-p</span> 3000
+<span class="c"># Docker ran /dev/init -- nc -l -p 3000 inside the container instead of just nc</span>
+</code></pre></div></div>
+
+<hr>
+
+<h5 id="726-health-check-in-docker">
+<a class="anchor" href="#726-health-check-in-docker" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.6 Health Check In Docker</h5>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- There are two ways to specify the health check <span class="nb">command</span>:
+1. Use a HEALTHCHECK instruction when defining the image
+2. On the command-line when running a container
+
+1. This is a 1st Mothed : It is used when we define an Image
+<span class="nv">$ </span>FROM nginx:1.13-alpine
+HEALTHCHECK <span class="nt">--interval</span><span class="o">=</span>5s <span class="nt">--retries</span><span class="o">=</span>2 <span class="se">\</span>
+ CMD nc <span class="nt">-vz</span> <span class="nt">-w</span> 2 localhost 80 <span class="o">||</span> <span class="nb">exit </span>1
+
+<span class="nv">$ </span>docker ps <span class="nt">--format</span> <span class="s1">'table \t\t'</span>
+NAMES            IMAGE                       STATUS
+healthcheck_ex   dockerinaction/healthcheck  Up 3 minutes <span class="o">(</span>healthy<span class="o">)</span>
+
+
+<span class="c">#  Exit Status Codes</span>
+- 0: success—The container is healthy and ready <span class="k">for </span>use.
+- 1: unhealthy—The container is not working correctly.
+- 2: reserved—Do not use this <span class="nb">exit </span>code.
+
+2. Command-line Method
+<span class="nv">$ </span>docker container run <span class="nt">--name</span><span class="o">=</span>healthcheck_ex <span class="nt">-d</span> <span class="se">\</span>
+<span class="nt">--health-cmd</span><span class="o">=</span><span class="s1">'nc -vz -w 2 localhost 80 || exit 1'</span> <span class="se">\</span>
+nginx:1.13-alpine
+</code></pre></div></div>
+
+<hr>
+
+<h5 id="727-hardening-application-images">
+<a class="anchor" href="#727-hardening-application-images" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.7 Hardening Application Images</h5>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- There are Three Methods to hardended the images
+1. We can enforce that our images are built from a specific image.
+2. we can make sure that regardless of how containers are built from our image, they will have a sensible default user.
+3. we should eliminate a common path <span class="k">for </span>root user escalation
+from programs with setuid or setgid attributes set.
+
+
+1. Content Addressable Images identifiers <span class="o">(</span> CAIID <span class="o">)</span>
+<span class="c"># Build Images using authentic digest : that digest is known as CAIID</span>
+<span class="c"># So now how many images we build from these they are authentic.</span>
+<span class="nt">---</span>
+docker pull debian:stable
+stable: Pulling from library/debian
+31c6765cabf1: Pull <span class="nb">complete
+</span>Digest: sha256:6aedee3ef827...
+<span class="c"># Dockerfile:</span>
+FROM debian@sha256:6aedee3ef827...
+...
+<span class="nt">---</span>
+
+2. Create a User &amp; <span class="nb">groups</span>
+<span class="nv">$ </span>RUN groupadd <span class="nt">-r</span> postgres <span class="o">&amp;&amp;</span> useradd <span class="nt">-r</span> <span class="nt">-g</span> postgres postgres
+
+3. SUID &amp; GUID
+<span class="nt">---</span>
+<span class="nv">$ </span>FROM ubuntu:latest
+<span class="c"># Set the SUID bit on whoami</span>
+RUN <span class="nb">chmod </span>u+s /usr/bin/whoami
+<span class="c"># Create an example user and set it as the default</span>
+RUN adduser <span class="nt">--system</span> <span class="nt">--no-create-home</span> <span class="nt">--disabled-password</span> <span class="nt">--disabled-login</span> <span class="se">\</span>
+ <span class="nt">--shell</span> /bin/sh example
+USER example
+<span class="c"># Set the default to compare the container user and</span>
+<span class="c"># the effective user for whoami</span>
+CMD <span class="nb">printf</span> <span class="s2">"Container running as: %s</span><span class="se">\n</span><span class="s2">"</span> <span class="si">$(</span><span class="nb">id</span> <span class="nt">-u</span> <span class="nt">-n</span><span class="si">)</span> <span class="o">&amp;&amp;</span> <span class="se">\</span>
+ <span class="nb">printf</span> <span class="s2">"Effectively running whoami as: %s</span><span class="se">\n</span><span class="s2">"</span> <span class="si">$(</span><span class="nb">whoami</span><span class="si">)</span>
+<span class="nt">---</span>
+Output
+<span class="nt">---</span>
+Container running as: example
+Effectively running <span class="nb">whoami </span>as: root
+<span class="nt">---</span>
+
+The output of the default <span class="nb">command </span>shows that even though you’ve executed the
+<span class="nb">whoami command </span>as the example user, it’s running from the context of the root user.
+</code></pre></div></div>
+
+<hr>
+
+<h5 id="728-complete-story-of-cache">
+<a class="anchor" href="#728-complete-story-of-cache" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.8 Complete Story of Cache</h5>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># --no-cache will downlaod fresh containers from source. it will not use the cache files</span>
+
+<span class="c"># Example</span>
+<span class="nv">$ </span>docker build <span class="nt">--no-cache</span> <span class="nb">.</span>
+
+<span class="c"># Busting the Cache</span>
+<span class="c"># we need this because some time our image build takes so much time. so we need cache up to a certain point.</span>
+<span class="c"># Method 1 (cheat) :</span>
+Add a benign comment after the <span class="nb">command </span>to invalidate the cache. This works because Docker treats the non-whitespace change to theline as though it were a new <span class="nb">command</span>, so the cached layer is not re-used.
+<span class="nt">---</span>
+CMD <span class="o">[</span><span class="s2">"npm"</span>,<span class="s2">"start"</span><span class="o">]</span> <span class="c">#bust the cache</span>
+<span class="nt">---</span>
+
+<span class="c"># Method 2 ( using ARG )</span>
+Use the ARG directive <span class="k">in </span>your Dockerfile to <span class="nb">enable </span>surgical cache-busting.
+If this ARG variable isset to a value never used before on your host, the cache will be busted from that point.
+<span class="nt">---</span>
+WORKDIR todo
+ARG <span class="nv">CACHEBUST</span><span class="o">=</span>no
+RUN npm <span class="nb">install</span>
+<span class="nt">---</span>
+
+<span class="nv">$ </span>docker build <span class="nt">--build-arg</span> <span class="nv">CACHEBUST</span><span class="o">=</span><span class="k">${</span><span class="nv">RANDOM</span><span class="k">}</span> <span class="nb">.</span>
+<span class="nv">$ </span><span class="nb">echo</span> <span class="k">${</span><span class="nv">RANDOM</span><span class="k">}</span> 19856
+<span class="nv">$ </span><span class="nb">echo</span> <span class="k">${</span><span class="nv">RANDOM</span><span class="k">}</span> 26429
+
+<span class="c"># If not using Bash</span>
+<span class="nv">$ </span>docker build <span class="nt">--build-arg</span> <span class="nv">CACHEBUST</span><span class="o">=</span><span class="si">$(</span><span class="nb">date</span> +%s<span class="si">)</span> <span class="nb">.</span>
+
+<span class="c"># Method 3 ( Using ADD )</span>
+There are two useful features of ADD that you can use to your advantage <span class="k">in </span>this context: it caches the contents of the file it refers to, and it can take a network resource as an argument.
+<span class="c"># Git Repo Example</span>
+It means <span class="k">if </span>repo is not changed it uses cache or <span class="k">if </span>git repo is changed it rebuild the image from scratch.
+But it will vary from resources <span class="nb">type </span>to resource type.
+
+we can take <span class="nb">help </span>of Github API here : It  has  URLs  foreach repository that <span class="k">return </span>JSON <span class="k">for </span>the most recent commits. When a new commit ismade, the content of the response changes.
+
+<span class="nt">---</span>
+FROM ubuntu:16.04
+ADD https://api.github.com/repos/nodejs/node/commits  /dev/null
+RUN git clone https://github.com/nodejs/node
+<span class="nt">---</span>
+
+</code></pre></div></div>
+
+<hr>
+
+<h5 id="729-flattening-images">
+<a class="anchor" href="#729-flattening-images" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.9 Flattening Images</h5>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># This is imp because images can reveal the imp information</span>
+Example :
+
+<span class="c"># create a docker file : It has sensitive information</span>
+<span class="nt">---</span>
+FROM debian
+RUN <span class="nb">echo</span> <span class="s2">"My Big Secret"</span> <span class="o">&gt;&gt;</span> /tmp/secret_key
+RUN <span class="nb">cat</span> /tmp/secret_key
+RUN <span class="nb">rm</span> /tmp/secret_key
+<span class="nt">---</span>
+<span class="nv">$ </span>docker build <span class="nt">-t</span> secret <span class="nb">.</span>
+<span class="c"># But now problem arise</span>
+<span class="nv">$ </span>docker <span class="nb">history </span>secret
+...
+5e39caf7560f 3 days ago /bin/sh <span class="nt">-c</span> <span class="nb">echo</span> <span class="s2">"My Big Secret"</span> <span class="o">&gt;&gt;</span> /tmp/se 14 B
+...
+
+<span class="nv">$ </span>docker run 5b376ff3d7cd <span class="nb">cat</span> /tmp/secret_key
+My Big Secret
+
+But <span class="k">if </span>someone could download this image from public repo and insect the <span class="nb">history</span> &amp; run thi <span class="nb">command</span> : It reveal the secret.
+
+<span class="c"># To get rid of this type of problem : we need to remove intermediate layering</span>
+<span class="c"># we need to export the image as a trivially run container</span>
+and <span class="k">then </span>re-import and tag the resulting image:
+<span class="nv">$ </span>docker run <span class="nt">-d</span> secret /bin/true
+- new_id
+
+<span class="c"># Runs a docker export, taking a conatiner iD as arg and outgoing a tar file of fs contents.</span>
+<span class="c"># This is piped to docker import which takes tar file and create a new image.</span>
+<span class="nv">$ </span>docker <span class="nb">export </span>new_id | docker import - new_secret
+<span class="nv">$ </span>docker <span class="nb">history </span>new_secret
+</code></pre></div></div>
+
+<hr>
+
+<h3 id="73-refer">
+<a class="anchor" href="#73-refer" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.3 Refer</h3>
+
+<ul>
+  <li><a href="https://docs.docker.com/engine/reference/builder/#dockerfile-examples">Examples</a></li>
+  <li><a href="https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/">Best practices for writing Dockerfiles</a></li>
+  <li>
+<a href="http://crosbymichael.com/">Michael Crosby</a> has some more <a href="http://crosbymichael.com/dockerfile-best-practices.html">Dockerfiles best practices</a> / <a href="http://crosbymichael.com/dockerfile-best-practices-take-2.html">take 2</a>.</li>
+  <li>
+<a href="http://jonathan.bergknoff.com/journal/building-good-docker-images">Building Good Docker Images</a> / <a href="http://jonathan.bergknoff.com/journal/building-better-docker-images">Building Better Docker Images</a>
+</li>
+  <li><a href="https://speakerdeck.com/garethr/managing-container-configuration-with-metadata">Managing Container Configuration with Metadata</a></li>
+  <li><a href="https://rock-it.pl/how-to-write-excellent-dockerfiles/">How to write excellent Dockerfiles</a></li>
+</ul>
+
+<hr>
+<hr>
+
+<h2 id="80-registry--repository">
+<a class="anchor" href="#80-registry--repository" aria-hidden="true"><span class="octicon octicon-link"></span></a>8.0 Registry &amp; Repository</h2>
+
+<p><img src="s3://akash.r/Devops_Notes_screenshots/Docker/Docker_Hard_Parts/Repository.png" alt="Registry.png"></p>
+
+<p>A repository is a <em>hosted</em> collection of tagged images that together create the file system for a container.</p>
+
+<p>A registry is a <em>host</em> – a server that stores repositories and provides an HTTP API for <a href="https://docs.docker.com/engine/tutorials/dockerrepos/">managing the uploading and downloading of repositories</a>.</p>
+
+<h3 id="81-enviornment">
+<a class="anchor" href="#81-enviornment" aria-hidden="true"><span class="octicon octicon-link"></span></a>8.1 Enviornment</h3>
+
+<ul>
+  <li>
+<a href="https://docs.docker.com/engine/reference/commandline/login"><code class="language-plaintext highlighter-rouge">docker login</code></a> to login to a registry.</li>
+  <li>
+<a href="https://docs.docker.com/engine/reference/commandline/logout"><code class="language-plaintext highlighter-rouge">docker logout</code></a> to logout from a registry.</li>
+  <li>
+<a href="https://docs.docker.com/engine/reference/commandline/search"><code class="language-plaintext highlighter-rouge">docker search</code></a> searches registry for image.</li>
+  <li>
+<a href="https://docs.docker.com/engine/reference/commandline/pull"><code class="language-plaintext highlighter-rouge">docker pull</code></a> pulls an image from registry to local machine.</li>
+  <li>
+<a href="https://docs.docker.com/engine/reference/commandline/push"><code class="language-plaintext highlighter-rouge">docker push</code></a> pushes an image to the registry from local machine.</li>
+</ul>
+
+<p><strong>NOTE</strong> : Refer Chapter 9 of Docker in Action : Public and private
+software distribution ( This Cover’s Every Basic detail about Registry &amp; Repository )</p>
+
+<h3 id="82-setup-local-docker-registry">
+<a class="anchor" href="#82-setup-local-docker-registry" aria-hidden="true"><span class="octicon octicon-link"></span></a>8.2 Setup Local Docker Registry</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># To start a registry on local Network</span>
+<span class="nv">$ </span>docker run <span class="nt">-d</span> <span class="nt">-p</span> 5000:5000 <span class="nt">-v</span> <span class="nv">$HOME</span>/registry:/var/lib/registry registry:2
+
+<span class="c"># This  command  makes  the  registry  available  on  port  5000  of  the  Docker  host(-p  5000:5000).  With  the  -v  flag,  it  makes  the  registry folder on your host(/var/lib/registry)  available  in  the  container  as  $HOME/registry.  The  registry’s  fileswill therefore be stored on the host in the /var/lib/registry folder.</span>
+<span class="c"># HOSTNAME is the hostname or IP address of your new reg-istry server</span>
+<span class="c"># we also use --insecure-registry ( We know our local network is secure :) [Docker will only allow you to pull from registries with a signedHTTPS certificate.] )</span>
+
+<span class="c"># Push the image to the registry</span>
+<span class="nv">$ </span>docker push HOSTNAME:5000/image:tag.
+
+</code></pre></div></div>
+
+<hr>
+<hr>
+
+<h2 id="90-docker-compose">
+<a class="anchor" href="#90-docker-compose" aria-hidden="true"><span class="octicon octicon-link"></span></a>9.0 Docker Compose</h2>
+
+<p>Compose is a tool for defining and running multi-container Docker applications. With Compose, you use a YAML file to configure your application’s services. Then, with a single command, you create and start all the services from your configuration. To learn more about all the features of Compose, see the <a href="https://docs.docker.com/compose/overview/#features">list of features</a>.</p>
+
+<p>The standard filename for Compose files is <code class="language-plaintext highlighter-rouge">docker-compose.yml</code>.</p>
+
+<h3 id="91-yaml-basics">
+<a class="anchor" href="#91-yaml-basics" aria-hidden="true"><span class="octicon octicon-link"></span></a>9.1 YAML Basics</h3>
+
+<ul>
+  <li>A YAML document can include a comment at the end of any line. Comments are marked by a space followed by a hash sign ( #). Any characters that follow until the end of the line are ignored by the parser.</li>
+  <li>YAML uses three types of data and two styles of describing that data, block and flow.
+    <ul>
+      <li>Flow collections are specified similarly to collection literals in JavaScript and other
+languages. For example, the following is a list of strings in the flow style: <code class="language-plaintext highlighter-rouge">["PersonA","PersonB"]</code>
+</li>
+      <li>The block style is more common and will be used in this primer except where noted.
+The three types of data are <code class="language-plaintext highlighter-rouge">maps</code>, <code class="language-plaintext highlighter-rouge">lists</code>, and <code class="language-plaintext highlighter-rouge">scalar values</code>.
+        <ul>
+          <li>Maps are defined by a set of unique properties in the form of key/value pairs that
+are delimited by a colon and space (: ).</li>
+          <li>Scaler Values : Scaler String <code class="language-plaintext highlighter-rouge">image: "alpine"</code>
+  , Scaler Command : <code class="language-plaintext highlighter-rouge">command: echo hello world</code>
+</li>
+          <li>Scaler Rules :
+            <ol>
+              <li>Must not be empty,</li>
+              <li>Must not contain leading or trailing whitespace characters</li>
+              <li>Must not begin with an indicator character (for example, - or :) in places where
+doing so would cause an ambiguity.</li>
+              <li>Must never contain character combinations using a colon (:) and hash sign (#)</li>
+            </ol>
+          </li>
+          <li>Lists (or block sequences) are series of nodes in which each element is denoted by a
+leading hyphen (-) indicator. For example:
+      <code class="language-plaintext highlighter-rouge">- item 1</code>
+      <code class="language-plaintext highlighter-rouge">- item 2</code>
+      <code class="language-plaintext highlighter-rouge">- item 3</code>
+      <code class="language-plaintext highlighter-rouge">- # an empty item</code>
+      <code class="language-plaintext highlighter-rouge">- item 4</code>
+</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>Indentation Rules : YAML uses indentation to indicate content scope. Scope determines which
+block each element belongs to. There are a few rules:
+    <ul>
+      <li>Only spaces can be used for indentation.</li>
+      <li>The amount of indentation does not matter as long as
+  – All peer elements (in the same scope) have the same amount of indentation.
+  – Any child elements are further indented.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>These documents are equivalent:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>top-level:
+ second-level: # three spaces
+ third-level: # two more spaces
+ - "list item" # single additional indent on items in this list
+ another-third-level: # a third-level peer with the same two spaces
+ fourth-level: "string scalar" # 6 more spaces
+ another-second-level: # a 2nd level peer with three spaces
+ - a list item # list items in this scope have
+ # 15 total leading spaces
+ - a peer item # A peer list item with a gap in the list
+---
+# every scope level adds exactly 1 space
+top-level:
+ second-level:
+ third-level:
+ - "list item"
+ another-third-level:
+ fourth-level: "string scalar"
+ another-second-level:
+ - a list item
+ - a peer item
+</code></pre></div></div>
+
+<h3 id="92-docker-compose-basics">
+<a class="anchor" href="#92-docker-compose-basics" aria-hidden="true"><span class="octicon octicon-link"></span></a>9.2 Docker Compose Basics</h3>
+
+<p>By using the following command you can start up your application:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># first install docker-compose on your system (eg: Ubuntu )
+$ sudo apt install docker-compose
+$ docker-compose -f &lt;docker-compose-file&gt; up
+</code></pre></div></div>
+
+<p>You can also run docker-compose in detached mode using -d flag, then you can stop it whenever needed by the following command:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker-compose stop
+</code></pre></div></div>
+
+<p>You can bring everything down, removing the containers entirely, with the down command. Pass <code class="language-plaintext highlighter-rouge">--volumes</code> to also remove the data volume.</p>
+
+<p>Let understand Docker compose with an Example :</p>
+
+<h5 id="921-example-yml">
+<a class="anchor" href="#921-example-yml" aria-hidden="true"><span class="octicon octicon-link"></span></a>9.2.1 Example yml</h5>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># wikijs.yml
+---
+version: '2'
+services:
+  db:
+    image: postgres:11-alpine
+    environment:
+      POSTGRES_DB: wiki
+      POSTGRES_PASSWORD: wikijsrocks
+      POSTGRES_USER: wikijs
+    logging:
+      driver: "none"
+    restart: unless-stopped
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  wiki:
+    image: requarks/wiki:2
+    depends_on:
+      - db
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: wikijs
+      DB_PASS: wikijsrocks
+      DB_NAME: wiki
+    restart: unless-stopped
+    ports:
+      - "80:3000"
+
+volumes:
+  db-data:
+---
+
+# we can create a docker stack with this yml file ( it established a wikijs and postgresql db )
+$ docker stack deploy -c wikijs.yml wikijs
+
+# if we use docker swarn or Kubernetes we can create a replicas of this images into 3 diff servers
+--
+deploy:
+ replicas: 3
+--
+# add this to end of yml and again deploy it. It will update the container
+
+# To Check The State of stack
+$ docker stack ps \
+ --format '\t' \
+ wikijs
+
+# To remove a service from stack ( like limit the replicas from 3 to 2 )
+$ docker stack deploy \
+-c wikijs.yml \
+--prune \
+wikijs
+
+
+We Need To use Prue Here : Because without Prune it will not completely remove services which causes problmes ( like for Instead of using postgressql we want to use a mysql so if we updated our stack yml file and deploy it. it will add mysql db but doesn't remove postgres containers so to remove postgres we use prune )
+
+The --prune flag will clean up any resource in the stack that isn’t explicitly referenced
+in the Compose file used for the deploy operation.
+
+# Prune
+
+The new [Data Management Commands](https://github.com/docker/docker/pull/26108) have landed as of Docker 1.13:
+
+* `docker system prune`
+* `docker volume prune`
+* `docker network prune`
+* `docker container prune`
+* `docker image prune`
+
+
+Note : There is a problem here everytime a container replaced docker will create a new volume space for container and its replicas. This would cause problems in a real-world system.
+So, to get rid of this
+
+EX:
+---
+volumes:
+   pgdata: # empty definition uses volume defaults
+services:
+   postgres:
+      image: dockerinaction/postgres:11-alpine
+      volumes:
+         - type: volume
+         source: pgdata # The named volume above
+         target: /var/lib/postgresql/data
+      environment:
+         POSTGRES_PASSWORD: example
+---
+
+The file defines a volume named pgdata, and the postgres service
+mounts that volume at /var/lib/postgresql/data. That location is where the PostgreSQL software will store any database schema or data.
+
+Inspect
+$ docker stack deploy \
+-c databases.yml \
+--prune \
+my-databases
+
+$ docker volume ls
+DRIVER  VOLUME NAME
+local   my-databases_pgdata
+
+$ docker service remove my-databases_postgres
+
+Then restore the service by using the Compose file:
+$ docker stack deploy \
+-c databases.yml \
+--prune \
+my-databases
+
+
+</code></pre></div></div>
+
+<hr>
+<hr>
+
+<h2 id="100-devops-operations-with-docker">
+<a class="anchor" href="#100-devops-operations-with-docker" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.0 DevOps Operations With Docker</h2>
+
+<hr>
+
+<h3 id="101-convert-your-virtual-box-vm-to-docker-container">
+<a class="anchor" href="#101-convert-your-virtual-box-vm-to-docker-container" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.1 Convert Your Virtual Box VM To Docker Container</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Process : VM FILE (.vdi or anything) =&gt; TAR =&gt; Import TAR as an Image in Docker.</span>
+
+<span class="nv">$ </span><span class="nb">sudo </span>apt <span class="nb">install </span>qemu-utils
+
+<span class="c"># Identify the path to your VM disk image. ( Stop the VM )</span>
+<span class="c"># Sets up a variable pointingto your VM disk image.</span>
+<span class="nv">$ VMDISK</span><span class="o">=</span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/VirtualBox VMs/myvm/myvm.vdi"</span>
+
+<span class="c"># Initializes a kernelmodule requiredby qemu-nbd</span>
+<span class="nv">$ </span><span class="nb">sudo </span>modprobe nbd
+
+<span class="c"># Connects the VM disk to a virtual device node</span>
+<span class="nv">$ </span><span class="nb">sudo </span>qemu-nbd <span class="nt">-c</span> /dev/nbd0 <span class="nt">-r</span> <span class="nv">$VMDISK3</span><span class="o">((</span>CO1-3<span class="o">))</span>
+
+<span class="c"># Lists the partition numbers available to mount on this disk</span>
+<span class="nv">$ </span><span class="nb">ls</span> /dev/nbd0p<span class="k">*</span> /dev/nbd0p1 /dev/nbd0p2
+
+<span class="c"># Mounts the selected partition at /mnt with qemu-nbd</span>
+<span class="nv">$ </span><span class="nb">sudo </span>mount /dev/nbd0p2 /mnt
+
+<span class="c"># Creates a TAR filecalled img.tar from /mnt</span>
+<span class="nv">$ </span><span class="nb">sudo tar </span>cf img.tar <span class="nt">-C</span> /mnt <span class="nb">.</span>
+
+<span class="c"># Unmounts and cleans up after qemu-nbd</span>
+<span class="nv">$ </span><span class="nb">sudo </span>umount /mnt <span class="o">&amp;&amp;</span> <span class="nb">sudo </span>qemu-nbd <span class="nt">-d</span> /dev/nbd0
+
+<span class="c"># Dockerfile</span>
+FROM scratch
+ADD img.tar /
+
+<span class="nv">$ </span>docker build <span class="nb">.</span>
+</code></pre></div></div>
+
+<hr>
+
+<h3 id="102-host-like-container">
+<a class="anchor" href="#102-host-like-container" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.2 Host Like Container</h3>
+
+<p>Containers are not virtual machines—there are significant differences—and pretending there aren’t can cause confusion and issues down the line.</p>
+
+<ul>
+  <li>Differences between VMs and Docker containers:
+    <ul>
+      <li>Docker is application-oriented, whereas VMs are operating-system oriented.</li>
+      <li>Docker  containers  share  an  operating  system  with  other  Docker  containers.  Incontrast, VMs each have their own operating system managed by a hypervisor.</li>
+      <li>Docker containers are designed to run one principal process, not manage mul-tiple sets of processes.</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run <span class="nt">-d</span> phusion/baseimage <span class="o">[</span> This Image designed to run multiple processes.]
+docker <span class="nb">exec</span> <span class="nt">-i</span> <span class="nt">-t</span> container_ID /bin/bash
+ps <span class="nt">-ef</span> <span class="o">[</span> It starts <span class="o">(</span>cron, sshd, and syslog<span class="o">)</span><span class="nb">.</span> It Much like a host. <span class="o">]</span>
+</code></pre></div></div>
+
+<hr>
+
+<h3 id="103-running-gui-in-containers">
+<a class="anchor" href="#103-running-gui-in-containers" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.3 Running GUI in Containers</h3>
+
+<p>Process : Create  an  image  with  your  user  credentials  and  the  program,  and  bind  mount  your Xserver to it.
+Note : another method is to setup VNC server on container</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Dockerfile for setting up firefox on container</span>
+<span class="nt">---</span>
+FROM ubuntu:14.04
+RUN apt-get update
+RUN apt-get <span class="nb">install</span> <span class="nt">-y</span> firefox
+RUN groupadd <span class="nt">-g</span> GID USERNAME
+RUN useradd <span class="nt">-d</span> /home/USERNAME <span class="nt">-s</span> /bin/bash <span class="se">\-</span>m USERNAME <span class="nt">-u</span> UID <span class="nt">-g</span> GID
+USER USERNAME
+ENV HOME /home/USERNAME
+CMD /usr/bin/firefox
+<span class="nt">---</span>
+
+<span class="nv">$ </span>docker build <span class="nt">-t</span> gui <span class="nb">.</span>
+<span class="nv">$ </span>docker run <span class="nt">-v</span> /tmp/.X11-unix:/tmp/.X11-unix <span class="nt">-h</span> <span class="nv">$HOSTNAME</span> <span class="nt">-v</span> <span class="nv">$HOME</span>/.Xauthority:/home/<span class="nv">$USER</span>/.Xauthority <span class="nt">-e</span> <span class="nv">DISPLAY</span><span class="o">=</span><span class="nv">$DISPLAY</span> gui
+
+<span class="c"># It will popup firefox ( which runs on container )</span>
+
+</code></pre></div></div>
+
+<hr>
+
+<h3 id="104-using-docker-machine-to-provision-docker-hosts">
+<a class="anchor" href="#104-using-docker-machine-to-provision-docker-hosts" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.4 Using Docker Machine to Provision Docker Hosts</h3>
+
+<p>Docker-machine is a tool just like a vagrant. EX: we can setup VM with virtualBox with docker command.
+walkthrough:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Install Docker Machine on Linux</span>
+<span class="nv">$ </span>curl <span class="nt">-L</span> https://github.com/docker/machine/releases/download/v0.16.2/docker-machine-<span class="sb">`</span><span class="nb">uname</span> <span class="nt">-s</span><span class="sb">`</span>-<span class="sb">`</span><span class="nb">uname</span> <span class="nt">-m</span><span class="sb">`</span> <span class="o">&gt;</span>/tmp/docker-machine <span class="o">&amp;&amp;</span> <span class="nb">chmod</span> +x /tmp/docker-machine <span class="o">&amp;&amp;</span> <span class="nb">sudo cp</span> /tmp/docker-machine /usr/local/bin/docker-machine
+
+<span class="c"># Create a VM by docker daemon on Oracle Virtual Box</span>
+<span class="nv">$ </span>docker-machine create <span class="nt">--driver</span> virtualbox host1
+
+<span class="c"># Run this command to set the DOCKER_HOST environment variable, which sets the default host that Docker commands will be run on</span>
+<span class="nv">$ </span>docker-machine <span class="nb">env </span>host1
+<span class="nv">$ </span><span class="nb">eval</span> <span class="si">$(</span>docker-machine <span class="nb">env </span>host1<span class="si">)</span>
+
+<span class="c"># we can direct to VM</span>
+<span class="nv">$ </span>docker-machine ssh host1
+
+Commands of Docker-Machine:
+create  : Creates a new Machine
+<span class="nb">ls</span>      : List Machines
+stop    : Stop Machines
+start   : Start Machines
+restart : Restart Machines
+<span class="nb">rm</span>      : Destroys the machine
+inspect : Returns a JSON representation of the machine’s metadata
+config  : Return the config of machine
+ip      : Returns the IP address of the machine
+url     : Returns a URL <span class="k">for </span>the Docker daemon on the machine
+upgrade : Upgrades the Docker version on the host to the latest
+</code></pre></div></div>
+
+<hr>
+
+<h3 id="105-build-images-using-a-chef-solo">
+<a class="anchor" href="#105-build-images-using-a-chef-solo" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.5 Build Images using a Chef Solo</h3>
+
+<p>Chef : It is a configuration Management Tool ( using this can reduce the amount of work required to configure Images )</p>
+
+<ul>
+  <li>Here we setup hello world apache website ( Example ).</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Need a working code</span>
+<span class="nv">$ </span>git clone https://github.com/docker-in-practice/docker-chef-solo-example.git
+<span class="c"># All the working code in there</span>
+<span class="nv">$ </span><span class="nb">cd </span>into it <span class="o">(</span> there is a Dockerfile and some other files and folders <span class="o">(</span> chef recepies etc <span class="o">)</span>
+<span class="nv">$ </span>docker build <span class="nt">-t</span> chef-example <span class="nb">.</span>
+<span class="nv">$ </span>docker run <span class="nt">-it</span> <span class="nt">-p</span> 8080:80 chef-example
+<span class="c"># This is a one time written code we can anywhere to deploy a website ( in such a small steps )</span>
+
+</code></pre></div></div>
+
+<hr>
+
+<h3 id="106-ci-operations-with-docker">
+<a class="anchor" href="#106-ci-operations-with-docker" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.6 CI Operations With Docker</h3>
+
+<p>CI : Continious Integration</p>
+
+<p><img src="s3://akash.r/Devops_Notes_screenshots/Docker/Docker_Hard_Parts/CIoperations.png" alt="Image_pipeline.png"></p>
+
+<h5 id="1061-steps">
+<a class="anchor" href="#1061-steps" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.6.1 Steps</h5>
+
+<ul>
+  <li>Check out a clean copy of the source code defining the image and build scripts so the origin and process used to build the image is known.</li>
+  <li>Retrieve or generate artifacts that will be included in the image, such as the application package and runtime libraries.</li>
+  <li>Build the image by using a Dockerfile.</li>
+  <li>Verify that the image is structured and functions as intended.</li>
+  <li>(Optional) Verify that the image does not contain known vulnerabilities.</li>
+  <li>Tag the image so that it can be consumed easily.</li>
+  <li>Publish the image to a registry or another distribution channel.</li>
+</ul>
+
+<h5 id="1062-method-1--builds-a-image-using-dockerhub-workflow--test-and-push-images-">
+<a class="anchor" href="#1062-method-1--builds-a-image-using-dockerhub-workflow--test-and-push-images-" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.6.2 Method 1 : Builds a Image Using DockerHub Workflow ( Test and Push Images )</h5>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># For this you will Git Repo and docker Hub Repo</span>
+<span class="c"># Link Docker Hub to to git repo ( it take code from git repo and compile and create a desired Image ( like other ci tools do )</span>
+<span class="c"># wait for the docker hub to build to complete</span>
+<span class="c"># Remember this is a basic solution</span>
+
+</code></pre></div></div>
+
+<h5 id="1063-method-2--setting-up-a-package-cache-for-faster-builds">
+<a class="anchor" href="#1063-method-2--setting-up-a-package-cache-for-faster-builds" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.6.3 Method 2 : Setting up a package cache for faster Builds</h5>
+
+<p>While building the images it will take caches instead of download everytime from internet.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># We are using squid Proxy Here</span>
+<span class="nv">$ </span><span class="nb">sudo </span>apt-get <span class="nb">install </span>squid-deb-proxy
+<span class="nv">$ </span>check <span class="k">for </span>port 8000
+<span class="nv">$ </span>create a Docker File
+<span class="nt">---</span> using a apt proxy
+FROM debian
+RUN apt-get update <span class="nt">-y</span> <span class="o">&amp;&amp;</span> apt-get <span class="nb">install </span>net-tools
+RUN <span class="nb">echo</span> <span class="s2">"Acquire::http::Proxy </span><span class="se">\"</span><span class="s2">http://</span><span class="si">$(</span> <span class="se">\</span>
+route <span class="nt">-n</span> | <span class="nb">awk</span> <span class="s1">'/^0.0.0.0/ {print $2}'</span> <span class="se">\</span>
+<span class="si">)</span><span class="s2">:8000</span><span class="se">\"</span><span class="s2">;"</span> <span class="se">\</span>
+<span class="o">&gt;</span> /etc/apt/apt.conf.d/30proxy
+RUN <span class="nb">echo</span> <span class="s2">"Acquire::http::Proxy::ppa.launchpad.net DIRECT;"</span> <span class="o">&gt;&gt;</span> <span class="se">\</span>
+/etc/apt/apt.conf.d/30proxy
+CMD <span class="o">[</span><span class="s2">"/bin/bash"</span><span class="o">]</span>
+<span class="nt">---</span>
+This will cache all the webpages and apt package we downlaod after running this container : <span class="k">if </span>again download them they will be download <span class="k">in </span>miliseconds
+</code></pre></div></div>
+
+<h5 id="1063-method-3--running-the-jenkins-master-withing-the-docker-container">
+<a class="anchor" href="#1063-method-3--running-the-jenkins-master-withing-the-docker-container" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.6.3 Method 3 : Running the Jenkins Master Withing the Docker Container</h5>
+
+<p>Portable Jenkins Server</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># download git clone https://github.com/docker-in-practice/jenkins.git.</span>
+<span class="c"># Put your required plugins in jenkins_plugins.txt</span>
+
+<span class="nt">---</span> Dockerfile
+FROM jenkins
+COPY jenkins_plugins.txt /tmp/jenkins_plugins.txt
+RUN /usr/local/bin/plugins.sh /tmp/jenkins_plugins.txt
+USER root
+RUN <span class="nb">rm</span> /tmp/jenkins_plugins.txt
+RUN groupadd <span class="nt">-g</span> 999 docker
+RUN addgroup <span class="nt">-a</span> jenkins docker
+USER jenkins
+<span class="nt">---</span>
+
+<span class="nv">$ </span>docker build <span class="nt">-t</span> jenkins <span class="nb">.</span>
+<span class="nv">$ </span>docker run <span class="nt">--name</span> jenkins <span class="nt">-p</span> 8080:8080 <span class="se">\</span>
+<span class="nt">-p</span> 50000:50000 <span class="se">\</span>
+<span class="nt">-v</span> /var/run/docker.sock:/var/run/docker.sock <span class="se">\</span>
+<span class="nt">-v</span> /tmp:/var/jenkins_home <span class="se">\</span>
+<span class="nt">-d</span> <span class="se">\</span>
+jenkins
+
+<span class="c"># go to localhost:8080 : Copy master password from logs</span>
+
+<span class="c"># Reliably Upgrade a Jenkins Server</span>
+
+<span class="nt">---</span> Dockerfile
+FROM docker
+ADD jenkins_updater.sh /jenkins_updater.sh
+RUN <span class="nb">chmod</span> +x /jenkins_updater.sh
+ENTRYPOINT /jenkins_updater.sh
+<span class="nt">---</span>
+
+<span class="nt">---</span> Shell script to backup and restart Jenkins
+<span class="c">#!/bin/sh</span>
+<span class="nb">set</span> <span class="nt">-e</span>
+<span class="nb">set</span> <span class="nt">-x</span>
+
+<span class="k">if</span> <span class="o">!</span> docker pull jenkins | <span class="nb">grep </span>up.to.date
+<span class="k">then
+</span>docker stop jenkins
+docker rename jenkins jenkins.bak.<span class="si">$(</span><span class="nb">date</span> +%Y%m%d%H%M<span class="si">)</span>
+<span class="nb">cp</span> <span class="nt">-r</span> /var/docker/mounts/jenkins_home <span class="se">\</span>
+/var/docker/mounts/jenkins_home.bak.<span class="si">$(</span><span class="nb">date</span> +%Y%m%d%H%M<span class="si">)</span>
+
+docker run <span class="nt">-d</span> <span class="se">\</span>
+<span class="nt">--restart</span> always <span class="se">\</span>
+<span class="nt">-v</span> /var/docker/mounts/jenkins_home:/var/jenkins_home <span class="se">\</span>
+<span class="nt">--name</span> jenkins <span class="se">\</span>
+<span class="nt">-p</span> 8080:8080 <span class="se">\</span>
+jenkins
+<span class="k">fi</span>
+<span class="nt">---</span>
+
+<span class="c"># docker Command to run the Jenkins Updater</span>
+<span class="nv">$ </span>docker run <span class="nt">--rm</span> <span class="nt">-d</span> <span class="nt">-v</span> /var/lib/docker:/var/lib/docker <span class="nt">-v</span> /var/run/docker.sock:/var/run/docker.sock <span class="nt">-v</span>/var/docker/mounts:/var/docker/mounts dockerinpractice/jenkins-updater
+
+<span class="c"># to automate the process add this command to crontab</span>
+0 <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> dokcker_command
+
+</code></pre></div></div>
+
+<hr>
+
+<h3 id="107-cd-operations-with-docker">
+<a class="anchor" href="#107-cd-operations-with-docker" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.7 CD Operations with Docker</h3>
+
+<p>CD : Continious Delivery ( CI + Deployment )</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c"># Copy an Image Between Two Registries</span>
+Process <span class="o">=&gt;</span> Pulling the image from the registry -&gt; retag -&gt; pushing the new Image
+<span class="nv">$ </span>docker tag <span class="nt">-f</span> <span class="nv">$OLDREG</span>/<span class="nv">$MYIMAGE</span> <span class="nv">$NEWREG</span>/<span class="nv">$MYIMAGE</span>
+<span class="nv">$ </span>docker push <span class="nv">$NEWREG</span>/<span class="nv">$MYIMAGE</span>
+<span class="nv">$ </span>docker rmi <span class="nv">$OLDREG</span>/<span class="nv">$MYIMAGE</span>
+<span class="nv">$ </span>docker image prune <span class="nt">-f</span>
+
+<span class="c"># Copy an Image btw Two Machine With a very low-bandwidth Connection</span>
+
+Process <span class="o">=&gt;</span> Here we use backup tool called Bup <span class="o">(</span> creates a bup data tool <span class="o">)</span>
+<span class="c"># Example ( Not Exact data is used so please Don't judge me )</span>
+<span class="c"># pull two images like Ubuntu:18.04 &amp; 19.10 ( Both are example = 65 MB Each = 130 MB )</span>
+<span class="nv">$ </span><span class="nb">mkdir </span>bup_pool
+<span class="nv">$ </span><span class="nb">alias </span><span class="nv">dbup</span><span class="o">=</span><span class="s2">"docker run --rm </span><span class="se">\</span><span class="s2">
+-v </span><span class="si">$(</span><span class="nb">pwd</span><span class="si">)</span><span class="s2">/bup_pool:/pool -v /var/run/docker.sock:/var/run/docker.sock dockerinpractice/dbup"</span>
+<span class="nv">$ </span>dbup save ubuntu:18.04
+<span class="nv">$ </span><span class="nb">du</span> <span class="nt">-sh</span> bup_pool <span class="o">(</span> 74 MB <span class="o">)</span>
+<span class="nv">$ </span>dbup save ubuntu:19.10
+<span class="nv">$ </span><span class="nb">du</span> <span class="nt">-sh</span> bup_pool <span class="o">(</span> 96 MB <span class="o">)</span> <span class="o">(</span> Saves 35 MB <span class="o">)</span>
+
+<span class="c"># On other machine ( rsync from host1 to host2</span>
+<span class="o">)</span>
+<span class="nv">$ </span>dbup load ubuntu:18.04
+
+<span class="c"># Also copies files between host with TAR</span>
+Docker <span class="nb">export</span> : creates Container To TAR
+Docker Import : TAR to Image
+Docker save   : Image To TAR
+Docker load   : TAR to Docker Image
+
+Example : Transfer docker Image directory over ssh
+<span class="nv">$ </span>docker <span class="nb">export</span> <span class="si">$(</span>docker run <span class="nt">-d</span>  debian:7.3 <span class="nb">true</span><span class="si">)</span> | ssh user@host docker import
+
+</code></pre></div></div>
+
+<hr>
+
+<h3 id="108-cordination-between-containers">
+<a class="anchor" href="#108-cordination-between-containers" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.8 Cordination Between Containers</h3>
+
+<p>We need coordination between containers : Like if we take an example of one server and one python based echo client.
+P1: If we start the client container first : It will lead to failure
+P2 : forgetting to remove the containers will result in
+problems when you try to restart
+P3 :  Naming containers incorrectly will result
+in failure.
+So how to get rid of this types of problem : we need a solution,where we can run the container without any problem.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c"># Solution : create a compose file</span>
+<span class="nt">---</span>
+version: <span class="s2">"3"</span>
+   services:
+     echo-server:
+       image: server
+       expose:
+         - <span class="s2">"2000"</span>
+     client:
+       image: client
+       links:
+- echo-server:talkto
+<span class="nt">---</span>
+<span class="c"># with this we can start container in correct order &amp; also we call rebuild the container anywhere</span>
+<span class="nv">$ </span>docker-compose up
+Attaching to dockercompose_server_1, dockercompose_client_1
+client_1 | Received: Hello, world
+client_1 |
+client_1 | Received: Hello, world
+client_1 |
+
+</code></pre></div></div>
+
+<hr>
+<hr>
+
+<h2 id="110-security-with-docker">
+<a class="anchor" href="#110-security-with-docker" aria-hidden="true"><span class="octicon octicon-link"></span></a>11.0 Security With Docker</h2>
+
+<hr>
+<p>This is where security tips about Docker go. The Docker <a href="https://docs.docker.com/engine/security/security/">security</a> page goes into more detail.</p>
+
+<p>First things first: Docker runs as root. If you are in the <code class="language-plaintext highlighter-rouge">docker</code> group, you effectively <a href="https://web.archive.org/web/20161226211755/http://reventlov.com/advisories/using-the-docker-command-to-root-the-host">have root access</a>. If you expose the docker unix socket to a container, you are giving the container <a href="https://www.lvh.io/posts/dont-expose-the-docker-socket-not-even-to-a-container/">root access to the host</a>.</p>
+
+<p>Docker should not be your only defense. You should secure and harden it.</p>
+
+<p>For an understanding of what containers leave exposed, you should read <a href="https://www.nccgroup.trust/globalassets/our-research/us/whitepapers/2016/april/ncc_group_understanding_hardening_linux_containers-1-1.pdf">Understanding and Hardening Linux Containers</a> by <a href="https://twitter.com/dyn___">Aaron Grattafiori</a>. This is a complete and comprehensive guide to the issues involved with containers, with a plethora of links and footnotes leading on to yet more useful content. The security tips following are useful if you’ve already hardened containers in the past, but are not a substitute for understanding.</p>
+
+<h3 id="111-security-tips">
+<a class="anchor" href="#111-security-tips" aria-hidden="true"><span class="octicon octicon-link"></span></a>11.1 Security Tips</h3>
+
+<p>For greatest security, you want to run Docker inside a virtual machine. This is straight from the Docker Security Team Lead – <a href="http://www.slideshare.net/jpetazzo/linux-containers-lxc-docker-and-security">slides</a> / <a href="http://www.projectatomic.io/blog/2014/08/is-it-safe-a-look-at-docker-and-security-from-linuxcon/">notes</a>. Then, run with AppArmor / seccomp / SELinux / grsec etc to <a href="http://linux-audit.com/docker-security-best-practices-for-your-vessel-and-containers/">limit the container permissions</a>. See the <a href="https://blog.docker.com/2016/02/docker-engine-1-10-security/">Docker 1.10 security features</a> for more details.</p>
+
+<p>Docker image ids are <a href="https://medium.com/@quayio/your-docker-image-ids-are-secrets-and-its-time-you-treated-them-that-way-f55e9f14c1a4">sensitive information</a> and should not be exposed to the outside world. Treat them like passwords.</p>
+
+<p>See the <a href="https://github.com/konstruktoid/Docker/blob/master/Security/CheatSheet.adoc">Docker Security Cheat Sheet</a> by <a href="https://github.com/konstruktoid">Thomas Sjögren</a>: some good stuff about container hardening in there.</p>
+
+<p>Check out the <a href="https://github.com/docker/docker-bench-security">docker bench security script</a>, download the <a href="https://blog.docker.com/2015/05/understanding-docker-security-and-best-practices/">white papers</a>.</p>
+
+<p>Snyk’s <a href="https://snyk.io/blog/10-docker-image-security-best-practices/">10 Docker Image Security Best Practices cheat sheet</a></p>
+
+<p>You should start off by using a kernel with unstable patches for grsecurity / pax compiled in, such as <a href="https://en.wikipedia.org/wiki/Alpine_Linux">Alpine Linux</a>. If you are using grsecurity in production, you should spring for <a href="https://grsecurity.net/business_support.php">commercial support</a> for the <a href="https://grsecurity.net/announce.php">stable patches</a>, same as you would do for RedHat. It’s $200 a month, which is nothing to your devops budget.</p>
+
+<p>Since docker 1.11 you can easily limit the number of active processes running inside a container to prevent fork bombs. This requires a linux kernel &gt;= 4.3 with CGROUP_PIDS=y to be in the kernel configuration.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run --pids-limit=64
+</code></pre></div></div>
+
+<p>Also available since docker 1.11 is the ability to prevent processes from gaining new privileges. This feature have been in the linux kernel since version 3.5. You can read more about it in <a href="http://www.projectatomic.io/blog/2016/03/no-new-privs-docker/">this</a> blog post.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run --security-opt=no-new-privileges
+</code></pre></div></div>
+
+<p>From the <a href="http://container-solutions.com/content/uploads/2015/06/15.06.15_DockerCheatSheet_A2.pdf">Docker Security Cheat Sheet</a> (it’s in PDF which makes it hard to use, so copying below) by <a href="http://container-solutions.com/is-docker-safe-for-production/">Container Solutions</a>:</p>
+
+<p>Turn off interprocess communication with:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker -d --icc=false --iptables
+</code></pre></div></div>
+
+<p>Set the container to be read-only:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run --read-only
+</code></pre></div></div>
+
+<p>Verify images with a hashsum:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker pull debian@sha256:a25306f3850e1bd44541976aa7b5fd0a29be
+</code></pre></div></div>
+
+<p>Set volumes to be read only:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run -v $(pwd)/secrets:/secrets:ro debian
+</code></pre></div></div>
+
+<p>Define and run a user in your Dockerfile so you don’t run as root inside the container:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>RUN groupadd -r user &amp;&amp; useradd -r -g user user
+USER user
+</code></pre></div></div>
+
+<h3 id="112-security-videos">
+<a class="anchor" href="#112-security-videos" aria-hidden="true"><span class="octicon octicon-link"></span></a>11.2 Security Videos</h3>
+
+<ul>
+  <li><a href="https://youtu.be/04LOuMgNj9U">Using Docker Safely</a></li>
+  <li><a href="https://youtu.be/KmxOXmPhZbk">Securing your applications using Docker</a></li>
+  <li><a href="https://youtu.be/a9lE9Urr6AQ">Container security: Do containers actually contain?</a></li>
+  <li><a href="https://www.youtube.com/watch?v=iN6QbszB1R8">Linux Containers: Future or Fantasy?</a></li>
+</ul>
+
+<h3 id="113-security-roadmap">
+<a class="anchor" href="#113-security-roadmap" aria-hidden="true"><span class="octicon octicon-link"></span></a>11.3 Security Roadmap</h3>
+
+<p>The Docker roadmap talks about <a href="https://github.com/docker/docker/blob/master/ROADMAP.md#11-security">seccomp support</a>.
+There is an AppArmor policy generator called <a href="https://github.com/jfrazelle/bane">bane</a>, and they’re working on <a href="https://github.com/docker/docker/issues/17142">security profiles</a>.</p>
+
+<hr>
+
+<p>Till 21 Aprill</p>
+
+<h3 id="path-to-complete">
+<a class="anchor" href="#path-to-complete" aria-hidden="true"><span class="octicon octicon-link"></span></a>Path to Complete</h3>
+
+<ul>
+  <li>Docker access</li>
+  <li>Security Measures In Docker</li>
+  <li>Securing Access to Docker</li>
+  <li>Security from Outside docker</li>
+</ul>
+
+<hr>
+
+<h2 id="120-monitoring-docker">
+<a class="anchor" href="#120-monitoring-docker" aria-hidden="true"><span class="octicon octicon-link"></span></a>12.0 Monitoring Docker</h2>
+
+<h3 id="121-monitoring">
+<a class="anchor" href="#121-monitoring" aria-hidden="true"><span class="octicon octicon-link"></span></a>12.1 Monitoring</h3>
+
+<hr>
+
+<h3 id="122-resource-control">
+<a class="anchor" href="#122-resource-control" aria-hidden="true"><span class="octicon octicon-link"></span></a>12.2 Resource Control</h3>
+
+<hr>
+
+<h3 id="123-some-advance-approches">
+<a class="anchor" href="#123-some-advance-approches" aria-hidden="true"><span class="octicon octicon-link"></span></a>12.3 Some Advance Approches</h3>
+
+  </div><a class="u-url" href="/Notes/markdown/2020/09/01/Docker-Hard-Parts.html" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/Notes/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/Notes/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/Notes/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>An easy to use blogging platform with support for Jupyter Notebooks.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/fastai" title="fastai"><svg class="svg-icon grey"><use xlink:href="/Notes/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/fastdotai" title="fastdotai"><svg class="svg-icon grey"><use xlink:href="/Notes/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
