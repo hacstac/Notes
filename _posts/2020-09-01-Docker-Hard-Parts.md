@@ -2,7 +2,7 @@
 toc: true
 layout: post
 description: Introduction to Docker Deep Concepts
-categories: [markdown]
+categories: [docker]
 title: Docker Hard Parts
 ---
 
@@ -45,7 +45,7 @@ fi
 
 ### 7.2 Getting Practical
 
-##### 7.2.1 Packaging Git with Dockerfile
+#### 7.2.1 Packaging Git with Dockerfile
 
 ```bash
 # Create a file name Dockerfile
@@ -78,20 +78,21 @@ provided commands to install Git.
 
 ENTRYPOINT ["git"] — Sets the entrypoint for the image to  git.
 ---
+
 # --file or -f will read from diff file like 'BuildScript or anything'
 # --quiet or -q will run in quiet mode
 ```
 
 ---
 
-##### 7.2.2 Dockerignore
+#### 7.2.2 Dockerignore
 
-- .dockerignore file will help us to exclude some files to add to the image during the build
+- `.dockerignore` file will help us to exclude some files to add to the image during the build
 - CLI modifies the context to exclude files and directories that match patterns in it. This helps to avoid unnecessarily sending large or sensitive files and directories to the daemon and potentially adding them to images using ADD or COPY.
 
 ---
 
-##### 7.2.3 File System Instructions
+#### 7.2.3 File System Instructions
 
 ```bash
 - COPY : Will copy files from the filesystem where the image is being built.
@@ -102,8 +103,8 @@ ENTRYPOINT ["git"] — Sets the entrypoint for the image to  git.
            - Extract the files of any source determined to be an archive file
 - ONBUILD : This instruction let the other instructions to execute ( if resulting image is used as base img for another build )
 
-# Example
 
+# Example
 # ADD : We can ADD large no of files to a container without any problem
 # Docker will unpack tarfiles of most standard types (.gz, .bz2, .xz, .tar).
 # some.tar
@@ -167,7 +168,7 @@ $ docker run -v /var/log/myapplogs:/log_dir log-cleaner 365
 
 ---
 
-##### 7.2.4 Create a Maintainable Dockerfiles
+#### 7.2.4 Create a Maintainable Dockerfiles
 
 ```bash
 - ARG : arg defines a variable thta users can provide to docker when building and a image.
@@ -192,7 +193,7 @@ dockerinaction/mailer-base:0.6
 
 ---
 
-##### 7.2.5 Init System for Docker
+#### 7.2.5 Init System for Docker
 
 - Most Popular init systems are : runit, tini, BusyBox init, Supervisord, and DAEMON
 - By Default docker comes with tini init system
@@ -204,7 +205,7 @@ $ docker container run -it --init alpine:3.6 nc -l -p 3000
 
 ---
 
-##### 7.2.6 Health Check In Docker
+#### 7.2.6 Health Check In Docker
 
 ```bash
 - There are two ways to specify the health check command:
@@ -234,7 +235,7 @@ nginx:1.13-alpine
 
 ---
 
-##### 7.2.7 Hardening Application Images
+#### 7.2.7 Hardening Application Images
 
 ```bash
 - There are Three Methods to hardended the images
@@ -286,7 +287,7 @@ whoami command as the example user, it’s running from the context of the root 
 
 ---
 
-##### 7.2.8 Complete Story of Cache
+#### 7.2.8 Complete Story of Cache
 
 ```bash
 # --no-cache will downlaod fresh containers from source. it will not use the cache files
@@ -320,6 +321,7 @@ $ docker build --build-arg CACHEBUST=$(date +%s) .
 
 # Method 3 ( Using ADD )
 There are two useful features of ADD that you can use to your advantage in this context: it caches the contents of the file it refers to, and it can take a network resource as an argument.
+
 # Git Repo Example
 It means if repo is not changed it uses cache or if git repo is changed it rebuild the image from scratch.
 But it will vary from resources type to resource type.
@@ -331,12 +333,11 @@ FROM ubuntu:16.04
 ADD https://api.github.com/repos/nodejs/node/commits  /dev/null
 RUN git clone https://github.com/nodejs/node
 ---
-
 ```
 
 ---
 
-##### 7.2.9 Flattening Images
+#### 7.2.9 Flattening Images
 
 ```bash
 # This is imp because images can reveal the imp information
@@ -418,7 +419,6 @@ $ docker run -d -p 5000:5000 -v $HOME/registry:/var/lib/registry registry:2
 
 # Push the image to the registry
 $ docker push HOSTNAME:5000/image:tag.
-
 ```
 
 ---
@@ -476,6 +476,7 @@ top-level:
  - a list item # list items in this scope have
  # 15 total leading spaces
  - a peer item # A peer list item with a gap in the list
+
 ---
 # every scope level adds exactly 1 space
 top-level:
@@ -493,7 +494,7 @@ top-level:
 
 By using the following command you can start up your application:
 
-```
+```bash
 # first install docker-compose on your system (eg: Ubuntu )
 $ sudo apt install docker-compose
 $ docker-compose -f <docker-compose-file> up
@@ -501,7 +502,7 @@ $ docker-compose -f <docker-compose-file> up
 
 You can also run docker-compose in detached mode using -d flag, then you can stop it whenever needed by the following command:
 
-```
+```bash
 docker-compose stop
 ```
 
@@ -509,9 +510,9 @@ You can bring everything down, removing the containers entirely, with the down c
 
 Let understand Docker compose with an Example :
 
-##### 9.2.1 Example yml
+#### 9.2.1 Example yml
 
-```
+```bash
 # wikijs.yml
 ---
 version: '2'
@@ -569,7 +570,7 @@ $ docker stack deploy \
 wikijs
 
 
-We Need To use Prue Here : Because without Prune it will not completely remove services which causes problmes ( like for Instead of using postgressql we want to use a mysql so if we updated our stack yml file and deploy it. it will add mysql db but doesn't remove postgres containers so to remove postgres we use prune )
+We Need To use Prue Here : Because without Prune it will not completely remove services which causes problmes ( like for Instead of using postgressql we want to use a mysql so if we updated our stack yml file and deploy it. it will add mysql db but doesnt remove postgres containers so to remove postgres we use prune )
 
 The --prune flag will clean up any resource in the stack that isn’t explicitly referenced
 in the Compose file used for the deploy operation.
@@ -623,8 +624,6 @@ $ docker stack deploy \
 -c databases.yml \
 --prune \
 my-databases
-
-
 ```
 
 ---
@@ -711,7 +710,6 @@ $ docker build -t gui .
 $ docker run -v /tmp/.X11-unix:/tmp/.X11-unix -h $HOSTNAME -v $HOME/.Xauthority:/home/$USER/.Xauthority -e DISPLAY=$DISPLAY gui
 
 # It will popup firefox ( which runs on container )
-
 ```
 
 ---
@@ -776,7 +774,7 @@ CI : Continious Integration
 
 ![Image_pipeline.png](https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Docker/Docker_Hard_Parts/CIoperations.png)
 
-##### 10.6.1 Steps
+#### 10.6.1 Steps
 
 * Check out a clean copy of the source code defining the image and build scripts so the origin and process used to build the image is known.
 * Retrieve or generate artifacts that will be included in the image, such as the application package and runtime libraries.
@@ -786,7 +784,7 @@ CI : Continious Integration
 * Tag the image so that it can be consumed easily.
 * Publish the image to a registry or another distribution channel.
 
-##### 10.6.2 Method 1 : Builds a Image Using DockerHub Workflow ( Test and Push Images )
+#### 10.6.2 Method 1 : Builds a Image Using DockerHub Workflow ( Test and Push Images )
 
 ```bash
 # For this you will Git Repo and docker Hub Repo
@@ -796,7 +794,7 @@ CI : Continious Integration
 
 ```
 
-##### 10.6.3 Method 2 : Setting up a package cache for faster Builds
+#### 10.6.3 Method 2 : Setting up a package cache for faster Builds
 
 While building the images it will take caches instead of download everytime from internet.
 
@@ -805,6 +803,7 @@ While building the images it will take caches instead of download everytime from
 $ sudo apt-get install squid-deb-proxy
 $ check for port 8000
 $ create a Docker File
+
 --- using a apt proxy
 FROM debian
 RUN apt-get update -y && apt-get install net-tools
@@ -816,6 +815,7 @@ RUN echo "Acquire::http::Proxy::ppa.launchpad.net DIRECT;" >> \
 /etc/apt/apt.conf.d/30proxy
 CMD ["/bin/bash"]
 ---
+
 This will cache all the webpages and apt package we downlaod after running this container : if again download them they will be download in miliseconds
 ```
 
@@ -883,7 +883,6 @@ $ docker run --rm -d -v /var/lib/docker:/var/lib/docker -v /var/run/docker.sock:
 
 # to automate the process add this command to crontab
 0 * * * * dokcker_command
-
 ```
 
 ---
@@ -926,7 +925,6 @@ Docker load   : TAR to Docker Image
 
 Example : Transfer docker Image directory over ssh
 $ docker export $(docker run -d  debian:7.3 true) | ssh user@host docker import
-
 ```
 
 ---
@@ -966,8 +964,7 @@ client_1 |
 
 ```
 
-----
-----
+---
 
 ## 11.0 Security With Docker
 
@@ -996,13 +993,13 @@ You should start off by using a kernel with unstable patches for grsecurity / pa
 
 Since docker 1.11 you can easily limit the number of active processes running inside a container to prevent fork bombs. This requires a linux kernel >= 4.3 with CGROUP_PIDS=y to be in the kernel configuration.
 
-```
+```bash
 docker run --pids-limit=64
 ```
 
 Also available since docker 1.11 is the ability to prevent processes from gaining new privileges. This feature have been in the linux kernel since version 3.5. You can read more about it in [this](http://www.projectatomic.io/blog/2016/03/no-new-privs-docker/) blog post.
 
-```
+```bash
 docker run --security-opt=no-new-privileges
 ```
 
@@ -1010,31 +1007,31 @@ From the [Docker Security Cheat Sheet](http://container-solutions.com/content/up
 
 Turn off interprocess communication with:
 
-```
+```bash
 docker -d --icc=false --iptables
 ```
 
 Set the container to be read-only:
 
-```
+```bash
 docker run --read-only
 ```
 
 Verify images with a hashsum:
 
-```
+```bash
 docker pull debian@sha256:a25306f3850e1bd44541976aa7b5fd0a29be
 ```
 
 Set volumes to be read only:
 
-```
+```bash
 docker run -v $(pwd)/secrets:/secrets:ro debian
 ```
 
 Define and run a user in your Dockerfile so you don't run as root inside the container:
 
-```
+```bash
 RUN groupadd -r user && useradd -r -g user user
 USER user
 ```

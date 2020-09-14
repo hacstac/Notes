@@ -2,7 +2,7 @@
 toc: true
 layout: post
 description: Introduction to Docker Concepts
-categories: [markdown]
+categories: [docker]
 title: Docker Easy Parts
 ---
 
