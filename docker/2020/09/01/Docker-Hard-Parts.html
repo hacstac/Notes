@@ -4,21 +4,21 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
-<title>Docker Hard Parts | NoteBook</title>
+<title>Docker Hard Parts | Notebook</title>
 <meta name="generator" content="Jekyll v4.1.1" />
 <meta property="og:title" content="Docker Hard Parts" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="Introduction to Docker Deep Concepts" />
 <meta property="og:description" content="Introduction to Docker Deep Concepts" />
-<link rel="canonical" href="https://hacstac.github.io/Notes/markdown/2020/09/01/Docker-Hard-Parts.html" />
-<meta property="og:url" content="https://hacstac.github.io/Notes/markdown/2020/09/01/Docker-Hard-Parts.html" />
-<meta property="og:site_name" content="NoteBook" />
+<link rel="canonical" href="https://hacstac.github.io/Notes/docker/2020/09/01/Docker-Hard-Parts.html" />
+<meta property="og:url" content="https://hacstac.github.io/Notes/docker/2020/09/01/Docker-Hard-Parts.html" />
+<meta property="og:site_name" content="Notebook" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2020-09-01T00:00:00-05:00" />
 <script type="application/ld+json">
-{"description":"Introduction to Docker Deep Concepts","url":"https://hacstac.github.io/Notes/markdown/2020/09/01/Docker-Hard-Parts.html","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://hacstac.github.io/Notes/markdown/2020/09/01/Docker-Hard-Parts.html"},"headline":"Docker Hard Parts","dateModified":"2020-09-01T00:00:00-05:00","datePublished":"2020-09-01T00:00:00-05:00","@context":"https://schema.org"}</script>
+{"description":"Introduction to Docker Deep Concepts","url":"https://hacstac.github.io/Notes/docker/2020/09/01/Docker-Hard-Parts.html","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://hacstac.github.io/Notes/docker/2020/09/01/Docker-Hard-Parts.html"},"headline":"Docker Hard Parts","dateModified":"2020-09-01T00:00:00-05:00","datePublished":"2020-09-01T00:00:00-05:00","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
-<link rel="stylesheet" href="/Notes/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://hacstac.github.io/Notes/feed.xml" title="NoteBook" /><link rel="shortcut icon" type="image/x-icon" href="/Notes/images/favicon.ico"><link href="https://unpkg.com/@primer/css/dist/primer.css" rel="stylesheet" />
+<link rel="stylesheet" href="/Notes/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://hacstac.github.io/Notes/feed.xml" title="Notebook" /><link rel="shortcut icon" type="image/x-icon" href="/Notes/images/favicon.ico"><link href="https://unpkg.com/@primer/css/dist/primer.css" rel="stylesheet" />
 <link rel="stylesheet" href="//use.fontawesome.com/releases/v5.0.7/css/all.css">
 
 <script>
@@ -53,7 +53,7 @@ window.onload = wrap_img;
 </head>
 <body><header class="site-header">
 
-  <div class="wrapper"><a class="site-title" rel="author" href="/Notes/">NoteBook</a><nav class="site-nav">
+  <div class="wrapper"><a class="site-title" rel="author" href="/Notes/">Notebook</a><nav class="site-nav">
         <input type="checkbox" id="nav-trigger" class="nav-trigger" />
         <label for="nav-trigger">
           <span class="menu-icon">
@@ -84,7 +84,7 @@ window.onload = wrap_img;
     
       <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
       
-        <a class="category-tags-link" href="/Notes/categories/#markdown">markdown</a>
+        <a class="category-tags-link" href="/Notes/categories/#docker">docker</a>
         
       
       </p>
@@ -99,15 +99,15 @@ window.onload = wrap_img;
 <li class="toc-entry toc-h3"><a href="#71-instructions">7.1 Instructions</a></li>
 <li class="toc-entry toc-h3"><a href="#72-getting-practical">7.2 Getting Practical</a>
 <ul>
-<li class="toc-entry toc-h5"><a href="#721-packaging-git-with-dockerfile">7.2.1 Packaging Git with Dockerfile</a></li>
-<li class="toc-entry toc-h5"><a href="#722-dockerignore">7.2.2 Dockerignore</a></li>
-<li class="toc-entry toc-h5"><a href="#723-file-system-instructions">7.2.3 File System Instructions</a></li>
-<li class="toc-entry toc-h5"><a href="#724-create-a-maintainable-dockerfiles">7.2.4 Create a Maintainable Dockerfiles</a></li>
-<li class="toc-entry toc-h5"><a href="#725-init-system-for-docker">7.2.5 Init System for Docker</a></li>
-<li class="toc-entry toc-h5"><a href="#726-health-check-in-docker">7.2.6 Health Check In Docker</a></li>
-<li class="toc-entry toc-h5"><a href="#727-hardening-application-images">7.2.7 Hardening Application Images</a></li>
-<li class="toc-entry toc-h5"><a href="#728-complete-story-of-cache">7.2.8 Complete Story of Cache</a></li>
-<li class="toc-entry toc-h5"><a href="#729-flattening-images">7.2.9 Flattening Images</a></li>
+<li class="toc-entry toc-h4"><a href="#721-packaging-git-with-dockerfile">7.2.1 Packaging Git with Dockerfile</a></li>
+<li class="toc-entry toc-h4"><a href="#722-dockerignore">7.2.2 Dockerignore</a></li>
+<li class="toc-entry toc-h4"><a href="#723-file-system-instructions">7.2.3 File System Instructions</a></li>
+<li class="toc-entry toc-h4"><a href="#724-create-a-maintainable-dockerfiles">7.2.4 Create a Maintainable Dockerfiles</a></li>
+<li class="toc-entry toc-h4"><a href="#725-init-system-for-docker">7.2.5 Init System for Docker</a></li>
+<li class="toc-entry toc-h4"><a href="#726-health-check-in-docker">7.2.6 Health Check In Docker</a></li>
+<li class="toc-entry toc-h4"><a href="#727-hardening-application-images">7.2.7 Hardening Application Images</a></li>
+<li class="toc-entry toc-h4"><a href="#728-complete-story-of-cache">7.2.8 Complete Story of Cache</a></li>
+<li class="toc-entry toc-h4"><a href="#729-flattening-images">7.2.9 Flattening Images</a></li>
 </ul>
 </li>
 <li class="toc-entry toc-h3"><a href="#73-refer">7.3 Refer</a></li>
@@ -124,7 +124,7 @@ window.onload = wrap_img;
 <li class="toc-entry toc-h3"><a href="#91-yaml-basics">9.1 YAML Basics</a></li>
 <li class="toc-entry toc-h3"><a href="#92-docker-compose-basics">9.2 Docker Compose Basics</a>
 <ul>
-<li class="toc-entry toc-h5"><a href="#921-example-yml">9.2.1 Example yml</a></li>
+<li class="toc-entry toc-h4"><a href="#921-example-yml">9.2.1 Example yml</a></li>
 </ul>
 </li>
 </ul>
@@ -138,10 +138,13 @@ window.onload = wrap_img;
 <li class="toc-entry toc-h3"><a href="#105-build-images-using-a-chef-solo">10.5 Build Images using a Chef Solo</a></li>
 <li class="toc-entry toc-h3"><a href="#106-ci-operations-with-docker">10.6 CI Operations With Docker</a>
 <ul>
-<li class="toc-entry toc-h5"><a href="#1061-steps">10.6.1 Steps</a></li>
-<li class="toc-entry toc-h5"><a href="#1062-method-1--builds-a-image-using-dockerhub-workflow--test-and-push-images-">10.6.2 Method 1 : Builds a Image Using DockerHub Workflow ( Test and Push Images )</a></li>
-<li class="toc-entry toc-h5"><a href="#1063-method-2--setting-up-a-package-cache-for-faster-builds">10.6.3 Method 2 : Setting up a package cache for faster Builds</a></li>
+<li class="toc-entry toc-h4"><a href="#1061-steps">10.6.1 Steps</a></li>
+<li class="toc-entry toc-h4"><a href="#1062-method-1--builds-a-image-using-dockerhub-workflow--test-and-push-images-">10.6.2 Method 1 : Builds a Image Using DockerHub Workflow ( Test and Push Images )</a></li>
+<li class="toc-entry toc-h4"><a href="#1063-method-2--setting-up-a-package-cache-for-faster-builds">10.6.3 Method 2 : Setting up a package cache for faster Builds</a>
+<ul>
 <li class="toc-entry toc-h5"><a href="#1063-method-3--running-the-jenkins-master-withing-the-docker-container">10.6.3 Method 3 : Running the Jenkins Master Withing the Docker Container</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toc-entry toc-h3"><a href="#107-cd-operations-with-docker">10.7 CD Operations with Docker</a></li>
@@ -221,8 +224,8 @@ window.onload = wrap_img;
 <h3 id="72-getting-practical">
 <a class="anchor" href="#72-getting-practical" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2 Getting Practical</h3>
 
-<h5 id="721-packaging-git-with-dockerfile">
-<a class="anchor" href="#721-packaging-git-with-dockerfile" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.1 Packaging Git with Dockerfile</h5>
+<h4 id="721-packaging-git-with-dockerfile">
+<a class="anchor" href="#721-packaging-git-with-dockerfile" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.1 Packaging Git with Dockerfile</h4>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Create a file name Dockerfile</span>
 <span class="nt">---</span>
@@ -254,24 +257,26 @@ provided commands to <span class="nb">install </span>Git.
 
 ENTRYPOINT <span class="o">[</span><span class="s2">"git"</span><span class="o">]</span> — Sets the entrypoint <span class="k">for </span>the image to  git.
 <span class="nt">---</span>
+
 <span class="c"># --file or -f will read from diff file like 'BuildScript or anything'</span>
 <span class="c"># --quiet or -q will run in quiet mode</span>
 </code></pre></div></div>
 
 <hr>
 
-<h5 id="722-dockerignore">
-<a class="anchor" href="#722-dockerignore" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.2 Dockerignore</h5>
+<h4 id="722-dockerignore">
+<a class="anchor" href="#722-dockerignore" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.2 Dockerignore</h4>
 
 <ul>
-  <li>.dockerignore file will help us to exclude some files to add to the image during the build</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">.dockerignore</code> file will help us to exclude some files to add to the image during the build</li>
   <li>CLI modifies the context to exclude files and directories that match patterns in it. This helps to avoid unnecessarily sending large or sensitive files and directories to the daemon and potentially adding them to images using ADD or COPY.</li>
 </ul>
 
 <hr>
 
-<h5 id="723-file-system-instructions">
-<a class="anchor" href="#723-file-system-instructions" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.3 File System Instructions</h5>
+<h4 id="723-file-system-instructions">
+<a class="anchor" href="#723-file-system-instructions" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.3 File System Instructions</h4>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- COPY : Will copy files from the filesystem where the image is being built.
 - VOLUME : Same as <span class="nt">--volume</span> flag <span class="o">(</span> bound mount volume <span class="o">)</span>
@@ -281,8 +286,8 @@ ENTRYPOINT <span class="o">[</span><span class="s2">"git"</span><span class="o">
            - Extract the files of any <span class="nb">source </span>determined to be an archive file
 - ONBUILD : This instruction <span class="nb">let </span>the other instructions to execute <span class="o">(</span> <span class="k">if </span>resulting image is used as base img <span class="k">for </span>another build <span class="o">)</span>
 
-<span class="c"># Example</span>
 
+<span class="c"># Example</span>
 <span class="c"># ADD : We can ADD large no of files to a container without any problem</span>
 <span class="c"># Docker will unpack tarfiles of most standard types (.gz, .bz2, .xz, .tar).</span>
 <span class="c"># some.tar</span>
@@ -346,8 +351,8 @@ CMD <span class="o">[</span><span class="s2">"7"</span><span class="o">]</span>
 
 <hr>
 
-<h5 id="724-create-a-maintainable-dockerfiles">
-<a class="anchor" href="#724-create-a-maintainable-dockerfiles" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.4 Create a Maintainable Dockerfiles</h5>
+<h4 id="724-create-a-maintainable-dockerfiles">
+<a class="anchor" href="#724-create-a-maintainable-dockerfiles" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.4 Create a Maintainable Dockerfiles</h4>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- ARG : arg defines a variable thta <span class="nb">users </span>can provide to docker when building and a image.
 Ex: Dockerfile
@@ -371,8 +376,8 @@ dockerinaction/mailer-base:0.6
 
 <hr>
 
-<h5 id="725-init-system-for-docker">
-<a class="anchor" href="#725-init-system-for-docker" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.5 Init System for Docker</h5>
+<h4 id="725-init-system-for-docker">
+<a class="anchor" href="#725-init-system-for-docker" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.5 Init System for Docker</h4>
 
 <ul>
   <li>Most Popular init systems are : runit, tini, BusyBox init, Supervisord, and DAEMON</li>
@@ -385,8 +390,8 @@ dockerinaction/mailer-base:0.6
 
 <hr>
 
-<h5 id="726-health-check-in-docker">
-<a class="anchor" href="#726-health-check-in-docker" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.6 Health Check In Docker</h5>
+<h4 id="726-health-check-in-docker">
+<a class="anchor" href="#726-health-check-in-docker" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.6 Health Check In Docker</h4>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- There are two ways to specify the health check <span class="nb">command</span>:
 1. Use a HEALTHCHECK instruction when defining the image
@@ -415,8 +420,8 @@ nginx:1.13-alpine
 
 <hr>
 
-<h5 id="727-hardening-application-images">
-<a class="anchor" href="#727-hardening-application-images" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.7 Hardening Application Images</h5>
+<h4 id="727-hardening-application-images">
+<a class="anchor" href="#727-hardening-application-images" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.7 Hardening Application Images</h4>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- There are Three Methods to hardended the images
 1. We can enforce that our images are built from a specific image.
@@ -467,8 +472,8 @@ The output of the default <span class="nb">command </span>shows that even though
 
 <hr>
 
-<h5 id="728-complete-story-of-cache">
-<a class="anchor" href="#728-complete-story-of-cache" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.8 Complete Story of Cache</h5>
+<h4 id="728-complete-story-of-cache">
+<a class="anchor" href="#728-complete-story-of-cache" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.8 Complete Story of Cache</h4>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># --no-cache will downlaod fresh containers from source. it will not use the cache files</span>
 
@@ -501,6 +506,7 @@ RUN npm <span class="nb">install</span>
 
 <span class="c"># Method 3 ( Using ADD )</span>
 There are two useful features of ADD that you can use to your advantage <span class="k">in </span>this context: it caches the contents of the file it refers to, and it can take a network resource as an argument.
+
 <span class="c"># Git Repo Example</span>
 It means <span class="k">if </span>repo is not changed it uses cache or <span class="k">if </span>git repo is changed it rebuild the image from scratch.
 But it will vary from resources <span class="nb">type </span>to resource type.
@@ -512,13 +518,12 @@ FROM ubuntu:16.04
 ADD https://api.github.com/repos/nodejs/node/commits  /dev/null
 RUN git clone https://github.com/nodejs/node
 <span class="nt">---</span>
-
 </code></pre></div></div>
 
 <hr>
 
-<h5 id="729-flattening-images">
-<a class="anchor" href="#729-flattening-images" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.9 Flattening Images</h5>
+<h4 id="729-flattening-images">
+<a class="anchor" href="#729-flattening-images" aria-hidden="true"><span class="octicon octicon-link"></span></a>7.2.9 Flattening Images</h4>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># This is imp because images can reveal the imp information</span>
 Example :
@@ -614,7 +619,6 @@ software distribution ( This Cover’s Every Basic detail about Registry &amp; R
 
 <span class="c"># Push the image to the registry</span>
 <span class="nv">$ </span>docker push HOSTNAME:5000/image:tag.
-
 </code></pre></div></div>
 
 <hr>
@@ -689,6 +693,7 @@ block each element belongs to. There are a few rules:
  - a list item # list items in this scope have
  # 15 total leading spaces
  - a peer item # A peer list item with a gap in the list
+
 ---
 # every scope level adds exactly 1 space
 top-level:
@@ -707,26 +712,26 @@ top-level:
 
 <p>By using the following command you can start up your application:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># first install docker-compose on your system (eg: Ubuntu )
-$ sudo apt install docker-compose
-$ docker-compose -f &lt;docker-compose-file&gt; up
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># first install docker-compose on your system (eg: Ubuntu )</span>
+<span class="nv">$ </span><span class="nb">sudo </span>apt <span class="nb">install </span>docker-compose
+<span class="nv">$ </span>docker-compose <span class="nt">-f</span> &lt;docker-compose-file&gt; up
 </code></pre></div></div>
 
 <p>You can also run docker-compose in detached mode using -d flag, then you can stop it whenever needed by the following command:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker-compose stop
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker-compose stop
 </code></pre></div></div>
 
 <p>You can bring everything down, removing the containers entirely, with the down command. Pass <code class="language-plaintext highlighter-rouge">--volumes</code> to also remove the data volume.</p>
 
 <p>Let understand Docker compose with an Example :</p>
 
-<h5 id="921-example-yml">
-<a class="anchor" href="#921-example-yml" aria-hidden="true"><span class="octicon octicon-link"></span></a>9.2.1 Example yml</h5>
+<h4 id="921-example-yml">
+<a class="anchor" href="#921-example-yml" aria-hidden="true"><span class="octicon octicon-link"></span></a>9.2.1 Example yml</h4>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># wikijs.yml
----
-version: '2'
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># wikijs.yml</span>
+<span class="nt">---</span>
+version: <span class="s1">'2'</span>
 services:
   db:
     image: postgres:11-alpine
@@ -735,7 +740,7 @@ services:
       POSTGRES_PASSWORD: wikijsrocks
       POSTGRES_USER: wikijs
     logging:
-      driver: "none"
+      driver: <span class="s2">"none"</span>
     restart: unless-stopped
     volumes:
       - db-data:/var/lib/postgresql/data
@@ -753,90 +758,88 @@ services:
       DB_NAME: wiki
     restart: unless-stopped
     ports:
-      - "80:3000"
+      - <span class="s2">"80:3000"</span>
 
 volumes:
   db-data:
----
+<span class="nt">---</span>
 
-# we can create a docker stack with this yml file ( it established a wikijs and postgresql db )
-$ docker stack deploy -c wikijs.yml wikijs
+<span class="c"># we can create a docker stack with this yml file ( it established a wikijs and postgresql db )</span>
+<span class="nv">$ </span>docker stack deploy <span class="nt">-c</span> wikijs.yml wikijs
 
-# if we use docker swarn or Kubernetes we can create a replicas of this images into 3 diff servers
---
+<span class="c"># if we use docker swarn or Kubernetes we can create a replicas of this images into 3 diff servers</span>
+<span class="nt">--</span>
 deploy:
  replicas: 3
---
-# add this to end of yml and again deploy it. It will update the container
+<span class="nt">--</span>
+<span class="c"># add this to end of yml and again deploy it. It will update the container</span>
 
-# To Check The State of stack
-$ docker stack ps \
- --format '\t' \
+<span class="c"># To Check The State of stack</span>
+<span class="nv">$ </span>docker stack ps <span class="se">\</span>
+ <span class="nt">--format</span> <span class="s1">'\t'</span> <span class="se">\</span>
  wikijs
 
-# To remove a service from stack ( like limit the replicas from 3 to 2 )
-$ docker stack deploy \
--c wikijs.yml \
---prune \
+<span class="c"># To remove a service from stack ( like limit the replicas from 3 to 2 )</span>
+<span class="nv">$ </span>docker stack deploy <span class="se">\</span>
+<span class="nt">-c</span> wikijs.yml <span class="se">\</span>
+<span class="nt">--prune</span> <span class="se">\</span>
 wikijs
 
 
-We Need To use Prue Here : Because without Prune it will not completely remove services which causes problmes ( like for Instead of using postgressql we want to use a mysql so if we updated our stack yml file and deploy it. it will add mysql db but doesn't remove postgres containers so to remove postgres we use prune )
+We Need To use Prue Here : Because without Prune it will not completely remove services which causes problmes <span class="o">(</span> like <span class="k">for </span>Instead of using postgressql we want to use a mysql so <span class="k">if </span>we updated our stack yml file and deploy it. it will add mysql db but doesnt remove postgres containers so to remove postgres we use prune <span class="o">)</span>
 
-The --prune flag will clean up any resource in the stack that isn’t explicitly referenced
-in the Compose file used for the deploy operation.
+The <span class="nt">--prune</span> flag will clean up any resource <span class="k">in </span>the stack that isn’t explicitly referenced
+<span class="k">in </span>the Compose file used <span class="k">for </span>the deploy operation.
 
-# Prune
+<span class="c"># Prune</span>
 
-The new [Data Management Commands](https://github.com/docker/docker/pull/26108) have landed as of Docker 1.13:
+The new <span class="o">[</span>Data Management Commands]<span class="o">(</span>https://github.com/docker/docker/pull/26108<span class="o">)</span> have landed as of Docker 1.13:
 
-* `docker system prune`
-* `docker volume prune`
-* `docker network prune`
-* `docker container prune`
-* `docker image prune`
+<span class="k">*</span> <span class="sb">`</span>docker system prune<span class="sb">`</span>
+<span class="k">*</span> <span class="sb">`</span>docker volume prune<span class="sb">`</span>
+<span class="k">*</span> <span class="sb">`</span>docker network prune<span class="sb">`</span>
+<span class="k">*</span> <span class="sb">`</span>docker container prune<span class="sb">`</span>
+<span class="k">*</span> <span class="sb">`</span>docker image prune<span class="sb">`</span>
 
 
-Note : There is a problem here everytime a container replaced docker will create a new volume space for container and its replicas. This would cause problems in a real-world system.
+Note : There is a problem here everytime a container replaced docker will create a new volume space <span class="k">for </span>container and its replicas. This would cause problems <span class="k">in </span>a real-world system.
 So, to get rid of this
 
 EX:
----
+<span class="nt">---</span>
 volumes:
-   pgdata: # empty definition uses volume defaults
+   pgdata: <span class="c"># empty definition uses volume defaults</span>
 services:
    postgres:
       image: dockerinaction/postgres:11-alpine
       volumes:
-         - type: volume
-         source: pgdata # The named volume above
+         - <span class="nb">type</span>: volume
+         <span class="nb">source</span>: pgdata <span class="c"># The named volume above</span>
          target: /var/lib/postgresql/data
       environment:
          POSTGRES_PASSWORD: example
----
+<span class="nt">---</span>
 
 The file defines a volume named pgdata, and the postgres service
 mounts that volume at /var/lib/postgresql/data. That location is where the PostgreSQL software will store any database schema or data.
 
 Inspect
-$ docker stack deploy \
--c databases.yml \
---prune \
+<span class="nv">$ </span>docker stack deploy <span class="se">\</span>
+<span class="nt">-c</span> databases.yml <span class="se">\</span>
+<span class="nt">--prune</span> <span class="se">\</span>
 my-databases
 
-$ docker volume ls
-DRIVER  VOLUME NAME
-local   my-databases_pgdata
+<span class="nv">$ </span>docker volume <span class="nb">ls
+</span>DRIVER  VOLUME NAME
+<span class="nb">local   </span>my-databases_pgdata
 
-$ docker service remove my-databases_postgres
+<span class="nv">$ </span>docker service remove my-databases_postgres
 
 Then restore the service by using the Compose file:
-$ docker stack deploy \
--c databases.yml \
---prune \
+<span class="nv">$ </span>docker stack deploy <span class="se">\</span>
+<span class="nt">-c</span> databases.yml <span class="se">\</span>
+<span class="nt">--prune</span> <span class="se">\</span>
 my-databases
-
-
 </code></pre></div></div>
 
 <hr>
@@ -929,7 +932,6 @@ CMD /usr/bin/firefox
 <span class="nv">$ </span>docker run <span class="nt">-v</span> /tmp/.X11-unix:/tmp/.X11-unix <span class="nt">-h</span> <span class="nv">$HOSTNAME</span> <span class="nt">-v</span> <span class="nv">$HOME</span>/.Xauthority:/home/<span class="nv">$USER</span>/.Xauthority <span class="nt">-e</span> <span class="nv">DISPLAY</span><span class="o">=</span><span class="nv">$DISPLAY</span> gui
 
 <span class="c"># It will popup firefox ( which runs on container )</span>
-
 </code></pre></div></div>
 
 <hr>
@@ -997,8 +999,8 @@ upgrade : Upgrades the Docker version on the host to the latest
 
 <p><img src="https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Docker/Docker_Hard_Parts/CIoperations.png" alt="Image_pipeline.png"></p>
 
-<h5 id="1061-steps">
-<a class="anchor" href="#1061-steps" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.6.1 Steps</h5>
+<h4 id="1061-steps">
+<a class="anchor" href="#1061-steps" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.6.1 Steps</h4>
 
 <ul>
   <li>Check out a clean copy of the source code defining the image and build scripts so the origin and process used to build the image is known.</li>
@@ -1010,8 +1012,8 @@ upgrade : Upgrades the Docker version on the host to the latest
   <li>Publish the image to a registry or another distribution channel.</li>
 </ul>
 
-<h5 id="1062-method-1--builds-a-image-using-dockerhub-workflow--test-and-push-images-">
-<a class="anchor" href="#1062-method-1--builds-a-image-using-dockerhub-workflow--test-and-push-images-" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.6.2 Method 1 : Builds a Image Using DockerHub Workflow ( Test and Push Images )</h5>
+<h4 id="1062-method-1--builds-a-image-using-dockerhub-workflow--test-and-push-images-">
+<a class="anchor" href="#1062-method-1--builds-a-image-using-dockerhub-workflow--test-and-push-images-" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.6.2 Method 1 : Builds a Image Using DockerHub Workflow ( Test and Push Images )</h4>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># For this you will Git Repo and docker Hub Repo</span>
 <span class="c"># Link Docker Hub to to git repo ( it take code from git repo and compile and create a desired Image ( like other ci tools do )</span>
@@ -1020,8 +1022,8 @@ upgrade : Upgrades the Docker version on the host to the latest
 
 </code></pre></div></div>
 
-<h5 id="1063-method-2--setting-up-a-package-cache-for-faster-builds">
-<a class="anchor" href="#1063-method-2--setting-up-a-package-cache-for-faster-builds" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.6.3 Method 2 : Setting up a package cache for faster Builds</h5>
+<h4 id="1063-method-2--setting-up-a-package-cache-for-faster-builds">
+<a class="anchor" href="#1063-method-2--setting-up-a-package-cache-for-faster-builds" aria-hidden="true"><span class="octicon octicon-link"></span></a>10.6.3 Method 2 : Setting up a package cache for faster Builds</h4>
 
 <p>While building the images it will take caches instead of download everytime from internet.</p>
 
@@ -1029,6 +1031,7 @@ upgrade : Upgrades the Docker version on the host to the latest
 <span class="nv">$ </span><span class="nb">sudo </span>apt-get <span class="nb">install </span>squid-deb-proxy
 <span class="nv">$ </span>check <span class="k">for </span>port 8000
 <span class="nv">$ </span>create a Docker File
+
 <span class="nt">---</span> using a apt proxy
 FROM debian
 RUN apt-get update <span class="nt">-y</span> <span class="o">&amp;&amp;</span> apt-get <span class="nb">install </span>net-tools
@@ -1040,6 +1043,7 @@ RUN <span class="nb">echo</span> <span class="s2">"Acquire::http::Proxy::ppa.lau
 /etc/apt/apt.conf.d/30proxy
 CMD <span class="o">[</span><span class="s2">"/bin/bash"</span><span class="o">]</span>
 <span class="nt">---</span>
+
 This will cache all the webpages and apt package we downlaod after running this container : <span class="k">if </span>again download them they will be download <span class="k">in </span>miliseconds
 </code></pre></div></div>
 
@@ -1107,7 +1111,6 @@ jenkins
 
 <span class="c"># to automate the process add this command to crontab</span>
 0 <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> dokcker_command
-
 </code></pre></div></div>
 
 <hr>
@@ -1150,7 +1153,6 @@ Docker load   : TAR to Docker Image
 
 Example : Transfer docker Image directory over ssh
 <span class="nv">$ </span>docker <span class="nb">export</span> <span class="si">$(</span>docker run <span class="nt">-d</span>  debian:7.3 <span class="nb">true</span><span class="si">)</span> | ssh user@host docker import
-
 </code></pre></div></div>
 
 <hr>
@@ -1191,7 +1193,6 @@ client_1 |
 </code></pre></div></div>
 
 <hr>
-<hr>
 
 <h2 id="110-security-with-docker">
 <a class="anchor" href="#110-security-with-docker" aria-hidden="true"><span class="octicon octicon-link"></span></a>11.0 Security With Docker</h2>
@@ -1222,39 +1223,39 @@ client_1 |
 
 <p>Since docker 1.11 you can easily limit the number of active processes running inside a container to prevent fork bombs. This requires a linux kernel &gt;= 4.3 with CGROUP_PIDS=y to be in the kernel configuration.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run --pids-limit=64
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run <span class="nt">--pids-limit</span><span class="o">=</span>64
 </code></pre></div></div>
 
 <p>Also available since docker 1.11 is the ability to prevent processes from gaining new privileges. This feature have been in the linux kernel since version 3.5. You can read more about it in <a href="http://www.projectatomic.io/blog/2016/03/no-new-privs-docker/">this</a> blog post.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run --security-opt=no-new-privileges
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run <span class="nt">--security-opt</span><span class="o">=</span>no-new-privileges
 </code></pre></div></div>
 
 <p>From the <a href="http://container-solutions.com/content/uploads/2015/06/15.06.15_DockerCheatSheet_A2.pdf">Docker Security Cheat Sheet</a> (it’s in PDF which makes it hard to use, so copying below) by <a href="http://container-solutions.com/is-docker-safe-for-production/">Container Solutions</a>:</p>
 
 <p>Turn off interprocess communication with:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker -d --icc=false --iptables
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker <span class="nt">-d</span> <span class="nt">--icc</span><span class="o">=</span><span class="nb">false</span> <span class="nt">--iptables</span>
 </code></pre></div></div>
 
 <p>Set the container to be read-only:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run --read-only
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run <span class="nt">--read-only</span>
 </code></pre></div></div>
 
 <p>Verify images with a hashsum:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker pull debian@sha256:a25306f3850e1bd44541976aa7b5fd0a29be
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker pull debian@sha256:a25306f3850e1bd44541976aa7b5fd0a29be
 </code></pre></div></div>
 
 <p>Set volumes to be read only:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run -v $(pwd)/secrets:/secrets:ro debian
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run <span class="nt">-v</span> <span class="si">$(</span><span class="nb">pwd</span><span class="si">)</span>/secrets:/secrets:ro debian
 </code></pre></div></div>
 
 <p>Define and run a user in your Dockerfile so you don’t run as root inside the container:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>RUN groupadd -r user &amp;&amp; useradd -r -g user user
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>RUN groupadd <span class="nt">-r</span> user <span class="o">&amp;&amp;</span> useradd <span class="nt">-r</span> <span class="nt">-g</span> user user
 USER user
 </code></pre></div></div>
 
@@ -1306,7 +1307,7 @@ There is an AppArmor policy generator called <a href="https://github.com/jfrazel
 <h3 id="123-some-advance-approches">
 <a class="anchor" href="#123-some-advance-approches" aria-hidden="true"><span class="octicon octicon-link"></span></a>12.3 Some Advance Approches</h3>
 
-  </div><a class="u-url" href="/Notes/markdown/2020/09/01/Docker-Hard-Parts.html" hidden></a>
+  </div><a class="u-url" href="/Notes/docker/2020/09/01/Docker-Hard-Parts.html" hidden></a>
 </article>
       </div>
     </main><footer class="site-footer h-card">
@@ -1325,11 +1326,11 @@ There is an AppArmor policy generator called <a href="https://github.com/jfrazel
         </p>
       </div>
       <div class="footer-col">
-        <p>An easy to use blogging platform with support for Jupyter Notebooks.</p>
+        <p>A Daily Notebook for @Akash</p>
       </div>
     </div>
 
-    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/fastai" title="fastai"><svg class="svg-icon grey"><use xlink:href="/Notes/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/fastdotai" title="fastdotai"><svg class="svg-icon grey"><use xlink:href="/Notes/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/https%3A%2F%2Fgithub.com%2FAkashRajvanshi" title="https://github.com/AkashRajvanshi"><svg class="svg-icon grey"><use xlink:href="/Notes/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/https%3A%2F%2Ftwitter.com%2FAkash_Rajvanshi" title="https://twitter.com/Akash_Rajvanshi"><svg class="svg-icon grey"><use xlink:href="/Notes/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
 </div>
 
   </div>

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
-<loc>https://hacstac.github.io/Notes/markdown/2020/08/29/Docker-Easy-Parts.html</loc>
+<loc>https://hacstac.github.io/Notes/docker/2020/08/29/Docker-Easy-Parts.html</loc>
 <lastmod>2020-08-29T00:00:00-05:00</lastmod>
 </url>
 <url>
-<loc>https://hacstac.github.io/Notes/markdown/2020/09/01/Docker-Hard-Parts.html</loc>
+<loc>https://hacstac.github.io/Notes/docker/2020/09/01/Docker-Hard-Parts.html</loc>
 <lastmod>2020-09-01T00:00:00-05:00</lastmod>
 </url>
 <url>
