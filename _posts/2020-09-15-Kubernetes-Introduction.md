@@ -6,6 +6,8 @@ categories: [Kubernetes]
 title: Kubernetes 101
 ---
 
+---
+
 ## 1.0 What is Kubernetes
 
 Kubernetes is an open-source platform/tool created by Google. It is written in GO-Lang. So currently Kubernetes is an open-source project under Apache 2.0 license. Sometimes in the industry, Kubernetes is also known as “K8s”. With Kubernetes, you can run any Linux container across private, public, and hybrid cloud environments. Kubernetes provides some edge functions, such as Loadbalancer, Service discovery, and Roled Based Access Control(RBAC).
