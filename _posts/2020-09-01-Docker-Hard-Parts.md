@@ -2,8 +2,8 @@
 toc: true
 layout: post
 description: Introduction to Docker Deep Concepts
-categories: [docker]
-title: Docker Hard Parts
+categories: [Docker]
+title: Docker Hard Parts [Part - 2]
 ---
 
 ## 7.0 Building Images automatically with DockerFiles

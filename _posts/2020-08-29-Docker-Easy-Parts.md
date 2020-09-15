@@ -2,8 +2,8 @@
 toc: true
 layout: post
 description: Introduction to Docker Concepts
-categories: [docker]
-title: Docker Easy Parts
+categories: [Docker]
+title: Docker Easy Parts [Part - 1]
 ---
 
 ## 1.0 What is a Docker
