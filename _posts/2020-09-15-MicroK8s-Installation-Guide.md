@@ -1,25 +1,23 @@
 ---
 toc: true
 layout: post
-description: Developing and deploying Kubernetes applications on a Raspberry Pi cluster
+description: Developing and Deploying Kubernetes Applications with MicroK8s on a Raspberry Pi Cluster
 categories: [Kubernetes]
-title: Step By Step Process To Deploy Your Own Kubernetes Cluster
+title: Step-By-Step Process To Deploy Kubernetes On Your Raspberry PIs
 ---
 
 ---
 
 ## Overview
 
-Kubernetes is one of orchestration system which are getting popular for last five years. It’s originally made by Google but now it’s maintained by it’s huge community from all over the world. That’s why it might be become a new standard for container orchestration.
-
-But having Kubernetes cluster might be a bit expensive. You have to run at least two or 3 nodes to run the cluster and try several demo projects on that cluster. That could be overkill for someone. But how if we have a Kubernetes that might run in our local computer? That should be an interesting thing.
+Kubernetes is one of orchestration system which is getting popular for the last five years. Google initially makes it, but now it’s maintained by its vast community worldwide. That’s why it might become a new standard for container orchestration. But having a Kubernetes cluster might be a bit expensive. You have to run at least two or three nodes to run the cluster and try several demo projects on that cluster. That could be overkill for someone. But how if we have a Kubernetes that might run in our local computer? That should be an exciting thing.
 
 ### Hardware Need ( Must Have )
 
-- Raspberry PI (3/4 2GB RAM): Minimum 2 ( 1 Master, 1 Worker )
-- Power Cable ( 15W Typc-C for Rasp4 or Your can use POE Hat )
-- Ethernet Cable ( Minimum 5e/6 ( Rasp support upto 1Gbps ))
-- Micro SD Card ( Min 8 GB, Recommanded 32 GB )
+- Raspberry PI (3/4 Min 2GB RAM): Minimum 2 Nodes ( 1 Master Node, 1 Worker Node )
+- Power Supply Unit ( 15W Type-C for Rasp4 or You can use POE Hat )
+- Ethernet Cable ( Minimum CAT 5e/6 ( Rasp supports up to 1Gbps ))
+- Micro SD Card ( Min 8 GB, Recommended 32 GB )
 - Good Case With FAN ( Saves your rasp from dirt and excessive heat )
 
 ### Software Requirement
@@ -33,23 +31,23 @@ But having Kubernetes cluster might be a bit expensive. You have to run at least
 
 ### Part - 1: Setup RaspberryPIs
 
-- Use Raspberry PI Imager (Recommanded) or Etcher to boot ubuntu 20.4 64Bit on SD Card
-- When Imager flashes the OS in the SD Card open the boot drive and create a file name `ssh` (Without any extension).
+- Use Raspberry PI Imager (Recommended) or Etcher to boot ubuntu 20.4 64Bit on SD Card
+- When Imager flashes the OS in the SD Card, open the boot drive and create a file name `ssh` (Without any extension).
 - Boot your Rasps
-- Check the rasp IP from your router or use nmap to network scan like this : `nmap -sP 192.168.0.0/24`
-- ssh to rasps ( Ex: ssh ubuntu@10.0.1.49 )
+- Check the rasp IP from your router or use Nmap to network scan like this: `nmap -sP 192.168.0.0/24`
+- SSH to rasps ( Ex: ssh ubuntu@10.0.1.49 )
 - Default username : `ubuntu` & default password : `ubuntu`
-- Do all the basics things you always do with your rasps like setup static IP, setup dotfiles and other stuff.
+- Do all the basics things you always do with your rasps like setup static IP, setup dotfiles, and other stuff.
 
 ### Part - 2: Setup MicroK8s
 
-Microk8s provides a single command installation of the latest Kubernetes release on a local machine for development and testing. Setup is quick, fast (~30 sec) and supports many plugins including Istio with a single command. Since K8s is not the easiest thing to get started with, having a tool that would make it easy for you to get going is very desirable.
+Microk8s provides a single command installation of the latest Kubernetes release on a local machine for development and testing. Setup is quick, fast (~30 sec), and supports many plugins, including Istio, with a single command. Since K8s is not the easiest thing to get started with, having a tool that would make it easy for you to get going is very desirable.
 
-microk8s is strictly for Linux. There is no VM involved. It is distributed and runs as a snap — a pre-packaged application (similar to a Docker container). Snaps can be used on all major Linux distributions, including Ubuntu, Linux Mint, Debian and Fedora.
+microk8s is strictly for Linux. There is no VM involved. It is distributed and runs as a snap — a pre-packaged application (similar to a Docker container). Snaps can be used on all major Linux distributions, including Ubuntu, Linux Mint, Debian, and Fedora.
 
 #### A. Setup Docker and Do Some Other Tweaks Before Installing Kubernetes
 
-It is not a surprise we are going to use Docker Engine for the container runtime. Despite there are alternatives in rkt, cri-o and others. However, at a closer look, we can see Kubernetes uses containerd. We use docker because it is most famous conatiner system and quite easy to deploy.
+It is not a surprise we are going to use Docker Engine for the container runtime. Despite there are alternatives in rkt, cri-o, and others. However, at a closer look, we can see Kubernetes uses containers. We use docker because it is the most famous container system and relatively easy to deploy.
 
 ```bash
 # Do this on all of your nodes ( Rasps )
@@ -60,7 +58,7 @@ $ curl -sSL https://get.docker.com | sh
 
 --------------------------------------------------------------------------------------
 ## Enable cgroups (Control Groups). Cgroups allow the Linux kernel to limit and isolate resources.
-# Practically speaking, this allows Kubernetes to better manage resources used by the containers it runs and increases security by isolating containers from one another.
+# Practically speaking, this allows Kubernetes to manage better resources used by the containers it runs and increases security by isolating containers from one another.
 
 # Inspect Docker
 $ docker info
@@ -81,7 +79,7 @@ $ vim /etc/docker/daemon.json
   "insecure-registries" : ["localhost:32000"]
 }
 
-# Restart Docker and inspect again
+# Restart Docker and Inspect Again
 $ sudo systemctl restart docker
 
 # Inspect
@@ -104,7 +102,7 @@ swapaccount=1
 
 --or--
 
----With sed
+---Automatically with sed
 # Note the space before "cgroup_enable=cpuset", to add a space after the last existing item on the line
 $ sudo sed -i '$ s/$/ cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1 swapaccount=1/' /boot/firmware/cmdline.txt
 ---
@@ -130,7 +128,7 @@ You may follow the installation instruction of MicroK8S in the official [documen
 Start with installing MicroK8s using Snap which will take only a few seconds.
 
 ```bash
-# Do this on all the nodes ( Only Installtion step, Rest of the steps are for just master server )
+# Do this on all the nodes ( Only the Installation step, Rest of the steps are for just master server )
 
 ## Install MicroK8s
 $ sudo snap install microk8s --channel=1.19 --classic
@@ -215,8 +213,8 @@ $ sudo microk8s.kubectl get all --all-namespaces
 #### C. Access the Kubernetes Dashboard
 
 ```bash
-# We use headless OS, So we have no option to access servicex other than exposing to the intenal network.
-# By defauly Kubernetes dashboard is not accessible on local network, but if you using raspbionOS ( GUI ) then you can access to cluster ip in you raspi.
+# We use the headless OS, So we have no option to access services other than exposing to the internal network.
+# By default Kubernetes dashboard is not accessible on the local network, but if you were using raspbionOS ( GUI ), you could access the clusterIP in your Raspberry pi.
 
 # --Exposing--
 $ kubectl -n kube-system edit service kubernetes-dashboard
@@ -229,7 +227,7 @@ kubernetes-dashboard   NodePort   10.152.183.188   <none>        443:30355/TCP  
 # Dashboard Access : https://MasterServer:Port ( Ex: https://10.0.1.86:30355 )
 
 --------------------------------------------------------------------------------------
-## Kubernetes dashboard needs authentication to acess to the dashboard
+## Kubernetes dashboard needs authentication to access to the dashboard
 # Method 1 : Generate Token
 $ token=$(microk8s kubectl -n kube-system get secret | grep default-token | cut -d " " -f1)
 $ microk8s kubectl -n kube-system describe secret $token
@@ -262,7 +260,7 @@ spec:
 --------------------------------------------------------------------------------------
 ```
 
-#### E. Add Nodes To The Cluster
+#### D. Add Nodes To The Cluster
 
 ```bash
 # On Master Server
@@ -279,11 +277,11 @@ master   Ready    <none>   64m     v1.19.0-34+09a4aa08bb9e93
 node1    Ready    <none>   2m49s   v1.19.0-34+09a4aa08bb9e93
 ```
 
-#### F. Deploy Some Fun
+#### E. Deploy Some Fun
 
-##### F1. Install Portainer
+##### E1. Install Portainer
 
-Portainer is a lightweight management UI that allows you to easily manage your different Docker environments. Portainer provides an easy and simple solution for managing Docker containers and Swarm services through a web interface. Portainer supports a wide range of features for managing the Docker containers, such as managing the creation and deletion of Swarm services, user authentication, authorizations, connecting, executing commands in the console of running containers, and viewing containers’ logs.
+Portainer is a lightweight management UI that allows you to manage your different Docker environments easily. Portainer provides an easy and straightforward solution for managing Docker containers and Swarm services through a web interface. Portainer supports a wide range of features for managing the Docker containers, such as controlling the creation and deletion of Swarm services, user authentication, authorizations, connecting, executing commands in the console of running containers viewing containers’ logs.
 
 ```bash
 ## Install Portainer
@@ -303,14 +301,14 @@ $ kubectl apply -f portainer-nodeport.yaml
 
 ---
 
-##### F2. Install Linkding ( Bookmark Manager )
+##### E2. Install Linkding ( Bookmark Manager )
 
 Linkding is a self-hosted bookmark service : [sissbruecker/linkding](https://github.com/sissbruecker/linkding)
 
 ![Linkding](https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Linkding.png)
 
 ```bash
-# I m installing linkding with persistent storage ( To know about What persistent storage is check out my kubernetes 101 post )
+# I m installing linkding with persistent storage ( To know about What persistent storage is, check out my Kubernetes 101 post )
 
 # YAML for Persistent Volume ( pv.yml )
 ---
@@ -407,12 +405,12 @@ linkding     NodePort    10.152.183.77   <none>        9090:31071/TCP   30s
 
 ---
 
-##### F3. Install CodeServer
+##### E3. Install CodeServer
 
-CodeServer is nothing but VS Code on browser ( To use on any machine anywhere and access it in the browser. ) : [codercom/code-server](https://github.com/codercom/code-server)
+CodeServer is nothing but VS Code on the browser ( To use on any machine anywhere and access it in the browser. ) : [codercom/code-server](https://github.com/codercom/code-server)
 
 ```bash
-## Installing code-server with also persitent storage because, give freedom to access code file in your desired folder
+## Installing code-server with persistent storage, because this gives us the freedom to access code files from desired directories
 
 --------------------------------------------------------------------------------------
 # We already create PersitentVolume, but we need another claim for VSCode
