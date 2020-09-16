@@ -77,7 +77,7 @@ window.onload = wrap_img;
        • <span class="read-time" title="Estimated read time">
     
     
-      20 min read
+      30 min read
     
 </span></p>
 
@@ -132,6 +132,31 @@ window.onload = wrap_img;
 <li class="toc-entry toc-h4"><a href="#3312-external-name">3.3.12 External Name</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#40-befits-of-using-kubernetes">4.0 Befits of using kubernetes</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#41-kubernetes-will-keeping-your-containers-running">4.1 Kubernetes will keeping your containers running</a></li>
+<li class="toc-entry toc-h3"><a href="#42-scaling-the-number-of-copies">4.2 Scaling the number of copies</a></li>
+<li class="toc-entry toc-h3"><a href="#43-hitting-a-moving-target">4.3 Hitting a moving target</a></li>
+<li class="toc-entry toc-h3"><a href="#44-simplifying-application-deployment">4.4 Simplifying application deployment</a></li>
+<li class="toc-entry toc-h3"><a href="#45-achieving-better-utilization-of-hardware">4.5 Achieving better utilization of hardware</a></li>
+<li class="toc-entry toc-h3"><a href="#46-health-checking-and-self-healing">4.6 Health checking and self-healing</a></li>
+<li class="toc-entry toc-h3"><a href="#47-automatic-scaling">4.7 Automatic scaling</a></li>
+<li class="toc-entry toc-h3"><a href="#48-simplifying-application-development">4.8 Simplifying application development</a></li>
+<li class="toc-entry toc-h3"><a href="#49-storage-orchestration">4.9 Storage orchestration</a></li>
+<li class="toc-entry toc-h3"><a href="#410-secret-and-configuration-management">4.10 Secret and configuration management</a></li>
+<li class="toc-entry toc-h3"><a href="#411-horizontal-scaling">4.11 Horizontal Scaling</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#50-ways-to-spin-up-kubernetes-cluster">5.0 Ways to spin up kubernetes cluster</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#51-kubeadm">5.1 Kubeadm</a></li>
+<li class="toc-entry toc-h3"><a href="#52-minikube">5.2 Minikube</a></li>
+<li class="toc-entry toc-h3"><a href="#53-microk8s">5.3 MicroK8s</a></li>
+<li class="toc-entry toc-h3"><a href="#54-k3s">5.4 K3s</a></li>
+<li class="toc-entry toc-h3"><a href="#55-kind">5.5 Kind</a></li>
+<li class="toc-entry toc-h3"><a href="#56-k3d">5.6 K3d</a></li>
 </ul>
 </li>
 </ul><hr>
@@ -409,6 +434,136 @@ ETCD is a distributed reliable key-value store used by Kubernetes to store all d
 <a class="anchor" href="#3312-external-name" aria-hidden="true"><span class="octicon octicon-link"></span></a>3.3.12 External Name</h4>
 
 <p>This maps a service to endpoints completely outside of the cluster.</p>
+
+<hr>
+
+<h2 id="40-befits-of-using-kubernetes">
+<a class="anchor" href="#40-befits-of-using-kubernetes" aria-hidden="true"><span class="octicon octicon-link"></span></a>4.0 Befits of using kubernetes</h2>
+
+<h3 id="41-kubernetes-will-keeping-your-containers-running">
+<a class="anchor" href="#41-kubernetes-will-keeping-your-containers-running" aria-hidden="true"><span class="octicon octicon-link"></span></a>4.1 Kubernetes will keeping your containers running</h3>
+
+<p>Once the application is running, Kubernetes continuously makes sure that the deployed
+state of the application always matches the description you provided. For example, if
+you specify that you always want five instances of a web server running, Kubernetes will always keep exactly five instances running. If one of those instances stops working properly, like when its process crashes or when it stops responding, Kubernetes will restart it automatically. Similarly, if a whole worker node dies or becomes inaccessible, Kubernetes will select new nodes for all the containers that were running on the node and run them on the newly selected nodes.</p>
+
+<h3 id="42-scaling-the-number-of-copies">
+<a class="anchor" href="#42-scaling-the-number-of-copies" aria-hidden="true"><span class="octicon octicon-link"></span></a>4.2 Scaling the number of copies</h3>
+
+<p>While the application is running, you can decide you want to increase or decrease the number of copies, and Kubernetes will spin up additional ones or stop the excess ones, respectively. You can even leave the job of deciding the optimal number of cop- ies to Kubernetes. It can automatically keep adjusting the number, based on real-time metrics, such as CPU load, memory consumption, queries per second, or any other metric your app exposes.</p>
+
+<h3 id="43-hitting-a-moving-target">
+<a class="anchor" href="#43-hitting-a-moving-target" aria-hidden="true"><span class="octicon octicon-link"></span></a>4.3 Hitting a moving target</h3>
+
+<p>We’ve said that Kubernetes may need to move your containers around the cluster This can occur when the node they were running on has failed or because they were evicted from a node to make room for other containers. If the container is providing a service to external clients or other containers running in the cluster, how can they use the container properly if it’s constantly moving around the cluster? And how can clients connect to containers providing a service when those containers are replicated and spread across the whole cluster? To allow clients to easily find containers that provide a specific service, you can tell Kubernetes which containers provide the same service and Kubernetes will expose all of them at a single static IP address and expose that address to all applications run- ning in the cluster. This is done through environment variables, but clients can also look up the service IP through good old DNS. The kube-proxy will make sure connec- tions to the service are load balanced across all the containers that provide the service. The IP address of the service stays constant, so clients can always connect to its con- tainers, even when they’re moved around the cluster.</p>
+
+<h3 id="44-simplifying-application-deployment">
+<a class="anchor" href="#44-simplifying-application-deployment" aria-hidden="true"><span class="octicon octicon-link"></span></a>4.4 Simplifying application deployment</h3>
+
+<p>Kubernetes exposes all its worker nodes as a single deployment platform,
+application developers can start deploying applications on their own and don’t need
+to know anything about the servers that make up the cluster. In essence, all the nodes are now a single bunch of computational resources that are waiting for applications to consume them. A developer doesn’t usually care what kind of server the application is running on, as long as the server can provide the application with adequate system resources. Certain cases do exist where the developer does care what kind of hardware the application should run on. ( Like some app needs SSD deployment instead of HDD )</p>
+
+<h3 id="45-achieving-better-utilization-of-hardware">
+<a class="anchor" href="#45-achieving-better-utilization-of-hardware" aria-hidden="true"><span class="octicon octicon-link"></span></a>4.5 Achieving better utilization of hardware</h3>
+
+<p>By setting up Kubernetes on your servers and using it to run your apps instead of running them manually, you’ve decoupled your app from the infrastructure. When you tell Kubernetes to run your application, you’re letting it choose the most appropriate node to run your application on based on the description of the application’s resource requirements and the available resources on each node. By using containers and not tying the app down to a specific node in your cluster, you’re allowing the app to freely move around the cluster at any time, so the different app components running on the cluster can be mixed and matched to be packed tightly onto the cluster nodes. This ensures the node’s hardware resources are utilized as best as possible.</p>
+
+<p>The ability to move applications around the cluster at any time allows Kubernetes
+to utilize the infrastructure much better than what you can achieve manually.</p>
+
+<h3 id="46-health-checking-and-self-healing">
+<a class="anchor" href="#46-health-checking-and-self-healing" aria-hidden="true"><span class="octicon octicon-link"></span></a>4.6 Health checking and self-healing</h3>
+
+<p>Having a system that allows moving an application across the cluster at any time is also valuable in the event of server failures. As your cluster size increases, you’ll deal with failing computer components ever more frequently. Kubernetes monitors your app components and the nodes they run on and auto- matically reschedules them to other nodes in the event of a node failure. This frees the ops team from having to migrate app components manually and allows the team to immediately focus on fixing the node itself and returning it to the pool of available hardware resources instead of focusing on relocating the app.</p>
+
+<h3 id="47-automatic-scaling">
+<a class="anchor" href="#47-automatic-scaling" aria-hidden="true"><span class="octicon octicon-link"></span></a>4.7 Automatic scaling</h3>
+
+<p>Using Kubernetes to manage your deployed applications also means the ops team
+doesn’t need to constantly monitor the load of individual applications to react to sudden load spikes. As previously mentioned, Kubernetes can be told to monitor the resources used by each application and to keep adjusting the number of running instances of each application. If Kubernetes is running on cloud infrastructure, where adding additional nodes is as easy as requesting them through the cloud provider’s API, Kubernetes can even automatically scale the whole cluster size up or down based on the needs of the deployed applications.</p>
+
+<h3 id="48-simplifying-application-development">
+<a class="anchor" href="#48-simplifying-application-development" aria-hidden="true"><span class="octicon octicon-link"></span></a>4.8 Simplifying application development</h3>
+
+<p>Then there’s the fact that developers don’t need to implement features that they would usually implement. This includes discovery of services and/or peers in a clustered application. Kubernetes does this instead of the app. Usually, the app only needs to look up certain environment variables or perform a DNS lookup. If that’s not enough, the application can query the Kubernetes API server directly to get that and/or other information. Querying the Kubernetes API server like that can even save developers from having to implement complicated mechanisms such as leader election.</p>
+
+<h3 id="49-storage-orchestration">
+<a class="anchor" href="#49-storage-orchestration" aria-hidden="true"><span class="octicon octicon-link"></span></a>4.9 Storage orchestration</h3>
+
+<p>Consequently, mount local or public cloud or network storage.</p>
+
+<h3 id="410-secret-and-configuration-management">
+<a class="anchor" href="#410-secret-and-configuration-management" aria-hidden="true"><span class="octicon octicon-link"></span></a>4.10 Secret and configuration management</h3>
+
+<p>Create and update secrets and configs without rebuilding your image</p>
+
+<h3 id="411-horizontal-scaling">
+<a class="anchor" href="#411-horizontal-scaling" aria-hidden="true"><span class="octicon octicon-link"></span></a>4.11 Horizontal Scaling</h3>
+
+<p>first, we need to know what are the horizontal and vertical scalings are:</p>
+
+<ul>
+  <li>Vertically Scaling : Adding more CPUs, memory, and other server components</li>
+  <li>Horizontal Scaling : Setting up additional Servers and running multiple copies</li>
+</ul>
+
+<p>Kubernetes uses horizontal scaling, which provides greater flexibilities to the companies</p>
+
+<hr>
+
+<h2 id="50-ways-to-spin-up-kubernetes-cluster">
+<a class="anchor" href="#50-ways-to-spin-up-kubernetes-cluster" aria-hidden="true"><span class="octicon octicon-link"></span></a>5.0 Ways to spin up kubernetes cluster</h2>
+
+<h3 id="51-kubeadm">
+<a class="anchor" href="#51-kubeadm" aria-hidden="true"><span class="octicon octicon-link"></span></a>5.1 Kubeadm</h3>
+
+<p>The official CNCF tool for provisioning Kubernetes clusters in a variety of shapes and forms (e.g. single-node, multi-node, HA, self-hosted)</p>
+
+<h3 id="52-minikube">
+<a class="anchor" href="#52-minikube" aria-hidden="true"><span class="octicon octicon-link"></span></a>5.2 Minikube</h3>
+
+<p>Minikube can run on Windows and MacOS, because it relies on virtualization (e.g. Virtualbox) to deploy a kubernetes cluster in a Linux VM. You can also run minikube directly on linux with or without virtualization. It also has some developer-friendly features, like add-ons.</p>
+
+<p>From a user perspective minikube is a very beginner friendly tool. You start the cluster using <code class="language-plaintext highlighter-rouge">minikube start</code>, wait a few minutes and your <code class="language-plaintext highlighter-rouge">kubectl</code> is ready to go. To specify a Kubernetes version you can use the <code class="language-plaintext highlighter-rouge">--kubernetes-version</code> flag.</p>
+
+<p>If you are new to Kubernetes the first class support for its dashboard that minikube offers may help you. With a simple minikube dashboard the application will open up giving you a nice overview of everything that is going on in your cluster. This is being achieved by minikube’s addon system that helps you integrating things like, Helm, Nvidia GPUs and an image registry with your cluster.</p>
+
+<h3 id="53-microk8s">
+<a class="anchor" href="#53-microk8s" aria-hidden="true"><span class="octicon octicon-link"></span></a>5.3 MicroK8s</h3>
+
+<p>MicroK8s is a Kubernetes distribution from Canonical that is designed for fast and simple deployment, which makes it a good choice to run Kubernetes locally.</p>
+
+<p>Microk8s is similar to minikube in that it spins up a single-node Kubernetes cluster with its own set of add-ons. If MicroK8s runs on Linux, it also offers the advantage of not requiring VMs. On Windows and macOS, MicroK8s uses a VM framework called Multipass to create VMs for the Kubernetes cluster.</p>
+
+<p>Like minikube, microk8s is limited to a single-node Kubernetes cluster, with the added limitation of only running on Linux and only on Linux where snap is installed.</p>
+
+<h3 id="54-k3s">
+<a class="anchor" href="#54-k3s" aria-hidden="true"><span class="octicon octicon-link"></span></a>5.4 K3s</h3>
+
+<p>K3s is a minified version of Kubernetes developed by Rancher Labs. By removing dispensable features (legacy, alpha, non-default, in-tree plugins) and using lightweight components (e.g. sqlite3 instead of etcd3) they achieved a significant downsizing. This results in a single binary with a size of around 60 MB.</p>
+
+<p>K3s runs on any Linux distribution without any additional external dependencies or tools. It is marketed by Rancher as a lightweight Kubernetes offering suitable for edge environments, IoT devices, CI pipelines, and even ARM devices, like Raspberry Pi’s. K3s achieves its lightweight goal by stripping a bunch of features out of the Kubernetes binaries (e.g. legacy, alpha, and cloud-provider-specific features), replacing docker with containerd, and using sqlite3 as the default DB (instead of etcd). As a result, this lightweight Kubernetes only consumes 512 MB of RAM and 200 MB of disk space. K3s has some nice features, like Helm Chart support out-of-the-box.</p>
+
+<p>Unlike the previous two offerings, K3s can do multiple node Kubernetes cluster. However, due to technical limitations of SQLite, K3s currently does not support High Availability (HA), as in running multiple master nodes.</p>
+
+<p>One feature that stands out is called auto deployment. It allows you to deploy your Kubernetes manifests and Helm charts by putting them in a specific directory. K3s watches for changes and takes care of applying them without any further interaction. This is especially useful for CI pipelines and IoT devices (both target use cases of K3s). Just create/update your configuration and K3s makes sure to keep your deployments up to date.</p>
+
+<h3 id="55-kind">
+<a class="anchor" href="#55-kind" aria-hidden="true"><span class="octicon octicon-link"></span></a>5.5 Kind</h3>
+
+<p>Kind (Kubernetes-in-Docker), as the name implies, runs Kubernetes clusters in Docker containers. This is the official tool used by Kubernetes maintainers for Kubernetes v1.11+ conformance testing. It supports multi-node clusters as well as HA clusters. Because it runs K8s in Docker, kind can run on Windows, Mac, and Linux.</p>
+
+<p>Kind is optimized first and foremost for CI pipelines, so it may not have some of the developer-friendly features of other offerings. Kind leads to a significantly faster startup speed compared to spawning VM.</p>
+
+<p>Creating a cluster is very similar to minikube’s approach. Executing kind create cluster, playing the waiting game and afterwards you are good to go. By using different names (–name) kind allows you to create multiple instances in parallel.</p>
+
+<p>If you are looking for a way to programmatically create a Kubernetes cluster, kind kindly (you have been for waiting for this, don’t you ) publishes its Go packages that are used under the hood.</p>
+
+<h3 id="56-k3d">
+<a class="anchor" href="#56-k3d" aria-hidden="true"><span class="octicon octicon-link"></span></a>5.6 K3d</h3>
+
+<p>A new project that aims to bring K3s-in-Docker (similar to kind).</p>
 
 <hr>
 

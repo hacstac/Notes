@@ -1,18 +1,16 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://hacstac.github.io/Notes/feed.xml" rel="self" type="application/atom+xml" /><link href="https://hacstac.github.io/Notes/" rel="alternate" type="text/html" /><updated>2020-09-15T11:38:19-05:00</updated><id>https://hacstac.github.io/Notes/feed.xml</id><title type="html">Notebook</title><subtitle>A Daily Notebook for @Akash</subtitle><entry><title type="html">Step By Step Process To Deploy Your Own Kubernetes Cluster</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html" rel="alternate" type="text/html" title="Step By Step Process To Deploy Your Own Kubernetes Cluster" /><published>2020-09-15T00:00:00-05:00</published><updated>2020-09-15T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html">&lt;hr /&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://hacstac.github.io/Notes/feed.xml" rel="self" type="application/atom+xml" /><link href="https://hacstac.github.io/Notes/" rel="alternate" type="text/html" /><updated>2020-09-16T04:42:45-05:00</updated><id>https://hacstac.github.io/Notes/feed.xml</id><title type="html">Notebook</title><subtitle>A Daily Notebook for @Akash</subtitle><entry><title type="html">Step-By-Step Process To Deploy Kubernetes On Your Raspberry PIs</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html" rel="alternate" type="text/html" title="Step-By-Step Process To Deploy Kubernetes On Your Raspberry PIs" /><published>2020-09-15T00:00:00-05:00</published><updated>2020-09-15T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html">&lt;hr /&gt;
 
 &lt;h2 id=&quot;overview&quot;&gt;Overview&lt;/h2&gt;
 
-&lt;p&gt;Kubernetes is one of orchestration system which are getting popular for last five years. It’s originally made by Google but now it’s maintained by it’s huge community from all over the world. That’s why it might be become a new standard for container orchestration.&lt;/p&gt;
-
-&lt;p&gt;But having Kubernetes cluster might be a bit expensive. You have to run at least two or 3 nodes to run the cluster and try several demo projects on that cluster. That could be overkill for someone. But how if we have a Kubernetes that might run in our local computer? That should be an interesting thing.&lt;/p&gt;
+&lt;p&gt;Kubernetes is one of orchestration system which is getting popular for the last five years. Google initially makes it, but now it’s maintained by its vast community worldwide. That’s why it might become a new standard for container orchestration. But having a Kubernetes cluster might be a bit expensive. You have to run at least two or three nodes to run the cluster and try several demo projects on that cluster. That could be overkill for someone. But how if we have a Kubernetes that might run in our local computer? That should be an exciting thing.&lt;/p&gt;
 
 &lt;h3 id=&quot;hardware-need--must-have-&quot;&gt;Hardware Need ( Must Have )&lt;/h3&gt;
 
 &lt;ul&gt;
-  &lt;li&gt;Raspberry PI (3/4 2GB RAM): Minimum 2 ( 1 Master, 1 Worker )&lt;/li&gt;
-  &lt;li&gt;Power Cable ( 15W Typc-C for Rasp4 or Your can use POE Hat )&lt;/li&gt;
-  &lt;li&gt;Ethernet Cable ( Minimum 5e/6 ( Rasp support upto 1Gbps ))&lt;/li&gt;
-  &lt;li&gt;Micro SD Card ( Min 8 GB, Recommanded 32 GB )&lt;/li&gt;
+  &lt;li&gt;Raspberry PI (3/4 Min 2GB RAM): Minimum 2 Nodes ( 1 Master Node, 1 Worker Node )&lt;/li&gt;
+  &lt;li&gt;Power Supply Unit ( 15W Type-C for Rasp4 or You can use POE Hat )&lt;/li&gt;
+  &lt;li&gt;Ethernet Cable ( Minimum CAT 5e/6 ( Rasp supports up to 1Gbps ))&lt;/li&gt;
+  &lt;li&gt;Micro SD Card ( Min 8 GB, Recommended 32 GB )&lt;/li&gt;
   &lt;li&gt;Good Case With FAN ( Saves your rasp from dirt and excessive heat )&lt;/li&gt;
 &lt;/ul&gt;
 
@@ -30,24 +28,24 @@
 &lt;h3 id=&quot;part---1-setup-raspberrypis&quot;&gt;Part - 1: Setup RaspberryPIs&lt;/h3&gt;
 
 &lt;ul&gt;
-  &lt;li&gt;Use Raspberry PI Imager (Recommanded) or Etcher to boot ubuntu 20.4 64Bit on SD Card&lt;/li&gt;
-  &lt;li&gt;When Imager flashes the OS in the SD Card open the boot drive and create a file name &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ssh&lt;/code&gt; (Without any extension).&lt;/li&gt;
+  &lt;li&gt;Use Raspberry PI Imager (Recommended) or Etcher to boot ubuntu 20.4 64Bit on SD Card&lt;/li&gt;
+  &lt;li&gt;When Imager flashes the OS in the SD Card, open the boot drive and create a file name &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ssh&lt;/code&gt; (Without any extension).&lt;/li&gt;
   &lt;li&gt;Boot your Rasps&lt;/li&gt;
-  &lt;li&gt;Check the rasp IP from your router or use nmap to network scan like this : &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;nmap -sP 192.168.0.0/24&lt;/code&gt;&lt;/li&gt;
-  &lt;li&gt;ssh to rasps ( Ex: ssh ubuntu@10.0.1.49 )&lt;/li&gt;
+  &lt;li&gt;Check the rasp IP from your router or use Nmap to network scan like this: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;nmap -sP 192.168.0.0/24&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;SSH to rasps ( Ex: ssh ubuntu@10.0.1.49 )&lt;/li&gt;
   &lt;li&gt;Default username : &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ubuntu&lt;/code&gt; &amp;amp; default password : &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ubuntu&lt;/code&gt;&lt;/li&gt;
-  &lt;li&gt;Do all the basics things you always do with your rasps like setup static IP, setup dotfiles and other stuff.&lt;/li&gt;
+  &lt;li&gt;Do all the basics things you always do with your rasps like setup static IP, setup dotfiles, and other stuff.&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h3 id=&quot;part---2-setup-microk8s&quot;&gt;Part - 2: Setup MicroK8s&lt;/h3&gt;
 
-&lt;p&gt;Microk8s provides a single command installation of the latest Kubernetes release on a local machine for development and testing. Setup is quick, fast (~30 sec) and supports many plugins including Istio with a single command. Since K8s is not the easiest thing to get started with, having a tool that would make it easy for you to get going is very desirable.&lt;/p&gt;
+&lt;p&gt;Microk8s provides a single command installation of the latest Kubernetes release on a local machine for development and testing. Setup is quick, fast (~30 sec), and supports many plugins, including Istio, with a single command. Since K8s is not the easiest thing to get started with, having a tool that would make it easy for you to get going is very desirable.&lt;/p&gt;
 
-&lt;p&gt;microk8s is strictly for Linux. There is no VM involved. It is distributed and runs as a snap — a pre-packaged application (similar to a Docker container). Snaps can be used on all major Linux distributions, including Ubuntu, Linux Mint, Debian and Fedora.&lt;/p&gt;
+&lt;p&gt;microk8s is strictly for Linux. There is no VM involved. It is distributed and runs as a snap — a pre-packaged application (similar to a Docker container). Snaps can be used on all major Linux distributions, including Ubuntu, Linux Mint, Debian, and Fedora.&lt;/p&gt;
 
 &lt;h4 id=&quot;a-setup-docker-and-do-some-other-tweaks-before-installing-kubernetes&quot;&gt;A. Setup Docker and Do Some Other Tweaks Before Installing Kubernetes&lt;/h4&gt;
 
-&lt;p&gt;It is not a surprise we are going to use Docker Engine for the container runtime. Despite there are alternatives in rkt, cri-o and others. However, at a closer look, we can see Kubernetes uses containerd. We use docker because it is most famous conatiner system and quite easy to deploy.&lt;/p&gt;
+&lt;p&gt;It is not a surprise we are going to use Docker Engine for the container runtime. Despite there are alternatives in rkt, cri-o, and others. However, at a closer look, we can see Kubernetes uses containers. We use docker because it is the most famous container system and relatively easy to deploy.&lt;/p&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# Do this on all of your nodes ( Rasps )&lt;/span&gt;
 
@@ -57,7 +55,7 @@
 
 &lt;span class=&quot;nt&quot;&gt;--------------------------------------------------------------------------------------&lt;/span&gt;
 &lt;span class=&quot;c&quot;&gt;## Enable cgroups (Control Groups). Cgroups allow the Linux kernel to limit and isolate resources.&lt;/span&gt;
-&lt;span class=&quot;c&quot;&gt;# Practically speaking, this allows Kubernetes to better manage resources used by the containers it runs and increases security by isolating containers from one another.&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# Practically speaking, this allows Kubernetes to manage better resources used by the containers it runs and increases security by isolating containers from one another.&lt;/span&gt;
 
 &lt;span class=&quot;c&quot;&gt;# Inspect Docker&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;docker info
@@ -78,7 +76,7 @@
   &lt;span class=&quot;s2&quot;&gt;&quot;insecure-registries&quot;&lt;/span&gt; : &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;localhost:32000&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
 &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
 
-&lt;span class=&quot;c&quot;&gt;# Restart Docker and inspect again&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# Restart Docker and Inspect Again&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;systemctl restart docker
 
 &lt;span class=&quot;c&quot;&gt;# Inspect&lt;/span&gt;
@@ -101,7 +99,7 @@
 
 &lt;span class=&quot;nt&quot;&gt;--or--&lt;/span&gt;
 
-&lt;span class=&quot;nt&quot;&gt;---With&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;---Automatically&lt;/span&gt; with &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt;
 &lt;span class=&quot;c&quot;&gt;# Note the space before &quot;cgroup_enable=cpuset&quot;, to add a space after the last existing item on the line&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-i&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'$ s/$/ cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1 swapaccount=1/'&lt;/span&gt; /boot/firmware/cmdline.txt
 &lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
@@ -126,7 +124,7 @@ net.bridge.bridge-nf-call-iptables = 1
 
 &lt;p&gt;Start with installing MicroK8s using Snap which will take only a few seconds.&lt;/p&gt;
 
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# Do this on all the nodes ( Only Installtion step, Rest of the steps are for just master server )&lt;/span&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# Do this on all the nodes ( Only the Installation step, Rest of the steps are for just master server )&lt;/span&gt;
 
 &lt;span class=&quot;c&quot;&gt;## Install MicroK8s&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;snap &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;microk8s &lt;span class=&quot;nt&quot;&gt;--channel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;1.19 &lt;span class=&quot;nt&quot;&gt;--classic&lt;/span&gt;
@@ -210,8 +208,8 @@ addons:
 
 &lt;h4 id=&quot;c-access-the-kubernetes-dashboard&quot;&gt;C. Access the Kubernetes Dashboard&lt;/h4&gt;
 
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# We use headless OS, So we have no option to access servicex other than exposing to the intenal network.&lt;/span&gt;
-&lt;span class=&quot;c&quot;&gt;# By defauly Kubernetes dashboard is not accessible on local network, but if you using raspbionOS ( GUI ) then you can access to cluster ip in you raspi.&lt;/span&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# We use the headless OS, So we have no option to access services other than exposing to the internal network.&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# By default Kubernetes dashboard is not accessible on the local network, but if you were using raspbionOS ( GUI ), you could access the clusterIP in your Raspberry pi.&lt;/span&gt;
 
 &lt;span class=&quot;c&quot;&gt;# --Exposing--&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl &lt;span class=&quot;nt&quot;&gt;-n&lt;/span&gt; kube-system edit service kubernetes-dashboard
@@ -224,7 +222,7 @@ kubernetes-dashboard   NodePort   10.152.183.188   &amp;lt;none&amp;gt;        4
 &lt;span class=&quot;c&quot;&gt;# Dashboard Access : https://MasterServer:Port ( Ex: https://10.0.1.86:30355 )&lt;/span&gt;
 
 &lt;span class=&quot;nt&quot;&gt;--------------------------------------------------------------------------------------&lt;/span&gt;
-&lt;span class=&quot;c&quot;&gt;## Kubernetes dashboard needs authentication to acess to the dashboard&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;## Kubernetes dashboard needs authentication to access to the dashboard&lt;/span&gt;
 &lt;span class=&quot;c&quot;&gt;# Method 1 : Generate Token&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;$ token&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;microk8s kubectl &lt;span class=&quot;nt&quot;&gt;-n&lt;/span&gt; kube-system get secret | &lt;span class=&quot;nb&quot;&gt;grep &lt;/span&gt;default-token | &lt;span class=&quot;nb&quot;&gt;cut&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot; &quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-f1&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;microk8s kubectl &lt;span class=&quot;nt&quot;&gt;-n&lt;/span&gt; kube-system describe secret &lt;span class=&quot;nv&quot;&gt;$token&lt;/span&gt;
@@ -257,7 +255,7 @@ spec:
 &lt;span class=&quot;nt&quot;&gt;--------------------------------------------------------------------------------------&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h4 id=&quot;e-add-nodes-to-the-cluster&quot;&gt;E. Add Nodes To The Cluster&lt;/h4&gt;
+&lt;h4 id=&quot;d-add-nodes-to-the-cluster&quot;&gt;D. Add Nodes To The Cluster&lt;/h4&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# On Master Server&lt;/span&gt;
 &lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;microk8s add-node
@@ -273,11 +271,11 @@ master   Ready    &amp;lt;none&amp;gt;   64m     v1.19.0-34+09a4aa08bb9e93
 node1    Ready    &amp;lt;none&amp;gt;   2m49s   v1.19.0-34+09a4aa08bb9e93
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h4 id=&quot;f-deploy-some-fun&quot;&gt;F. Deploy Some Fun&lt;/h4&gt;
+&lt;h4 id=&quot;e-deploy-some-fun&quot;&gt;E. Deploy Some Fun&lt;/h4&gt;
 
-&lt;h5 id=&quot;f1-install-portainer&quot;&gt;F1. Install Portainer&lt;/h5&gt;
+&lt;h5 id=&quot;e1-install-portainer&quot;&gt;E1. Install Portainer&lt;/h5&gt;
 
-&lt;p&gt;Portainer is a lightweight management UI that allows you to easily manage your different Docker environments. Portainer provides an easy and simple solution for managing Docker containers and Swarm services through a web interface. Portainer supports a wide range of features for managing the Docker containers, such as managing the creation and deletion of Swarm services, user authentication, authorizations, connecting, executing commands in the console of running containers, and viewing containers’ logs.&lt;/p&gt;
+&lt;p&gt;Portainer is a lightweight management UI that allows you to manage your different Docker environments easily. Portainer provides an easy and straightforward solution for managing Docker containers and Swarm services through a web interface. Portainer supports a wide range of features for managing the Docker containers, such as controlling the creation and deletion of Swarm services, user authentication, authorizations, connecting, executing commands in the console of running containers viewing containers’ logs.&lt;/p&gt;
 
 &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;## Install Portainer&lt;/span&gt;
 
@@ -296,13 +294,13 @@ node1    Ready    &amp;lt;none&amp;gt;   2m49s   v1.19.0-34+09a4aa08bb9e93
 
 &lt;hr /&gt;
 
-&lt;h5 id=&quot;f2-install-linkding--bookmark-manager-&quot;&gt;F2. Install Linkding ( Bookmark Manager )&lt;/h5&gt;
+&lt;h5 id=&quot;e2-install-linkding--bookmark-manager-&quot;&gt;E2. Install Linkding ( Bookmark Manager )&lt;/h5&gt;
 
 &lt;p&gt;Linkding is a self-hosted bookmark service : &lt;a href=&quot;https://github.com/sissbruecker/linkding&quot;&gt;sissbruecker/linkding&lt;/a&gt;&lt;/p&gt;
 
 &lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Linkding.png&quot; alt=&quot;Linkding&quot; /&gt;&lt;/p&gt;
 
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# I m installing linkding with persistent storage ( To know about What persistent storage is check out my kubernetes 101 post )&lt;/span&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# I m installing linkding with persistent storage ( To know about What persistent storage is, check out my Kubernetes 101 post )&lt;/span&gt;
 
 &lt;span class=&quot;c&quot;&gt;# YAML for Persistent Volume ( pv.yml )&lt;/span&gt;
 &lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
@@ -399,11 +397,11 @@ linkding     NodePort    10.152.183.77   &amp;lt;none&amp;gt;        9090:31071/
 
 &lt;hr /&gt;
 
-&lt;h5 id=&quot;f3-install-codeserver&quot;&gt;F3. Install CodeServer&lt;/h5&gt;
+&lt;h5 id=&quot;e3-install-codeserver&quot;&gt;E3. Install CodeServer&lt;/h5&gt;
 
-&lt;p&gt;CodeServer is nothing but VS Code on browser ( To use on any machine anywhere and access it in the browser. ) : &lt;a href=&quot;https://github.com/codercom/code-server&quot;&gt;codercom/code-server&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;CodeServer is nothing but VS Code on the browser ( To use on any machine anywhere and access it in the browser. ) : &lt;a href=&quot;https://github.com/codercom/code-server&quot;&gt;codercom/code-server&lt;/a&gt;&lt;/p&gt;
 
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;## Installing code-server with also persitent storage because, give freedom to access code file in your desired folder&lt;/span&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;## Installing code-server with persistent storage, because this gives us the freedom to access code files from desired directories&lt;/span&gt;
 
 &lt;span class=&quot;nt&quot;&gt;--------------------------------------------------------------------------------------&lt;/span&gt;
 &lt;span class=&quot;c&quot;&gt;# We already create PersitentVolume, but we need another claim for VSCode&lt;/span&gt;
@@ -729,6 +727,117 @@ ETCD is a distributed reliable key-value store used by Kubernetes to store all d
 &lt;h4 id=&quot;3312-external-name&quot;&gt;3.3.12 External Name&lt;/h4&gt;
 
 &lt;p&gt;This maps a service to endpoints completely outside of the cluster.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;40-befits-of-using-kubernetes&quot;&gt;4.0 Befits of using kubernetes&lt;/h2&gt;
+
+&lt;h3 id=&quot;41-kubernetes-will-keeping-your-containers-running&quot;&gt;4.1 Kubernetes will keeping your containers running&lt;/h3&gt;
+
+&lt;p&gt;Once the application is running, Kubernetes continuously makes sure that the deployed
+state of the application always matches the description you provided. For example, if
+you specify that you always want five instances of a web server running, Kubernetes will always keep exactly five instances running. If one of those instances stops working properly, like when its process crashes or when it stops responding, Kubernetes will restart it automatically. Similarly, if a whole worker node dies or becomes inaccessible, Kubernetes will select new nodes for all the containers that were running on the node and run them on the newly selected nodes.&lt;/p&gt;
+
+&lt;h3 id=&quot;42-scaling-the-number-of-copies&quot;&gt;4.2 Scaling the number of copies&lt;/h3&gt;
+
+&lt;p&gt;While the application is running, you can decide you want to increase or decrease the number of copies, and Kubernetes will spin up additional ones or stop the excess ones, respectively. You can even leave the job of deciding the optimal number of cop- ies to Kubernetes. It can automatically keep adjusting the number, based on real-time metrics, such as CPU load, memory consumption, queries per second, or any other metric your app exposes.&lt;/p&gt;
+
+&lt;h3 id=&quot;43-hitting-a-moving-target&quot;&gt;4.3 Hitting a moving target&lt;/h3&gt;
+
+&lt;p&gt;We’ve said that Kubernetes may need to move your containers around the cluster This can occur when the node they were running on has failed or because they were evicted from a node to make room for other containers. If the container is providing a service to external clients or other containers running in the cluster, how can they use the container properly if it’s constantly moving around the cluster? And how can clients connect to containers providing a service when those containers are replicated and spread across the whole cluster? To allow clients to easily find containers that provide a specific service, you can tell Kubernetes which containers provide the same service and Kubernetes will expose all of them at a single static IP address and expose that address to all applications run- ning in the cluster. This is done through environment variables, but clients can also look up the service IP through good old DNS. The kube-proxy will make sure connec- tions to the service are load balanced across all the containers that provide the service. The IP address of the service stays constant, so clients can always connect to its con- tainers, even when they’re moved around the cluster.&lt;/p&gt;
+
+&lt;h3 id=&quot;44-simplifying-application-deployment&quot;&gt;4.4 Simplifying application deployment&lt;/h3&gt;
+
+&lt;p&gt;Kubernetes exposes all its worker nodes as a single deployment platform,
+application developers can start deploying applications on their own and don’t need
+to know anything about the servers that make up the cluster. In essence, all the nodes are now a single bunch of computational resources that are waiting for applications to consume them. A developer doesn’t usually care what kind of server the application is running on, as long as the server can provide the application with adequate system resources. Certain cases do exist where the developer does care what kind of hardware the application should run on. ( Like some app needs SSD deployment instead of HDD )&lt;/p&gt;
+
+&lt;h3 id=&quot;45-achieving-better-utilization-of-hardware&quot;&gt;4.5 Achieving better utilization of hardware&lt;/h3&gt;
+
+&lt;p&gt;By setting up Kubernetes on your servers and using it to run your apps instead of running them manually, you’ve decoupled your app from the infrastructure. When you tell Kubernetes to run your application, you’re letting it choose the most appropriate node to run your application on based on the description of the application’s resource requirements and the available resources on each node. By using containers and not tying the app down to a specific node in your cluster, you’re allowing the app to freely move around the cluster at any time, so the different app components running on the cluster can be mixed and matched to be packed tightly onto the cluster nodes. This ensures the node’s hardware resources are utilized as best as possible.&lt;/p&gt;
+
+&lt;p&gt;The ability to move applications around the cluster at any time allows Kubernetes
+to utilize the infrastructure much better than what you can achieve manually.&lt;/p&gt;
+
+&lt;h3 id=&quot;46-health-checking-and-self-healing&quot;&gt;4.6 Health checking and self-healing&lt;/h3&gt;
+
+&lt;p&gt;Having a system that allows moving an application across the cluster at any time is also valuable in the event of server failures. As your cluster size increases, you’ll deal with failing computer components ever more frequently. Kubernetes monitors your app components and the nodes they run on and auto- matically reschedules them to other nodes in the event of a node failure. This frees the ops team from having to migrate app components manually and allows the team to immediately focus on fixing the node itself and returning it to the pool of available hardware resources instead of focusing on relocating the app.&lt;/p&gt;
+
+&lt;h3 id=&quot;47-automatic-scaling&quot;&gt;4.7 Automatic scaling&lt;/h3&gt;
+
+&lt;p&gt;Using Kubernetes to manage your deployed applications also means the ops team
+doesn’t need to constantly monitor the load of individual applications to react to sudden load spikes. As previously mentioned, Kubernetes can be told to monitor the resources used by each application and to keep adjusting the number of running instances of each application. If Kubernetes is running on cloud infrastructure, where adding additional nodes is as easy as requesting them through the cloud provider’s API, Kubernetes can even automatically scale the whole cluster size up or down based on the needs of the deployed applications.&lt;/p&gt;
+
+&lt;h3 id=&quot;48-simplifying-application-development&quot;&gt;4.8 Simplifying application development&lt;/h3&gt;
+
+&lt;p&gt;Then there’s the fact that developers don’t need to implement features that they would usually implement. This includes discovery of services and/or peers in a clustered application. Kubernetes does this instead of the app. Usually, the app only needs to look up certain environment variables or perform a DNS lookup. If that’s not enough, the application can query the Kubernetes API server directly to get that and/or other information. Querying the Kubernetes API server like that can even save developers from having to implement complicated mechanisms such as leader election.&lt;/p&gt;
+
+&lt;h3 id=&quot;49-storage-orchestration&quot;&gt;4.9 Storage orchestration&lt;/h3&gt;
+
+&lt;p&gt;Consequently, mount local or public cloud or network storage.&lt;/p&gt;
+
+&lt;h3 id=&quot;410-secret-and-configuration-management&quot;&gt;4.10 Secret and configuration management&lt;/h3&gt;
+
+&lt;p&gt;Create and update secrets and configs without rebuilding your image&lt;/p&gt;
+
+&lt;h3 id=&quot;411-horizontal-scaling&quot;&gt;4.11 Horizontal Scaling&lt;/h3&gt;
+
+&lt;p&gt;first, we need to know what are the horizontal and vertical scalings are:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Vertically Scaling : Adding more CPUs, memory, and other server components&lt;/li&gt;
+  &lt;li&gt;Horizontal Scaling : Setting up additional Servers and running multiple copies&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Kubernetes uses horizontal scaling, which provides greater flexibilities to the companies&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;50-ways-to-spin-up-kubernetes-cluster&quot;&gt;5.0 Ways to spin up kubernetes cluster&lt;/h2&gt;
+
+&lt;h3 id=&quot;51-kubeadm&quot;&gt;5.1 Kubeadm&lt;/h3&gt;
+
+&lt;p&gt;The official CNCF tool for provisioning Kubernetes clusters in a variety of shapes and forms (e.g. single-node, multi-node, HA, self-hosted)&lt;/p&gt;
+
+&lt;h3 id=&quot;52-minikube&quot;&gt;5.2 Minikube&lt;/h3&gt;
+
+&lt;p&gt;Minikube can run on Windows and MacOS, because it relies on virtualization (e.g. Virtualbox) to deploy a kubernetes cluster in a Linux VM. You can also run minikube directly on linux with or without virtualization. It also has some developer-friendly features, like add-ons.&lt;/p&gt;
+
+&lt;p&gt;From a user perspective minikube is a very beginner friendly tool. You start the cluster using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;minikube start&lt;/code&gt;, wait a few minutes and your &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kubectl&lt;/code&gt; is ready to go. To specify a Kubernetes version you can use the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;--kubernetes-version&lt;/code&gt; flag.&lt;/p&gt;
+
+&lt;p&gt;If you are new to Kubernetes the first class support for its dashboard that minikube offers may help you. With a simple minikube dashboard the application will open up giving you a nice overview of everything that is going on in your cluster. This is being achieved by minikube’s addon system that helps you integrating things like, Helm, Nvidia GPUs and an image registry with your cluster.&lt;/p&gt;
+
+&lt;h3 id=&quot;53-microk8s&quot;&gt;5.3 MicroK8s&lt;/h3&gt;
+
+&lt;p&gt;MicroK8s is a Kubernetes distribution from Canonical that is designed for fast and simple deployment, which makes it a good choice to run Kubernetes locally.&lt;/p&gt;
+
+&lt;p&gt;Microk8s is similar to minikube in that it spins up a single-node Kubernetes cluster with its own set of add-ons. If MicroK8s runs on Linux, it also offers the advantage of not requiring VMs. On Windows and macOS, MicroK8s uses a VM framework called Multipass to create VMs for the Kubernetes cluster.&lt;/p&gt;
+
+&lt;p&gt;Like minikube, microk8s is limited to a single-node Kubernetes cluster, with the added limitation of only running on Linux and only on Linux where snap is installed.&lt;/p&gt;
+
+&lt;h3 id=&quot;54-k3s&quot;&gt;5.4 K3s&lt;/h3&gt;
+
+&lt;p&gt;K3s is a minified version of Kubernetes developed by Rancher Labs. By removing dispensable features (legacy, alpha, non-default, in-tree plugins) and using lightweight components (e.g. sqlite3 instead of etcd3) they achieved a significant downsizing. This results in a single binary with a size of around 60 MB.&lt;/p&gt;
+
+&lt;p&gt;K3s runs on any Linux distribution without any additional external dependencies or tools. It is marketed by Rancher as a lightweight Kubernetes offering suitable for edge environments, IoT devices, CI pipelines, and even ARM devices, like Raspberry Pi’s. K3s achieves its lightweight goal by stripping a bunch of features out of the Kubernetes binaries (e.g. legacy, alpha, and cloud-provider-specific features), replacing docker with containerd, and using sqlite3 as the default DB (instead of etcd). As a result, this lightweight Kubernetes only consumes 512 MB of RAM and 200 MB of disk space. K3s has some nice features, like Helm Chart support out-of-the-box.&lt;/p&gt;
+
+&lt;p&gt;Unlike the previous two offerings, K3s can do multiple node Kubernetes cluster. However, due to technical limitations of SQLite, K3s currently does not support High Availability (HA), as in running multiple master nodes.&lt;/p&gt;
+
+&lt;p&gt;One feature that stands out is called auto deployment. It allows you to deploy your Kubernetes manifests and Helm charts by putting them in a specific directory. K3s watches for changes and takes care of applying them without any further interaction. This is especially useful for CI pipelines and IoT devices (both target use cases of K3s). Just create/update your configuration and K3s makes sure to keep your deployments up to date.&lt;/p&gt;
+
+&lt;h3 id=&quot;55-kind&quot;&gt;5.5 Kind&lt;/h3&gt;
+
+&lt;p&gt;Kind (Kubernetes-in-Docker), as the name implies, runs Kubernetes clusters in Docker containers. This is the official tool used by Kubernetes maintainers for Kubernetes v1.11+ conformance testing. It supports multi-node clusters as well as HA clusters. Because it runs K8s in Docker, kind can run on Windows, Mac, and Linux.&lt;/p&gt;
+
+&lt;p&gt;Kind is optimized first and foremost for CI pipelines, so it may not have some of the developer-friendly features of other offerings. Kind leads to a significantly faster startup speed compared to spawning VM.&lt;/p&gt;
+
+&lt;p&gt;Creating a cluster is very similar to minikube’s approach. Executing kind create cluster, playing the waiting game and afterwards you are good to go. By using different names (–name) kind allows you to create multiple instances in parallel.&lt;/p&gt;
+
+&lt;p&gt;If you are looking for a way to programmatically create a Kubernetes cluster, kind kindly (you have been for waiting for this, don’t you ) publishes its Go packages that are used under the hood.&lt;/p&gt;
+
+&lt;h3 id=&quot;56-k3d&quot;&gt;5.6 K3d&lt;/h3&gt;
+
+&lt;p&gt;A new project that aims to bring K3s-in-Docker (similar to kind).&lt;/p&gt;
 
 &lt;hr /&gt;</content><author><name></name></author><category term="Kubernetes" /><summary type="html"></summary></entry><entry><title type="html">Docker Hard Parts [Part - 2]</title><link href="https://hacstac.github.io/Notes/docker/2020/09/01/Docker-Hard-Parts.html" rel="alternate" type="text/html" title="Docker Hard Parts [Part - 2]" /><published>2020-09-01T00:00:00-05:00</published><updated>2020-09-01T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/docker/2020/09/01/Docker-Hard-Parts</id><content type="html" xml:base="https://hacstac.github.io/Notes/docker/2020/09/01/Docker-Hard-Parts.html">&lt;h2 id=&quot;70-building-images-automatically-with-dockerfiles&quot;&gt;7.0 Building Images automatically with DockerFiles&lt;/h2&gt;
 

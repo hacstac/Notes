@@ -4,19 +4,19 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
-<title>Step By Step Process To Deploy Your Own Kubernetes Cluster | Notebook</title>
+<title>Step-By-Step Process To Deploy Kubernetes On Your Raspberry PIs | Notebook</title>
 <meta name="generator" content="Jekyll v4.1.1" />
-<meta property="og:title" content="Step By Step Process To Deploy Your Own Kubernetes Cluster" />
+<meta property="og:title" content="Step-By-Step Process To Deploy Kubernetes On Your Raspberry PIs" />
 <meta property="og:locale" content="en_US" />
-<meta name="description" content="Developing and deploying Kubernetes applications on a Raspberry Pi cluster" />
-<meta property="og:description" content="Developing and deploying Kubernetes applications on a Raspberry Pi cluster" />
+<meta name="description" content="Developing and Deploying Kubernetes Applications with MicroK8s on a Raspberry Pi Cluster" />
+<meta property="og:description" content="Developing and Deploying Kubernetes Applications with MicroK8s on a Raspberry Pi Cluster" />
 <link rel="canonical" href="https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html" />
 <meta property="og:url" content="https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html" />
 <meta property="og:site_name" content="Notebook" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2020-09-15T00:00:00-05:00" />
 <script type="application/ld+json">
-{"description":"Developing and deploying Kubernetes applications on a Raspberry Pi cluster","url":"https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html"},"headline":"Step By Step Process To Deploy Your Own Kubernetes Cluster","dateModified":"2020-09-15T00:00:00-05:00","datePublished":"2020-09-15T00:00:00-05:00","@context":"https://schema.org"}</script>
+{"description":"Developing and Deploying Kubernetes Applications with MicroK8s on a Raspberry Pi Cluster","url":"https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html"},"headline":"Step-By-Step Process To Deploy Kubernetes On Your Raspberry PIs","dateModified":"2020-09-15T00:00:00-05:00","datePublished":"2020-09-15T00:00:00-05:00","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 <link rel="stylesheet" href="/Notes/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://hacstac.github.io/Notes/feed.xml" title="Notebook" /><link rel="shortcut icon" type="image/x-icon" href="/Notes/images/favicon.ico"><link href="https://unpkg.com/@primer/css/dist/primer.css" rel="stylesheet" />
 <link rel="stylesheet" href="//use.fontawesome.com/releases/v5.0.7/css/all.css">
@@ -71,7 +71,7 @@ window.onload = wrap_img;
         <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
 
   <header class="post-header">
-    <h1 class="post-title p-name" itemprop="name headline">Step By Step Process To Deploy Your Own Kubernetes Cluster</h1><p class="page-description">Developing and deploying Kubernetes applications on a Raspberry Pi cluster</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2020-09-15T00:00:00-05:00" itemprop="datePublished">
+    <h1 class="post-title p-name" itemprop="name headline">Step-By-Step Process To Deploy Kubernetes On Your Raspberry PIs</h1><p class="page-description">Developing and Deploying Kubernetes Applications with MicroK8s on a Raspberry Pi Cluster</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2020-09-15T00:00:00-05:00" itemprop="datePublished">
         Sep 15, 2020
       </time>
        • <span class="read-time" title="Estimated read time">
@@ -108,12 +108,12 @@ window.onload = wrap_img;
 <li class="toc-entry toc-h4"><a href="#a-setup-docker-and-do-some-other-tweaks-before-installing-kubernetes">A. Setup Docker and Do Some Other Tweaks Before Installing Kubernetes</a></li>
 <li class="toc-entry toc-h4"><a href="#b-setup-microk8s">B. Setup MicroK8s</a></li>
 <li class="toc-entry toc-h4"><a href="#c-access-the-kubernetes-dashboard">C. Access the Kubernetes Dashboard</a></li>
-<li class="toc-entry toc-h4"><a href="#e-add-nodes-to-the-cluster">E. Add Nodes To The Cluster</a></li>
-<li class="toc-entry toc-h4"><a href="#f-deploy-some-fun">F. Deploy Some Fun</a>
+<li class="toc-entry toc-h4"><a href="#d-add-nodes-to-the-cluster">D. Add Nodes To The Cluster</a></li>
+<li class="toc-entry toc-h4"><a href="#e-deploy-some-fun">E. Deploy Some Fun</a>
 <ul>
-<li class="toc-entry toc-h5"><a href="#f1-install-portainer">F1. Install Portainer</a></li>
-<li class="toc-entry toc-h5"><a href="#f2-install-linkding--bookmark-manager-">F2. Install Linkding ( Bookmark Manager )</a></li>
-<li class="toc-entry toc-h5"><a href="#f3-install-codeserver">F3. Install CodeServer</a></li>
+<li class="toc-entry toc-h5"><a href="#e1-install-portainer">E1. Install Portainer</a></li>
+<li class="toc-entry toc-h5"><a href="#e2-install-linkding--bookmark-manager-">E2. Install Linkding ( Bookmark Manager )</a></li>
+<li class="toc-entry toc-h5"><a href="#e3-install-codeserver">E3. Install CodeServer</a></li>
 </ul>
 </li>
 </ul>
@@ -126,18 +126,16 @@ window.onload = wrap_img;
 <h2 id="overview">
 <a class="anchor" href="#overview" aria-hidden="true"><span class="octicon octicon-link"></span></a>Overview</h2>
 
-<p>Kubernetes is one of orchestration system which are getting popular for last five years. It’s originally made by Google but now it’s maintained by it’s huge community from all over the world. That’s why it might be become a new standard for container orchestration.</p>
-
-<p>But having Kubernetes cluster might be a bit expensive. You have to run at least two or 3 nodes to run the cluster and try several demo projects on that cluster. That could be overkill for someone. But how if we have a Kubernetes that might run in our local computer? That should be an interesting thing.</p>
+<p>Kubernetes is one of orchestration system which is getting popular for the last five years. Google initially makes it, but now it’s maintained by its vast community worldwide. That’s why it might become a new standard for container orchestration. But having a Kubernetes cluster might be a bit expensive. You have to run at least two or three nodes to run the cluster and try several demo projects on that cluster. That could be overkill for someone. But how if we have a Kubernetes that might run in our local computer? That should be an exciting thing.</p>
 
 <h3 id="hardware-need--must-have-">
 <a class="anchor" href="#hardware-need--must-have-" aria-hidden="true"><span class="octicon octicon-link"></span></a>Hardware Need ( Must Have )</h3>
 
 <ul>
-  <li>Raspberry PI (3/4 2GB RAM): Minimum 2 ( 1 Master, 1 Worker )</li>
-  <li>Power Cable ( 15W Typc-C for Rasp4 or Your can use POE Hat )</li>
-  <li>Ethernet Cable ( Minimum 5e/6 ( Rasp support upto 1Gbps ))</li>
-  <li>Micro SD Card ( Min 8 GB, Recommanded 32 GB )</li>
+  <li>Raspberry PI (3/4 Min 2GB RAM): Minimum 2 Nodes ( 1 Master Node, 1 Worker Node )</li>
+  <li>Power Supply Unit ( 15W Type-C for Rasp4 or You can use POE Hat )</li>
+  <li>Ethernet Cable ( Minimum CAT 5e/6 ( Rasp supports up to 1Gbps ))</li>
+  <li>Micro SD Card ( Min 8 GB, Recommended 32 GB )</li>
   <li>Good Case With FAN ( Saves your rasp from dirt and excessive heat )</li>
 </ul>
 
@@ -158,28 +156,28 @@ window.onload = wrap_img;
 <a class="anchor" href="#part---1-setup-raspberrypis" aria-hidden="true"><span class="octicon octicon-link"></span></a>Part - 1: Setup RaspberryPIs</h3>
 
 <ul>
-  <li>Use Raspberry PI Imager (Recommanded) or Etcher to boot ubuntu 20.4 64Bit on SD Card</li>
-  <li>When Imager flashes the OS in the SD Card open the boot drive and create a file name <code class="language-plaintext highlighter-rouge">ssh</code> (Without any extension).</li>
+  <li>Use Raspberry PI Imager (Recommended) or Etcher to boot ubuntu 20.4 64Bit on SD Card</li>
+  <li>When Imager flashes the OS in the SD Card, open the boot drive and create a file name <code class="language-plaintext highlighter-rouge">ssh</code> (Without any extension).</li>
   <li>Boot your Rasps</li>
-  <li>Check the rasp IP from your router or use nmap to network scan like this : <code class="language-plaintext highlighter-rouge">nmap -sP 192.168.0.0/24</code>
+  <li>Check the rasp IP from your router or use Nmap to network scan like this: <code class="language-plaintext highlighter-rouge">nmap -sP 192.168.0.0/24</code>
 </li>
-  <li>ssh to rasps ( Ex: ssh ubuntu@10.0.1.49 )</li>
+  <li>SSH to rasps ( Ex: ssh ubuntu@10.0.1.49 )</li>
   <li>Default username : <code class="language-plaintext highlighter-rouge">ubuntu</code> &amp; default password : <code class="language-plaintext highlighter-rouge">ubuntu</code>
 </li>
-  <li>Do all the basics things you always do with your rasps like setup static IP, setup dotfiles and other stuff.</li>
+  <li>Do all the basics things you always do with your rasps like setup static IP, setup dotfiles, and other stuff.</li>
 </ul>
 
 <h3 id="part---2-setup-microk8s">
 <a class="anchor" href="#part---2-setup-microk8s" aria-hidden="true"><span class="octicon octicon-link"></span></a>Part - 2: Setup MicroK8s</h3>
 
-<p>Microk8s provides a single command installation of the latest Kubernetes release on a local machine for development and testing. Setup is quick, fast (~30 sec) and supports many plugins including Istio with a single command. Since K8s is not the easiest thing to get started with, having a tool that would make it easy for you to get going is very desirable.</p>
+<p>Microk8s provides a single command installation of the latest Kubernetes release on a local machine for development and testing. Setup is quick, fast (~30 sec), and supports many plugins, including Istio, with a single command. Since K8s is not the easiest thing to get started with, having a tool that would make it easy for you to get going is very desirable.</p>
 
-<p>microk8s is strictly for Linux. There is no VM involved. It is distributed and runs as a snap — a pre-packaged application (similar to a Docker container). Snaps can be used on all major Linux distributions, including Ubuntu, Linux Mint, Debian and Fedora.</p>
+<p>microk8s is strictly for Linux. There is no VM involved. It is distributed and runs as a snap — a pre-packaged application (similar to a Docker container). Snaps can be used on all major Linux distributions, including Ubuntu, Linux Mint, Debian, and Fedora.</p>
 
 <h4 id="a-setup-docker-and-do-some-other-tweaks-before-installing-kubernetes">
 <a class="anchor" href="#a-setup-docker-and-do-some-other-tweaks-before-installing-kubernetes" aria-hidden="true"><span class="octicon octicon-link"></span></a>A. Setup Docker and Do Some Other Tweaks Before Installing Kubernetes</h4>
 
-<p>It is not a surprise we are going to use Docker Engine for the container runtime. Despite there are alternatives in rkt, cri-o and others. However, at a closer look, we can see Kubernetes uses containerd. We use docker because it is most famous conatiner system and quite easy to deploy.</p>
+<p>It is not a surprise we are going to use Docker Engine for the container runtime. Despite there are alternatives in rkt, cri-o, and others. However, at a closer look, we can see Kubernetes uses containers. We use docker because it is the most famous container system and relatively easy to deploy.</p>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Do this on all of your nodes ( Rasps )</span>
 
@@ -189,7 +187,7 @@ window.onload = wrap_img;
 
 <span class="nt">--------------------------------------------------------------------------------------</span>
 <span class="c">## Enable cgroups (Control Groups). Cgroups allow the Linux kernel to limit and isolate resources.</span>
-<span class="c"># Practically speaking, this allows Kubernetes to better manage resources used by the containers it runs and increases security by isolating containers from one another.</span>
+<span class="c"># Practically speaking, this allows Kubernetes to manage better resources used by the containers it runs and increases security by isolating containers from one another.</span>
 
 <span class="c"># Inspect Docker</span>
 <span class="nv">$ </span>docker info
@@ -210,7 +208,7 @@ window.onload = wrap_img;
   <span class="s2">"insecure-registries"</span> : <span class="o">[</span><span class="s2">"localhost:32000"</span><span class="o">]</span>
 <span class="o">}</span>
 
-<span class="c"># Restart Docker and inspect again</span>
+<span class="c"># Restart Docker and Inspect Again</span>
 <span class="nv">$ </span><span class="nb">sudo </span>systemctl restart docker
 
 <span class="c"># Inspect</span>
@@ -233,7 +231,7 @@ window.onload = wrap_img;
 
 <span class="nt">--or--</span>
 
-<span class="nt">---With</span> <span class="nb">sed</span>
+<span class="nt">---Automatically</span> with <span class="nb">sed</span>
 <span class="c"># Note the space before "cgroup_enable=cpuset", to add a space after the last existing item on the line</span>
 <span class="nv">$ </span><span class="nb">sudo sed</span> <span class="nt">-i</span> <span class="s1">'$ s/$/ cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1 swapaccount=1/'</span> /boot/firmware/cmdline.txt
 <span class="nt">---</span>
@@ -259,7 +257,7 @@ net.bridge.bridge-nf-call-iptables = 1
 
 <p>Start with installing MicroK8s using Snap which will take only a few seconds.</p>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Do this on all the nodes ( Only Installtion step, Rest of the steps are for just master server )</span>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Do this on all the nodes ( Only the Installation step, Rest of the steps are for just master server )</span>
 
 <span class="c">## Install MicroK8s</span>
 <span class="nv">$ </span><span class="nb">sudo </span>snap <span class="nb">install </span>microk8s <span class="nt">--channel</span><span class="o">=</span>1.19 <span class="nt">--classic</span>
@@ -344,8 +342,8 @@ addons:
 <h4 id="c-access-the-kubernetes-dashboard">
 <a class="anchor" href="#c-access-the-kubernetes-dashboard" aria-hidden="true"><span class="octicon octicon-link"></span></a>C. Access the Kubernetes Dashboard</h4>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># We use headless OS, So we have no option to access servicex other than exposing to the intenal network.</span>
-<span class="c"># By defauly Kubernetes dashboard is not accessible on local network, but if you using raspbionOS ( GUI ) then you can access to cluster ip in you raspi.</span>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># We use the headless OS, So we have no option to access services other than exposing to the internal network.</span>
+<span class="c"># By default Kubernetes dashboard is not accessible on the local network, but if you were using raspbionOS ( GUI ), you could access the clusterIP in your Raspberry pi.</span>
 
 <span class="c"># --Exposing--</span>
 <span class="nv">$ </span>kubectl <span class="nt">-n</span> kube-system edit service kubernetes-dashboard
@@ -358,7 +356,7 @@ kubernetes-dashboard   NodePort   10.152.183.188   &lt;none&gt;        443:30355
 <span class="c"># Dashboard Access : https://MasterServer:Port ( Ex: https://10.0.1.86:30355 )</span>
 
 <span class="nt">--------------------------------------------------------------------------------------</span>
-<span class="c">## Kubernetes dashboard needs authentication to acess to the dashboard</span>
+<span class="c">## Kubernetes dashboard needs authentication to access to the dashboard</span>
 <span class="c"># Method 1 : Generate Token</span>
 <span class="nv">$ token</span><span class="o">=</span><span class="si">$(</span>microk8s kubectl <span class="nt">-n</span> kube-system get secret | <span class="nb">grep </span>default-token | <span class="nb">cut</span> <span class="nt">-d</span> <span class="s2">" "</span> <span class="nt">-f1</span><span class="si">)</span>
 <span class="nv">$ </span>microk8s kubectl <span class="nt">-n</span> kube-system describe secret <span class="nv">$token</span>
@@ -391,8 +389,8 @@ spec:
 <span class="nt">--------------------------------------------------------------------------------------</span>
 </code></pre></div></div>
 
-<h4 id="e-add-nodes-to-the-cluster">
-<a class="anchor" href="#e-add-nodes-to-the-cluster" aria-hidden="true"><span class="octicon octicon-link"></span></a>E. Add Nodes To The Cluster</h4>
+<h4 id="d-add-nodes-to-the-cluster">
+<a class="anchor" href="#d-add-nodes-to-the-cluster" aria-hidden="true"><span class="octicon octicon-link"></span></a>D. Add Nodes To The Cluster</h4>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># On Master Server</span>
 <span class="nv">$ </span>microk8s add-node
@@ -408,13 +406,13 @@ master   Ready    &lt;none&gt;   64m     v1.19.0-34+09a4aa08bb9e93
 node1    Ready    &lt;none&gt;   2m49s   v1.19.0-34+09a4aa08bb9e93
 </code></pre></div></div>
 
-<h4 id="f-deploy-some-fun">
-<a class="anchor" href="#f-deploy-some-fun" aria-hidden="true"><span class="octicon octicon-link"></span></a>F. Deploy Some Fun</h4>
+<h4 id="e-deploy-some-fun">
+<a class="anchor" href="#e-deploy-some-fun" aria-hidden="true"><span class="octicon octicon-link"></span></a>E. Deploy Some Fun</h4>
 
-<h5 id="f1-install-portainer">
-<a class="anchor" href="#f1-install-portainer" aria-hidden="true"><span class="octicon octicon-link"></span></a>F1. Install Portainer</h5>
+<h5 id="e1-install-portainer">
+<a class="anchor" href="#e1-install-portainer" aria-hidden="true"><span class="octicon octicon-link"></span></a>E1. Install Portainer</h5>
 
-<p>Portainer is a lightweight management UI that allows you to easily manage your different Docker environments. Portainer provides an easy and simple solution for managing Docker containers and Swarm services through a web interface. Portainer supports a wide range of features for managing the Docker containers, such as managing the creation and deletion of Swarm services, user authentication, authorizations, connecting, executing commands in the console of running containers, and viewing containers’ logs.</p>
+<p>Portainer is a lightweight management UI that allows you to manage your different Docker environments easily. Portainer provides an easy and straightforward solution for managing Docker containers and Swarm services through a web interface. Portainer supports a wide range of features for managing the Docker containers, such as controlling the creation and deletion of Swarm services, user authentication, authorizations, connecting, executing commands in the console of running containers viewing containers’ logs.</p>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">## Install Portainer</span>
 
@@ -433,14 +431,14 @@ node1    Ready    &lt;none&gt;   2m49s   v1.19.0-34+09a4aa08bb9e93
 
 <hr>
 
-<h5 id="f2-install-linkding--bookmark-manager-">
-<a class="anchor" href="#f2-install-linkding--bookmark-manager-" aria-hidden="true"><span class="octicon octicon-link"></span></a>F2. Install Linkding ( Bookmark Manager )</h5>
+<h5 id="e2-install-linkding--bookmark-manager-">
+<a class="anchor" href="#e2-install-linkding--bookmark-manager-" aria-hidden="true"><span class="octicon octicon-link"></span></a>E2. Install Linkding ( Bookmark Manager )</h5>
 
 <p>Linkding is a self-hosted bookmark service : <a href="https://github.com/sissbruecker/linkding">sissbruecker/linkding</a></p>
 
 <p><img src="https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Linkding.png" alt="Linkding"></p>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># I m installing linkding with persistent storage ( To know about What persistent storage is check out my kubernetes 101 post )</span>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># I m installing linkding with persistent storage ( To know about What persistent storage is, check out my Kubernetes 101 post )</span>
 
 <span class="c"># YAML for Persistent Volume ( pv.yml )</span>
 <span class="nt">---</span>
@@ -537,12 +535,12 @@ linkding     NodePort    10.152.183.77   &lt;none&gt;        9090:31071/TCP   30
 
 <hr>
 
-<h5 id="f3-install-codeserver">
-<a class="anchor" href="#f3-install-codeserver" aria-hidden="true"><span class="octicon octicon-link"></span></a>F3. Install CodeServer</h5>
+<h5 id="e3-install-codeserver">
+<a class="anchor" href="#e3-install-codeserver" aria-hidden="true"><span class="octicon octicon-link"></span></a>E3. Install CodeServer</h5>
 
-<p>CodeServer is nothing but VS Code on browser ( To use on any machine anywhere and access it in the browser. ) : <a href="https://github.com/codercom/code-server">codercom/code-server</a></p>
+<p>CodeServer is nothing but VS Code on the browser ( To use on any machine anywhere and access it in the browser. ) : <a href="https://github.com/codercom/code-server">codercom/code-server</a></p>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">## Installing code-server with also persitent storage because, give freedom to access code file in your desired folder</span>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">## Installing code-server with persistent storage, because this gives us the freedom to access code files from desired directories</span>
 
 <span class="nt">--------------------------------------------------------------------------------------</span>
 <span class="c"># We already create PersitentVolume, but we need another claim for VSCode</span>
