@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Kubernetes Pods Deep Dive | Notebook</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Kubernetes Pods Deep Dive" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Easy guide to understand the kubernetes pods easily" />
+<meta property="og:description" content="Easy guide to understand the kubernetes pods easily" />
+<link rel="canonical" href="https://hacstac.github.io/Notes/kubernetes/2020/09/23/Kubernetes-Pods.html" />
+<meta property="og:url" content="https://hacstac.github.io/Notes/kubernetes/2020/09/23/Kubernetes-Pods.html" />
+<meta property="og:site_name" content="Notebook" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-09-23T00:00:00-05:00" />
+<script type="application/ld+json">
+{"description":"Easy guide to understand the kubernetes pods easily","url":"https://hacstac.github.io/Notes/kubernetes/2020/09/23/Kubernetes-Pods.html","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://hacstac.github.io/Notes/kubernetes/2020/09/23/Kubernetes-Pods.html"},"headline":"Kubernetes Pods Deep Dive","dateModified":"2020-09-23T00:00:00-05:00","datePublished":"2020-09-23T00:00:00-05:00","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/Notes/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://hacstac.github.io/Notes/feed.xml" title="Notebook" /><link rel="shortcut icon" type="image/x-icon" href="/Notes/images/favicon.ico"><link href="https://unpkg.com/@primer/css/dist/primer.css" rel="stylesheet" />
+<link rel="stylesheet" href="//use.fontawesome.com/releases/v5.0.7/css/all.css">
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/Notes/">Notebook</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/Notes/about/">About Me</a><a class="page-link" href="/Notes/search/">Search</a><a class="page-link" href="/Notes/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Kubernetes Pods Deep Dive</h1><p class="page-description">Easy guide to understand the kubernetes pods easily</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2020-09-23T00:00:00-05:00" itemprop="datePublished">
+        Sep 23, 2020
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      22 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/Notes/categories/#Kubernetes">Kubernetes</a>
+        
+      
+      </p>
+    
+
+    </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul class="section-nav">
+<li class="toc-entry toc-h2"><a href="#10-pods">1.0 Pods</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#11-some-general-faqs-regarding-pods">1.1 Some general FAQs regarding pods</a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#111-why-we-need-pods">1.1.1 Why we need pods</a></li>
+<li class="toc-entry toc-h4"><a href="#112-how-containers-share-the-same-ip-and-port-space-in-pods">1.1.2 how containers share the same IP and Port space in pods</a></li>
+<li class="toc-entry toc-h4"><a href="#113-how-to-organizing-containers-across-pods-properly">1.1.3 How to organizing containers across pods properly</a></li>
+<li class="toc-entry toc-h4"><a href="#114-when-to-use-multiple-containers-in-a-pod">1.1.4 When to use multiple containers in a pod</a></li>
+<li class="toc-entry toc-h4"><a href="#115-what-is-pod-manifest">1.1.5 What is pod manifest</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h3"><a href="#12-creating-pods">1.2 Creating Pods</a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#121-main-parts-of-pod-definition">1.2.1 Main parts of pod definition</a></li>
+<li class="toc-entry toc-h4"><a href="#122-lets-create-a-pod">1.2.2 Lets create a pod</a></li>
+<li class="toc-entry toc-h4"><a href="#123-get-details-of-a-pod">1.2.3 Get details of a pod</a></li>
+<li class="toc-entry toc-h4"><a href="#124-deletion-of-pods">1.2.4 Deletion of pods</a></li>
+<li class="toc-entry toc-h4"><a href="#125-accessing-the-pods">1.2.5 Accessing the pods</a></li>
+<li class="toc-entry toc-h4"><a href="#126-health-checks">1.2.6 Health Checks</a></li>
+<li class="toc-entry toc-h4"><a href="#127-resource-management">1.2.7 Resource Management</a></li>
+<li class="toc-entry toc-h4"><a href="#128-persistent-volumes-with-pods">1.2.8 Persistent Volumes with Pods</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul><hr>
+
+<h2 id="10-pods">
+<a class="anchor" href="#10-pods" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.0 Pods</h2>
+
+<p>POD: Kubernetes groups multiple containers into a single atomic unit called a Pod</p>
+
+<p>A pod is a co-located group of containers and represents the basic building block in Kubernetes. Instead of deploying containers individually, we always deploy and operate on a pod of containers. We’re not implying that a pod always includes more than one container—it’s common for pods to contain only a single container. The key thing about pods is that when a pod does have multiple containers, all of them are always run on a single worker node—it never spans multiple worker nodes. A Pod represents a collection of application containers and volumes running in the same execution environment. Pods, not containers, are the smallest deployable arti‐ fact in a Kubernetes cluster. This means all of the containers in a Pod always land on the same machine.</p>
+
+<p>Applications running in the same Pod share the same IP address and port space (net‐ work namespace), have the same hostname (UTS namespace), and can communicate using native interprocess communication channels over System V IPC or POSIX message queues (IPC namespace). However, applications in different Pods are isolated from each other; they have different IP addresses, different hostnames, and more. Containers in different Pods running on the same node might as well be on different servers.</p>
+
+<p><img src="https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Pod1.png" alt="Pods"></p>
+
+<hr>
+
+<h3 id="11-some-general-faqs-regarding-pods">
+<a class="anchor" href="#11-some-general-faqs-regarding-pods" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.1 Some general FAQs regarding pods</h3>
+
+<h4 id="111-why-we-need-pods">
+<a class="anchor" href="#111-why-we-need-pods" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.1.1 Why we need pods</h4>
+
+<ul>
+  <li><strong>Understanding why multiple containers are better than one container running multiple processes</strong></li>
+</ul>
+
+<p>Imagine an app consisting of multiple processes that either communicate through
+IPC (Inter-Process Communication) or through locally stored files requires them to run on the same machine. Because in Kubernetes, we always run processes in containers, and each container is much like an isolated machine. Containers are designed to run only a single process per container (unless the process itself spawns child processes). If you run multiple unrelated operations in a single container, it is your responsibility to keep all those processes running, manage their logs, and so on. For example, you’d have to include a mechanism for automatically restarting individual processes if they crash. Also, all those processes would log to the same standard output, so you’d have difficulty figuring out what method logged. That’s why we need to run each process in its container, and because of this problem, we need a higher-level construct that will allow us to bind containers together and manage them as a single unit. This is the reasoning behind pods.</p>
+
+<p>A pod of containers allows us to run near related processes together and provide them with (almost) the same environment as if they were all running in a single
+container, while keeping them somewhat isolated. This way, we can get the best of both
+worlds. We can take advantage of all the features containers provide, while at the
+same time giving the processes the illusion of running together.</p>
+
+<ul>
+  <li><strong>Understanding the partial isolation between containers of the same pod</strong></li>
+</ul>
+
+<p>We want containers inside each group to share certain resources, although not all, so that they’re not fully isolated. Kubernetes achieves this by config- uring Docker to have all containers of a pod share the same set of Linux namespaces instead of each container having its own set. Because all containers of a pod run under the same Network and UTS namespaces (we’re talking about Linux namespaces here), they all share the same hostname and network interfaces. Similarly, all containers of a pod run under the same IPC namespace and can communicate through IPC. In the latest Kubernetes and Docker versions, they can also share the same PID namespace, but that feature isn’t enabled by default. But when it comes to the filesystem, things are a little different. Because most of the container’s filesystem comes from the container image, by default, the filesystem of each container is fully isolated from other containers.</p>
+
+<h4 id="112-how-containers-share-the-same-ip-and-port-space-in-pods">
+<a class="anchor" href="#112-how-containers-share-the-same-ip-and-port-space-in-pods" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.1.2 how containers share the same IP and Port space in pods</h4>
+
+<p>One thing to stress here is that because containers in a pod run in the same Network namespace, they share the same IP address and port space. This means processes running in containers of the same pod need to take care not to bind to the same port numbers or they’ll run into port conflicts. But this only concerns containers in the same pod. Containers of different pods can never run into port conflicts, because each pod has a separate port space. All the containers in a pod also have the same loopback network interface, so a container can communicate with other containers in the same pod through localhost. All pods in a Kubernetes cluster reside in a single flat, shared, network-address space, which means every pod can access every other pod at the other pod’s IP address. No NAT (Network Address Translation) gateways exist between them. When two pods send network packets between each other, they’ll each see the actual IP address of the other as the source IP in the packet.</p>
+
+<p>Consequently, communication between pods is always simple. It doesn’t matter if two pods are scheduled onto a single or onto different worker nodes; in both cases the containers inside those pods can communicate with each other across the flat NAT- less network, much like computers on a local area network (LAN), regardless of the actual inter-node network topology. Like a computer on a LAN, each pod gets its own IP address and is accessible from all other pods through this network established specifically for pods. This is usually achieved through an additional software-defined net- work layered on top of the actual network.</p>
+
+<p><img src="https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Pod_Network.png" alt="Pod Network"></p>
+
+<h4 id="113-how-to-organizing-containers-across-pods-properly">
+<a class="anchor" href="#113-how-to-organizing-containers-across-pods-properly" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.1.3 How to organizing containers across pods properly</h4>
+
+<p>Pods are relatively lightweight, we can have as many as we need without incurring almost any overhead. Instead of stuffing everything into a single pod, we should organize apps into multiple pods, where each one contains only tightly related components or processes. For Ex: a multi-tier application consisting of a frontend
+application server and a backend database should be configured as a single pod or as
+two pods? Although nothing is stopping us from running both the frontend server and the database in a single pod with two containers, it isn’t the most appropriate way. We’ve said that all containers of the same pod always run co-located, but do the web server and the database really need to run on the same machine? The answer is obviously no.</p>
+
+<p>If both the frontend and backend are in the same pod, then both will always be run on the same machine. If you have a two-node Kubernetes cluster and only this single pod, you’ll only be using a single worker node and not taking advantage of the computational resources (CPU and memory) you have at your disposal on the second node. Splitting the pod into two would allow Kubernetes to schedule the frontend to one node and the backend to the other node, thereby improving the utilization of your infrastructure.</p>
+
+<p>Another reason why you shouldn’t put them both into a single pod is scaling. A pod is also the basic unit of scaling. Kubernetes can’t horizontally scale individual containers; instead, it scales whole pods. If your pod consists of a frontend and a backend container, when you scale up the number of instances of the pod to, let’s say, two, you end up with two frontend containers and two backend containers. Usually, frontend components have completely different scaling requirements
+than the backends, so we tend to scale them individually. Not to mention the fact that
+backends such as databases are usually much harder to scale compared to (stateless)
+frontend web servers.</p>
+
+<h4 id="114-when-to-use-multiple-containers-in-a-pod">
+<a class="anchor" href="#114-when-to-use-multiple-containers-in-a-pod" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.1.4 When to use multiple containers in a pod</h4>
+
+<p>The main reason to put multiple containers into a single pod is when the application
+consists of one main process and one or more complementary processes. For example, the main container in a pod could be a web server that serves files from a certain file directory, while an additional container (a sidecar container) periodically downloads content from an external source and stores it in the web server’s directory. But always remember you need a good reason to place a two containers in a single pod. ( like another container for gathering logs or to be used for more specific need )</p>
+
+<h4 id="115-what-is-pod-manifest">
+<a class="anchor" href="#115-what-is-pod-manifest" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.1.5 What is pod manifest</h4>
+
+<p>Pods are described in a Pod manifest. The Pod manifest is just a text-file representation of the Kubernetes API object. Kubernetes strongly believes in declarative configu‐ ration. Declarative configuration means that you write down the desired state of the world in a configuration and then submit that configuration to a service that takes actions to ensure the desired state becomes the actual state.</p>
+
+<p>The Kubernetes API server accepts and processes Pod manifests before storing them in persistent storage (etcd). The scheduler also uses the Kubernetes API to find Pods that haven’t been scheduled to a node. The scheduler then places the Pods onto nodes depending on the resources and other constraints expressed in the Pod manifests. Multiple Pods can be placed on the same machine as long as there are sufficient resources. However, scheduling multiple replicas of the same application onto the same machine is worse for reliability, since the machine is a single failure domain. Consequently, the Kubernetes scheduler tries to ensure that Pods from the same application are distributed onto different machines for reliability in the presence of such failures. Once scheduled to a node, Pods don’t move and must be explicitly destroyed and rescheduled.</p>
+
+<hr>
+
+<h3 id="12-creating-pods">
+<a class="anchor" href="#12-creating-pods" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.2 Creating Pods</h3>
+
+<p>Pods and other Kubernetes resources are usually created by posting a JSON or YAML
+manifest to the Kubernetes REST API endpoint. Also, we can use other, simpler ways
+of creating resources, such as the kubectl run command, but this usually allow us to configure a limited set of properties. Additionally, defining all your Kubernetes objects from YAML files makes it possible to store them in a version control system, with all the benefits it brings.</p>
+
+<h4 id="121-main-parts-of-pod-definition">
+<a class="anchor" href="#121-main-parts-of-pod-definition" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.2.1 Main parts of pod definition</h4>
+
+<ul>
+  <li>The three important sections of any pod defination is:
+    <ul>
+      <li>Metadata includes the name, namespace, labels, and other information about the pod.</li>
+      <li>Spec contains the actual description of the pod’s contents, such as the pod’s containers, volumes, and other data.</li>
+      <li>Status contains the current information about the running pod, such as what condition the pod is in, the description and status of each container, and the pod’s internal IP and other basic info. The status part contains read-only runtime data that shows the state of the resource at a given moment. When creating a new pod, you never need to provide the status part.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>EX: let’s look at what a YAML definition for one of those pods looks like: I know this looks complicated, but it becomes simple once you understand the basics and know how to distinguish between the important parts and the minor details. Also, you can take comfort in the fact that when creating a new pod, the YAML you need to write is much shorter</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">---linkding</span>.yml
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    cattle.io/timestamp: <span class="s2">"2020-09-19T07:58:22Z"</span>
+    cni.projectcalico.org/podIP: 10.42.0.66/32
+    cni.projectcalico.org/podIPs: 10.42.0.66/32
+    field.cattle.io/ports: <span class="s1">'[[{"containerPort":9090,"dnsName":"linkding-hostport","hostPort":9090,"kind":"HostPort","name":"port","protocol":"TCP","sourcePort":9090}]]'</span>
+  creationTimestamp: null
+  generateName: linkding-5c77d5f4cf-
+  labels:
+    pod-template-hash: 5c77d5f4cf
+    workload.user.cattle.io/workloadselector: deployment-default-linkding
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: <span class="o">{}</span>
+          f:cattle.io/timestamp: <span class="o">{}</span>
+          f:field.cattle.io/ports: <span class="o">{}</span>
+        f:generateName: <span class="o">{}</span>
+        f:labels:
+          .: <span class="o">{}</span>
+          f:pod-template-hash: <span class="o">{}</span>
+          f:workload.user.cattle.io/workloadselector: <span class="o">{}</span>
+        f:ownerReferences:
+          .: <span class="o">{}</span>
+          k:<span class="o">{</span><span class="s2">"uid"</span>:<span class="s2">"762057a3-c1d7-4fa1-91ca-01e961fbc72c"</span><span class="o">}</span>:
+            .: <span class="o">{}</span>
+            f:apiVersion: <span class="o">{}</span>
+            f:blockOwnerDeletion: <span class="o">{}</span>
+            f:controller: <span class="o">{}</span>
+            f:kind: <span class="o">{}</span>
+            f:name: <span class="o">{}</span>
+            f:uid: <span class="o">{}</span>
+      f:spec:
+        f:containers:
+          k:<span class="o">{</span><span class="s2">"name"</span>:<span class="s2">"linkding"</span><span class="o">}</span>:
+            .: <span class="o">{}</span>
+            f:image: <span class="o">{}</span>
+            f:imagePullPolicy: <span class="o">{}</span>
+            f:livenessProbe:
+              .: <span class="o">{}</span>
+              f:failureThreshold: <span class="o">{}</span>
+              f:initialDelaySeconds: <span class="o">{}</span>
+              f:periodSeconds: <span class="o">{}</span>
+              f:successThreshold: <span class="o">{}</span>
+              f:tcpSocket:
+                .: <span class="o">{}</span>
+                f:port: <span class="o">{}</span>
+              f:timeoutSeconds: <span class="o">{}</span>
+            f:name: <span class="o">{}</span>
+            f:ports:
+              .: <span class="o">{}</span>
+              k:<span class="o">{</span><span class="s2">"containerPort"</span>:9090,<span class="s2">"protocol"</span>:<span class="s2">"TCP"</span><span class="o">}</span>:
+                .: <span class="o">{}</span>
+                f:containerPort: <span class="o">{}</span>
+                f:hostPort: <span class="o">{}</span>
+                f:name: <span class="o">{}</span>
+                f:protocol: <span class="o">{}</span>
+            f:readinessProbe:
+              .: <span class="o">{}</span>
+              f:failureThreshold: <span class="o">{}</span>
+              f:initialDelaySeconds: <span class="o">{}</span>
+              f:periodSeconds: <span class="o">{}</span>
+              f:successThreshold: <span class="o">{}</span>
+              f:tcpSocket:
+                .: <span class="o">{}</span>
+                f:port: <span class="o">{}</span>
+              f:timeoutSeconds: <span class="o">{}</span>
+            f:resources: <span class="o">{}</span>
+            f:securityContext:
+              .: <span class="o">{}</span>
+              f:allowPrivilegeEscalation: <span class="o">{}</span>
+              f:capabilities: <span class="o">{}</span>
+              f:privileged: <span class="o">{}</span>
+              f:readOnlyRootFilesystem: <span class="o">{}</span>
+              f:runAsNonRoot: <span class="o">{}</span>
+            f:stdin: <span class="o">{}</span>
+            f:terminationMessagePath: <span class="o">{}</span>
+            f:terminationMessagePolicy: <span class="o">{}</span>
+            f:tty: <span class="o">{}</span>
+            f:volumeMounts:
+              .: <span class="o">{}</span>
+              k:<span class="o">{</span><span class="s2">"mountPath"</span>:<span class="s2">"/etc/linkding/data"</span><span class="o">}</span>:
+                .: <span class="o">{}</span>
+                f:mountPath: <span class="o">{}</span>
+                f:name: <span class="o">{}</span>
+        f:dnsPolicy: <span class="o">{}</span>
+        f:enableServiceLinks: <span class="o">{}</span>
+        f:restartPolicy: <span class="o">{}</span>
+        f:schedulerName: <span class="o">{}</span>
+        f:securityContext: <span class="o">{}</span>
+        f:terminationGracePeriodSeconds: <span class="o">{}</span>
+        f:volumes:
+          .: <span class="o">{}</span>
+          k:<span class="o">{</span><span class="s2">"name"</span>:<span class="s2">"data"</span><span class="o">}</span>:
+            .: <span class="o">{}</span>
+            f:hostPath:
+              .: <span class="o">{}</span>
+              f:path: <span class="o">{}</span>
+              f:type: <span class="o">{}</span>
+            f:name: <span class="o">{}</span>
+    manager: kube-controller-manager
+    operation: Update
+    <span class="nb">time</span>: <span class="s2">"2020-09-19T07:58:22Z"</span>
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          f:cni.projectcalico.org/podIP: <span class="o">{}</span>
+          f:cni.projectcalico.org/podIPs: <span class="o">{}</span>
+    manager: calico
+    operation: Update
+    <span class="nb">time</span>: <span class="s2">"2020-09-19T07:58:26Z"</span>
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:status:
+        f:conditions:
+          k:<span class="o">{</span><span class="s2">"type"</span>:<span class="s2">"ContainersReady"</span><span class="o">}</span>:
+            .: <span class="o">{}</span>
+            f:lastProbeTime: <span class="o">{}</span>
+            f:lastTransitionTime: <span class="o">{}</span>
+            f:status: <span class="o">{}</span>
+            f:type: <span class="o">{}</span>
+          k:<span class="o">{</span><span class="s2">"type"</span>:<span class="s2">"Initialized"</span><span class="o">}</span>:
+            .: <span class="o">{}</span>
+            f:lastProbeTime: <span class="o">{}</span>
+            f:lastTransitionTime: <span class="o">{}</span>
+            f:status: <span class="o">{}</span>
+            f:type: <span class="o">{}</span>
+          k:<span class="o">{</span><span class="s2">"type"</span>:<span class="s2">"Ready"</span><span class="o">}</span>:
+            .: <span class="o">{}</span>
+            f:lastProbeTime: <span class="o">{}</span>
+            f:lastTransitionTime: <span class="o">{}</span>
+            f:status: <span class="o">{}</span>
+            f:type: <span class="o">{}</span>
+        f:containerStatuses: <span class="o">{}</span>
+        f:hostIP: <span class="o">{}</span>
+        f:phase: <span class="o">{}</span>
+        f:podIP: <span class="o">{}</span>
+        f:podIPs:
+          .: <span class="o">{}</span>
+          k:<span class="o">{</span><span class="s2">"ip"</span>:<span class="s2">"10.42.0.66"</span><span class="o">}</span>:
+            .: <span class="o">{}</span>
+            f:ip: <span class="o">{}</span>
+        f:startTime: <span class="o">{}</span>
+    manager: kubelet
+    operation: Update
+    <span class="nb">time</span>: <span class="s2">"2020-09-19T07:59:15Z"</span>
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: <span class="nb">true
+    </span>controller: <span class="nb">true
+    </span>kind: ReplicaSet
+    name: linkding-5c77d5f4cf
+    uid: 762057a3-c1d7-4fa1-91ca-01e961fbc72c
+  selfLink: /api/v1/namespaces/default/pods/linkding-5c77d5f4cf-zlz6h
+spec:
+  containers:
+  - image: sissbruecker/linkding:latest
+    imagePullPolicy: Always
+    livenessProbe:
+      failureThreshold: 3
+      initialDelaySeconds: 10
+      periodSeconds: 2
+      successThreshold: 1
+      tcpSocket:
+        port: 9090
+      timeoutSeconds: 2
+    name: linkding
+    ports:
+    - containerPort: 9090
+      hostPort: 9090
+      name: port
+      protocol: TCP
+    readinessProbe:
+      failureThreshold: 3
+      initialDelaySeconds: 10
+      periodSeconds: 2
+      successThreshold: 2
+      tcpSocket:
+        port: 9090
+      timeoutSeconds: 2
+    resources: <span class="o">{}</span>
+    securityContext:
+      allowPrivilegeEscalation: <span class="nb">false
+      </span>capabilities: <span class="o">{}</span>
+      privileged: <span class="nb">false
+      </span>readOnlyRootFilesystem: <span class="nb">false
+      </span>runAsNonRoot: <span class="nb">false
+    </span>stdin: <span class="nb">true
+    </span>terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    <span class="nb">tty</span>: <span class="nb">true
+    </span>volumeMounts:
+    - mountPath: /etc/linkding/data
+      name: data
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: default-token-zh8ch
+      readOnly: <span class="nb">true
+  </span>dnsPolicy: ClusterFirst
+  enableServiceLinks: <span class="nb">true
+  </span>nodeName: rancherserver
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: <span class="o">{}</span>
+  serviceAccount: default
+  serviceAccountName: default
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - hostPath:
+      path: /data
+      <span class="nb">type</span>: <span class="s2">""</span>
+    name: data
+  - name: default-token-zh8ch
+    secret:
+      defaultMode: 420
+      secretName: default-token-zh8ch
+status:
+  phase: Pending
+  qosClass: BestEffort
+<span class="nt">---</span>
+
+<span class="c"># This is what we actually write:</span>
+
+<span class="c"># linkding.yaml</span>
+apiVersion: v1
+kind: Pod
+metadata:
+  name: linkding
+spec:
+  containers:
+  - image: sissbruecker/linkding:latest
+    name: linkding
+    ports:
+    - containerPort: 9090
+      protocol: TCP
+
+</code></pre></div></div>
+
+<h4 id="122-lets-create-a-pod">
+<a class="anchor" href="#122-lets-create-a-pod" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.2.2 Lets create a pod</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># ---Creation----</span>
+<span class="c"># The simplest way to create a pod is via the imperative kubectl run command.</span>
+<span class="nv">$ </span>kubectl run linkding <span class="nt">--image</span><span class="o">=</span>sissbruecker/linkding:latest <span class="nt">--port</span><span class="o">=</span>9090
+
+<span class="nt">--or--</span>
+
+<span class="c"># To create a pod from file</span>
+<span class="nv">$ </span>kubectl apply <span class="nt">-f</span> ./linkding.yaml
+
+</code></pre></div></div>
+
+<h4 id="123-get-details-of-a-pod">
+<a class="anchor" href="#123-get-details-of-a-pod" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.2.3 Get details of a pod</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># ---Details---</span>
+<span class="c"># Listing pods</span>
+<span class="nv">$ </span>kubectl get pods
+If you ran this <span class="nb">command </span>immediately after the Pod was created, you might see:
+NAME       READY   STATUS   RESTARTS   AGE
+linkding   0/1     Pending   0         1s
+<span class="c"># The Pending state indicates that the Pod has been submitted but hasn’t been scheduled yet.</span>
+
+<span class="c"># Get small overview</span>
+<span class="nv">$ </span>kubectl explain pods
+<span class="nv">$ </span>kubectl explain pod.spec
+
+<span class="c"># Getting the whole defination</span>
+<span class="nv">$ </span>kubectl get pod linkding <span class="nt">-o</span> yaml
+
+<span class="c"># To get pod details</span>
+<span class="nv">$ </span>kubectl describe pods linkding
+Name:         linkding-5c77d5f4cf-zlz6h
+Namespace:    default
+Priority:     0
+Node:         rancherserver/10.0.1.69
+Start Time:   Sat, 19 Sep 2020 07:58:23 +0000
+Labels:       pod-template-hash<span class="o">=</span>5c77d5f4cf
+              workload.user.cattle.io/workloadselector<span class="o">=</span>deployment-default-linkding
+Annotations:  cattle.io/timestamp: 2020-09-19T07:58:22Z
+              cni.projectcalico.org/podIP: 10.42.0.120/32
+              cni.projectcalico.org/podIPs: 10.42.0.120/32
+              field.cattle.io/ports:
+                <span class="o">[[{</span><span class="s2">"containerPort"</span>:9090,<span class="s2">"dnsName"</span>:<span class="s2">"linkding-hostport"</span>,<span class="s2">"hostPort"</span>:9090,<span class="s2">"kind"</span>:<span class="s2">"HostPort"</span>,<span class="s2">"name"</span>:<span class="s2">"port"</span>,<span class="s2">"protocol"</span>:<span class="s2">"TCP"</span>,<span class="s2">"sourcePort"</span>:9090<span class="o">}]</span>...
+Status:       Running
+IP:           10.42.0.120
+IPs:
+  IP:           10.42.0.120
+Controlled By:  ReplicaSet/linkding-5c77d5f4cf
+Containers:
+  linkding:
+    Container ID:   docker://5afb45048bae434f94571685f822ba8922d86e829d10c0dd4d067cb7f3889ac2
+    Image:          sissbruecker/linkding:latest
+    Image ID:       docker-pullable://sissbruecker/linkding@sha256:96089547c4829f6578d35ec2ba4dbfb7afced22c971b692c3a7ed0105ca59af8
+    Port:           9090/TCP
+    Host Port:      9090/TCP
+    State:          Running
+      Started:      Wed, 23 Sep 2020 08:22:02 +0000
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    137
+      Started:      Wed, 23 Sep 2020 08:21:04 +0000
+      Finished:     Wed, 23 Sep 2020 08:21:50 +0000
+    Ready:          True
+    Restart Count:  3
+    Liveness:       tcp-socket :9090 <span class="nv">delay</span><span class="o">=</span>10s <span class="nb">timeout</span><span class="o">=</span>2s <span class="nv">period</span><span class="o">=</span>2s <span class="c">#success=1 #failure=3</span>
+    Readiness:      tcp-socket :9090 <span class="nv">delay</span><span class="o">=</span>10s <span class="nb">timeout</span><span class="o">=</span>2s <span class="nv">period</span><span class="o">=</span>2s <span class="c">#success=2 #failure=3</span>
+    Environment:    &lt;none&gt;
+    Mounts:
+      /etc/linkding/data from data <span class="o">(</span>rw<span class="o">)</span>
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-zh8ch <span class="o">(</span>ro<span class="o">)</span>
+Conditions:
+  Type              Status
+  Initialized       True
+  Ready             True
+  ContainersReady   True
+  PodScheduled      True
+Volumes:
+  data:
+    Type:          HostPath <span class="o">(</span>bare host directory volume<span class="o">)</span>
+    Path:          /data
+    HostPathType:
+  default-token-zh8ch:
+    Type:        Secret <span class="o">(</span>a volume populated by a Secret<span class="o">)</span>
+    SecretName:  default-token-zh8ch
+    Optional:    <span class="nb">false
+</span>QoS Class:       BestEffort
+Node-Selectors:  &lt;none&gt;
+Tolerations:     node.kubernetes.io/not-ready:NoExecute <span class="k">for </span>300s
+                 node.kubernetes.io/unreachable:NoExecute <span class="k">for </span>300s
+Events:
+  Type     Reason          Age                     From                    Message
+  <span class="nt">----</span>     <span class="nt">------</span>          <span class="nt">----</span>                    <span class="nt">----</span>                    <span class="nt">-------</span>
+  Normal   SandboxChanged  9m1s                    kubelet, rancherserver  Pod sandbox changed, it will be killed and re-created.
+  Normal   Pulling         7m12s                   kubelet, rancherserver  Pulling image <span class="s2">"sissbruecker/linkding:latest"</span>
+  Normal   Pulled          6m55s                   kubelet, rancherserver  Successfully pulled image <span class="s2">"sissbruecker/linkding:latest"</span>
+  Normal   Created         6m44s                   kubelet, rancherserver  Created container linkding
+  Normal   Started         6m33s                   kubelet, rancherserver  Started container linkding
+
+</code></pre></div></div>
+
+<h4 id="124-deletion-of-pods">
+<a class="anchor" href="#124-deletion-of-pods" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.2.4 Deletion of pods</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">## ---Deletion---</span>
+<span class="c"># deleting pod by a name</span>
+<span class="nv">$ </span>kubectl delete pod linkding
+
+<span class="c"># Using the yaml, which is used when creating a pod</span>
+<span class="nv">$ </span>kubectl delete <span class="nt">-f</span> ./linkding.yaml
+
+<span class="c"># delete multiple pods by a name</span>
+<span class="nv">$ </span>kubectl delete pods pod1 pod2
+
+<span class="c"># delete pods using the label selectors</span>
+<span class="nv">$ </span>kubectl delete pod <span class="nt">-l</span> <span class="nv">creation_method</span><span class="o">=</span>manual
+
+<span class="c"># deleting pods by deleting the whole namespace</span>
+<span class="nv">$ </span>kubectl delete ns custom-namespace
+
+<span class="c"># delete all pods in a namespace</span>
+<span class="nv">$ </span>kubectl delete pods <span class="nt">--all</span>
+
+<span class="c"># delete all resources in a namespace</span>
+<span class="nv">$ </span>kubectl delete all <span class="nt">--all</span>
+</code></pre></div></div>
+
+<h4 id="125-accessing-the-pods">
+<a class="anchor" href="#125-accessing-the-pods" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.2.5 Accessing the pods</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># ---Accessing the pod---</span>
+
+<span class="c"># Using the port forwarding</span>
+<span class="nv">$ </span>kubectl port-forward linkding 9090:9090
+<span class="c"># A secure tunnel is created from your local machine, through the Kubernetes master, to the instance of the Pod running on one of the worker nodes. As long as the port-forward command is still running, you can access the Pod (in this case the kuard web interface) at http://localhost:9090.</span>
+
+
+<span class="c"># Get the logs</span>
+<span class="c"># When your application needs debugging, it’s helpful to be able to dig deeper than describe to understand what the application is doing. Kubernetes provides two commands for debugging running containers. The kubectl logs command downloads the current logs from the running instance:</span>
+<span class="nv">$ </span>kubectl logs linkding
+
+<span class="c"># If you are using multicontainer pods ( use container name )</span>
+<span class="nv">$ </span>kubectl logs linkding <span class="nt">-c</span> &lt;container&gt;
+
+<span class="c"># Running commands in container with exec</span>
+<span class="c"># Sometimes logs are insufficient, and to truly determine what’s going on you need to execute commands in the context of the container itself.</span>
+<span class="nv">$ </span>kubectl <span class="nb">exec</span> <span class="nt">-it</span> linkding <span class="nb">date</span>
+
+<span class="nt">------------------------------------------------------------------------------------------</span>
+<span class="c"># ---Copying files to and from containers---</span>
+<span class="c"># At times you may need to copy files from a remote container to a local machine for more in-depth exploration.</span>
+<span class="nv">$ </span>kubectl <span class="nb">cp</span> &lt;pod-name&gt;:/website/main.js ./main.js
+<span class="nv">$ </span>kubectl <span class="nb">cp</span> <span class="nv">$HOME</span>/config.txt &lt;pod-name&gt;:/config.txt
+<span class="c"># Copying files into a container is an anti-pattern.</span>
+
+</code></pre></div></div>
+
+<h4 id="126-health-checks">
+<a class="anchor" href="#126-health-checks" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.2.6 Health Checks</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># ---Health Checks---</span>
+<span class="c"># When you run your application as a container in Kubernetes, it is automatically kept alive for you using a process health check. This health check simply ensures that the main process of your application is always running. If it isn’t, Kubernetes restarts it.</span>
+
+<span class="c"># Add healthcheck</span>
+apiVersion: v1
+kind: Pod
+metadata:
+  name: linkding
+spec:
+  containers:
+  - image: sissbruecker/linkding:latest
+    name: linkding
+    livenessProbe:
+      httpGet:
+        path: /healthy
+        port: 9090
+      initialDeleySeconds: 5
+      timeoutSeconds: 1
+      periodSeconds: 10
+      failureThreshold: 3
+    ports:
+    - containerPort: 9090
+      protocol: TCP
+
+<span class="c"># The preceding Pod manifest uses an httpGet probe to perform an HTTP GET request against the /healthy endpoint on port 9090 of the kuard container.</span>
+<span class="c"># The probe sets an initialDelaySeconds of 5, and thus will not be called until 5 seconds after all the containers in the Pod are created. The probe must respond within the 1-second time‐out, and the HTTP status code must be equal to or greater than 200 and less than 400 to be considered successful.</span>
+<span class="c"># Kubernetes will call the probe every 10 seconds. If more than three consecutive probes fail, the container will fail and restart.</span>
+
+<span class="c"># Types of Health Checks</span>
+<span class="c"># In addition to HTTP checks, Kubernetes also supports tcpSocket health checks that open a TCP socket; if the connection is successful, the probe succeeds. This style of probe is useful for non-HTTP applications; for example, databases or other non– HTTP-based APIs.</span>
+<span class="c"># Finally, Kubernetes allows exec probes. These execute a script or program in the context of the container. Following typical convention, if this script returns a zero exit code, the probe succeeds; otherwise, it fails. exec scripts are often useful for custom application validation logic that doesn’t fit neatly into an HTTP call.</span>
+
+</code></pre></div></div>
+
+<h4 id="127-resource-management">
+<a class="anchor" href="#127-resource-management" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.2.7 Resource Management</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># ---Resource Management---</span>
+
+<span class="c">## Resource Requests: Minimum Required Resources</span>
+
+<span class="c"># A Pod requests the resources required to run its containers. Kubernetes guarantees that these resources are available to the Pod. The most commonly requested resources are CPU and memory, but Kubernetes has support for other resource types as well, such as GPUs and more</span>
+
+<span class="c">## Resource limits</span>
+
+<span class="c"># Requests are used when scheduling Pods to nodes. The Kubernetes scheduler will ensure that the sum of all requests of all Pods on a node does not exceed the capacity of the node</span>
+
+<span class="c"># Therefore, a Pod is guaranteed to have at least the requested resources when running on the node. Importantly, “request” specifies a minimum. It does not specify a maximum cap on the resources a Pod may use</span>
+
+<span class="nt">---</span>
+apiVersion: v1
+kind: Pod
+metadata:
+  name: linkding
+spec:
+  containers:
+
+- image: sissbruecker/linkding:latest
+    name: linkding
+    resources:
+      requests:
+        cpu: <span class="s2">"500m"</span>
+        memory: <span class="s2">"128Mi"</span>
+      limits:
+        cpu: <span class="s2">"1000m"</span>
+        memory: <span class="s2">"256Mi"</span>
+    livenessProbe:
+      httpGet:
+        path: /healthy
+        port: 9090
+      initialDeleySeconds: 5
+      timeoutSeconds: 1
+      periodSeconds: 10
+      failureThreshold: 3
+    ports:
+  - containerPort: 9090
+      protocol: TCP
+</code></pre></div></div>
+
+<h4 id="128-persistent-volumes-with-pods">
+<a class="anchor" href="#128-persistent-volumes-with-pods" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.2.8 Persistent Volumes with Pods</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># ---Persisting Data with Volumes---</span>
+
+<span class="c"># When a Pod is deleted or a container restarts, any and all data in the container’s file‐system is also deleted</span>
+
+<span class="c"># This is often a good thing, since you don’t want to leave around cruft that happened to be written by your stateless web application</span>
+
+<span class="c"># In other cases, having access to persistent disk storage is an important part of a healthy application</span>
+
+<span class="c"># Kubernetes models such persistent storage</span>
+
+<span class="nt">---</span>
+apiVersion: v1
+kind: Pod
+metadata:
+  name: linkding
+spec:
+  containers:
+
+- image: sissbruecker/linkding:latest
+    name: linkding
+    resources:
+      requests:
+        cpu: <span class="s2">"500m"</span>
+        memory: <span class="s2">"128Mi"</span>
+      limits:
+        cpu: <span class="s2">"1000m"</span>
+        memory: <span class="s2">"256Mi"</span>
+    livenessProbe:
+      httpGet:
+        path: /healthy
+        port: 9090
+      initialDeleySeconds: 5
+      timeoutSeconds: 1
+      periodSeconds: 10
+      failureThreshold: 3
+    volumeMounts:
+  - mountPath: <span class="s2">"/data"</span>
+        name: <span class="s2">"linkding-data"</span>
+    ports:
+  - containerPort: 9090
+      protocol: TCP
+
+<span class="c"># Different ways of using volumes with pods</span>
+
+<span class="c">## Communication/Synchronization</span>
+
+<span class="c"># In the first example of a Pod, we saw how two containers used a shared volume to serve a site while keeping it synchronized to a remote Git location</span>
+
+<span class="c"># To achieve this, the Pod uses an emptyDir volume. Such a volume is scoped to the Pod’s lifespan, but it can be shared between two containers, forming the basis for communication between our Git sync and web serving containers</span>
+
+<span class="nt">-----------------------------------------------------------------------------------------</span>
+<span class="c">## Cache</span>
+
+<span class="c"># An application may use a volume that is valuable for performance, but not required for correct operation of the application</span>
+
+<span class="c"># For example, perhaps the application keeps prerendered thumbnails of larger images. Of course, they can be reconstructed from the original images, but that makes serving the thumbnails more expensive</span>
+
+<span class="c"># You want such a cache to survive a container restart due to a health-check failure, and thus emptyDir works well for the cache use case as well</span>
+
+<span class="nt">-----------------------------------------------------------------------------------------</span>
+<span class="c">## Persitent Data</span>
+
+<span class="c"># Sometimes you will use a volume for truly persistent data—data that is independent of the lifespan of a particular Pod, and should move between nodes in the cluster if a node fails or a Pod moves to a different machine for some reason</span>
+
+<span class="c"># To achieve this, Kubernetes supports a wide variety of remote network storage volumes, including widely supported protocols like NFS and iSCSI as well as cloud provider network storage like Amazon’s Elastic Block Store, Azure’s Files and Disk Storage, as well as Google’s Persistent Disk</span>
+
+<span class="nt">-----------------------------------------------------------------------------------------</span>
+<span class="c">## Mounting the host filesystem</span>
+
+<span class="c"># Other applications don’t actually need a persistent volume, but they do need some access to the underlying host filesystem. For example, they may need access to the /dev filesystem in order to perform raw block-level access to a device on the system</span>
+
+<span class="c"># For these cases, Kubernetes supports the hostPath volume, which can mount arbitrary locations on the worker node into the container. The previous example uses the hostPath volume type. The volume created is /var/lib/ kuard on the host</span>
+
+<span class="nt">-----------------------------------------------------------------------------------------</span>
+<span class="c">## Persisting Data Using Remote Disks</span>
+
+<span class="c"># Oftentimes, you want the data a Pod is using to stay with the Pod, even if it is restarted on a different host machine</span>
+
+<span class="c"># To achieve this, you can mount a remote network storage volume into your Pod. When using network-based storage, Kubernetes automatically mounts and unmounts the appropriate storage whenever a Pod using that volume is scheduled onto a particular machine</span>
+
+<span class="c"># There are numerous methods for mounting volumes over the network</span>
+
+<span class="c"># Kubernetes includes support for standard protocols such as NFS and iSCSI as well as cloud pro‐ vider–based storage APIs for the major cloud providers (both public and private)</span>
+
+<span class="c"># In many cases, the cloud providers will also create the disk for you if it doesn’t already exist</span>
+
+volumes:
+
+- name: <span class="s2">"linkding"</span>
+    nfs:
+      server: my.nfs.server.local
+      path: <span class="s2">"/exports"</span>
+</code></pre></div></div>
+
+<hr>
+
+  </div><a class="u-url" href="/Notes/kubernetes/2020/09/23/Kubernetes-Pods.html" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/Notes/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/Notes/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/Notes/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>A Daily Notebook for @Akash</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/AkashRajvanshi" title="AkashRajvanshi"><svg class="svg-icon grey"><use xlink:href="/Notes/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/Akash_Rajvanshi" title="Akash_Rajvanshi"><svg class="svg-icon grey"><use xlink:href="/Notes/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

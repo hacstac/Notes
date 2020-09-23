@@ -1,4 +1,1043 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://hacstac.github.io/Notes/feed.xml" rel="self" type="application/atom+xml" /><link href="https://hacstac.github.io/Notes/" rel="alternate" type="text/html" /><updated>2020-09-16T04:42:45-05:00</updated><id>https://hacstac.github.io/Notes/feed.xml</id><title type="html">Notebook</title><subtitle>A Daily Notebook for @Akash</subtitle><entry><title type="html">Step-By-Step Process To Deploy Kubernetes On Your Raspberry PIs</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html" rel="alternate" type="text/html" title="Step-By-Step Process To Deploy Kubernetes On Your Raspberry PIs" /><published>2020-09-15T00:00:00-05:00</published><updated>2020-09-15T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html">&lt;hr /&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://hacstac.github.io/Notes/feed.xml" rel="self" type="application/atom+xml" /><link href="https://hacstac.github.io/Notes/" rel="alternate" type="text/html" /><updated>2020-09-23T06:34:53-05:00</updated><id>https://hacstac.github.io/Notes/feed.xml</id><title type="html">Notebook</title><subtitle>A Daily Notebook for @Akash</subtitle><entry><title type="html">Kubernetes Pods Deep Dive</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/09/23/Kubernetes-Pods.html" rel="alternate" type="text/html" title="Kubernetes Pods Deep Dive" /><published>2020-09-23T00:00:00-05:00</published><updated>2020-09-23T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/09/23/Kubernetes-Pods</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/09/23/Kubernetes-Pods.html">&lt;hr /&gt;
+
+&lt;h2 id=&quot;10-pods&quot;&gt;1.0 Pods&lt;/h2&gt;
+
+&lt;p&gt;POD: Kubernetes groups multiple containers into a single atomic unit called a Pod&lt;/p&gt;
+
+&lt;p&gt;A pod is a co-located group of containers and represents the basic building block in Kubernetes. Instead of deploying containers individually, we always deploy and operate on a pod of containers. We’re not implying that a pod always includes more than one container—it’s common for pods to contain only a single container. The key thing about pods is that when a pod does have multiple containers, all of them are always run on a single worker node—it never spans multiple worker nodes. A Pod represents a collection of application containers and volumes running in the same execution environment. Pods, not containers, are the smallest deployable arti‐ fact in a Kubernetes cluster. This means all of the containers in a Pod always land on the same machine.&lt;/p&gt;
+
+&lt;p&gt;Applications running in the same Pod share the same IP address and port space (net‐ work namespace), have the same hostname (UTS namespace), and can communicate using native interprocess communication channels over System V IPC or POSIX message queues (IPC namespace). However, applications in different Pods are isolated from each other; they have different IP addresses, different hostnames, and more. Containers in different Pods running on the same node might as well be on different servers.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Pod1.png&quot; alt=&quot;Pods&quot; /&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;11-some-general-faqs-regarding-pods&quot;&gt;1.1 Some general FAQs regarding pods&lt;/h3&gt;
+
+&lt;h4 id=&quot;111-why-we-need-pods&quot;&gt;1.1.1 Why we need pods&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Understanding why multiple containers are better than one container running multiple processes&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Imagine an app consisting of multiple processes that either communicate through
+IPC (Inter-Process Communication) or through locally stored files requires them to run on the same machine. Because in Kubernetes, we always run processes in containers, and each container is much like an isolated machine. Containers are designed to run only a single process per container (unless the process itself spawns child processes). If you run multiple unrelated operations in a single container, it is your responsibility to keep all those processes running, manage their logs, and so on. For example, you’d have to include a mechanism for automatically restarting individual processes if they crash. Also, all those processes would log to the same standard output, so you’d have difficulty figuring out what method logged. That’s why we need to run each process in its container, and because of this problem, we need a higher-level construct that will allow us to bind containers together and manage them as a single unit. This is the reasoning behind pods.&lt;/p&gt;
+
+&lt;p&gt;A pod of containers allows us to run near related processes together and provide them with (almost) the same environment as if they were all running in a single
+container, while keeping them somewhat isolated. This way, we can get the best of both
+worlds. We can take advantage of all the features containers provide, while at the
+same time giving the processes the illusion of running together.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Understanding the partial isolation between containers of the same pod&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;We want containers inside each group to share certain resources, although not all, so that they’re not fully isolated. Kubernetes achieves this by config- uring Docker to have all containers of a pod share the same set of Linux namespaces instead of each container having its own set. Because all containers of a pod run under the same Network and UTS namespaces (we’re talking about Linux namespaces here), they all share the same hostname and network interfaces. Similarly, all containers of a pod run under the same IPC namespace and can communicate through IPC. In the latest Kubernetes and Docker versions, they can also share the same PID namespace, but that feature isn’t enabled by default. But when it comes to the filesystem, things are a little different. Because most of the container’s filesystem comes from the container image, by default, the filesystem of each container is fully isolated from other containers.&lt;/p&gt;
+
+&lt;h4 id=&quot;112-how-containers-share-the-same-ip-and-port-space-in-pods&quot;&gt;1.1.2 how containers share the same IP and Port space in pods&lt;/h4&gt;
+
+&lt;p&gt;One thing to stress here is that because containers in a pod run in the same Network namespace, they share the same IP address and port space. This means processes running in containers of the same pod need to take care not to bind to the same port numbers or they’ll run into port conflicts. But this only concerns containers in the same pod. Containers of different pods can never run into port conflicts, because each pod has a separate port space. All the containers in a pod also have the same loopback network interface, so a container can communicate with other containers in the same pod through localhost. All pods in a Kubernetes cluster reside in a single flat, shared, network-address space, which means every pod can access every other pod at the other pod’s IP address. No NAT (Network Address Translation) gateways exist between them. When two pods send network packets between each other, they’ll each see the actual IP address of the other as the source IP in the packet.&lt;/p&gt;
+
+&lt;p&gt;Consequently, communication between pods is always simple. It doesn’t matter if two pods are scheduled onto a single or onto different worker nodes; in both cases the containers inside those pods can communicate with each other across the flat NAT- less network, much like computers on a local area network (LAN), regardless of the actual inter-node network topology. Like a computer on a LAN, each pod gets its own IP address and is accessible from all other pods through this network established specifically for pods. This is usually achieved through an additional software-defined net- work layered on top of the actual network.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Pod_Network.png&quot; alt=&quot;Pod Network&quot; /&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;113-how-to-organizing-containers-across-pods-properly&quot;&gt;1.1.3 How to organizing containers across pods properly&lt;/h4&gt;
+
+&lt;p&gt;Pods are relatively lightweight, we can have as many as we need without incurring almost any overhead. Instead of stuffing everything into a single pod, we should organize apps into multiple pods, where each one contains only tightly related components or processes. For Ex: a multi-tier application consisting of a frontend
+application server and a backend database should be configured as a single pod or as
+two pods? Although nothing is stopping us from running both the frontend server and the database in a single pod with two containers, it isn’t the most appropriate way. We’ve said that all containers of the same pod always run co-located, but do the web server and the database really need to run on the same machine? The answer is obviously no.&lt;/p&gt;
+
+&lt;p&gt;If both the frontend and backend are in the same pod, then both will always be run on the same machine. If you have a two-node Kubernetes cluster and only this single pod, you’ll only be using a single worker node and not taking advantage of the computational resources (CPU and memory) you have at your disposal on the second node. Splitting the pod into two would allow Kubernetes to schedule the frontend to one node and the backend to the other node, thereby improving the utilization of your infrastructure.&lt;/p&gt;
+
+&lt;p&gt;Another reason why you shouldn’t put them both into a single pod is scaling. A pod is also the basic unit of scaling. Kubernetes can’t horizontally scale individual containers; instead, it scales whole pods. If your pod consists of a frontend and a backend container, when you scale up the number of instances of the pod to, let’s say, two, you end up with two frontend containers and two backend containers. Usually, frontend components have completely different scaling requirements
+than the backends, so we tend to scale them individually. Not to mention the fact that
+backends such as databases are usually much harder to scale compared to (stateless)
+frontend web servers.&lt;/p&gt;
+
+&lt;h4 id=&quot;114-when-to-use-multiple-containers-in-a-pod&quot;&gt;1.1.4 When to use multiple containers in a pod&lt;/h4&gt;
+
+&lt;p&gt;The main reason to put multiple containers into a single pod is when the application
+consists of one main process and one or more complementary processes. For example, the main container in a pod could be a web server that serves files from a certain file directory, while an additional container (a sidecar container) periodically downloads content from an external source and stores it in the web server’s directory. But always remember you need a good reason to place a two containers in a single pod. ( like another container for gathering logs or to be used for more specific need )&lt;/p&gt;
+
+&lt;h4 id=&quot;115-what-is-pod-manifest&quot;&gt;1.1.5 What is pod manifest&lt;/h4&gt;
+
+&lt;p&gt;Pods are described in a Pod manifest. The Pod manifest is just a text-file representation of the Kubernetes API object. Kubernetes strongly believes in declarative configu‐ ration. Declarative configuration means that you write down the desired state of the world in a configuration and then submit that configuration to a service that takes actions to ensure the desired state becomes the actual state.&lt;/p&gt;
+
+&lt;p&gt;The Kubernetes API server accepts and processes Pod manifests before storing them in persistent storage (etcd). The scheduler also uses the Kubernetes API to find Pods that haven’t been scheduled to a node. The scheduler then places the Pods onto nodes depending on the resources and other constraints expressed in the Pod manifests. Multiple Pods can be placed on the same machine as long as there are sufficient resources. However, scheduling multiple replicas of the same application onto the same machine is worse for reliability, since the machine is a single failure domain. Consequently, the Kubernetes scheduler tries to ensure that Pods from the same application are distributed onto different machines for reliability in the presence of such failures. Once scheduled to a node, Pods don’t move and must be explicitly destroyed and rescheduled.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;12-creating-pods&quot;&gt;1.2 Creating Pods&lt;/h3&gt;
+
+&lt;p&gt;Pods and other Kubernetes resources are usually created by posting a JSON or YAML
+manifest to the Kubernetes REST API endpoint. Also, we can use other, simpler ways
+of creating resources, such as the kubectl run command, but this usually allow us to configure a limited set of properties. Additionally, defining all your Kubernetes objects from YAML files makes it possible to store them in a version control system, with all the benefits it brings.&lt;/p&gt;
+
+&lt;h4 id=&quot;121-main-parts-of-pod-definition&quot;&gt;1.2.1 Main parts of pod definition&lt;/h4&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The three important sections of any pod defination is:
+    &lt;ul&gt;
+      &lt;li&gt;Metadata includes the name, namespace, labels, and other information about the pod.&lt;/li&gt;
+      &lt;li&gt;Spec contains the actual description of the pod’s contents, such as the pod’s containers, volumes, and other data.&lt;/li&gt;
+      &lt;li&gt;Status contains the current information about the running pod, such as what condition the pod is in, the description and status of each container, and the pod’s internal IP and other basic info. The status part contains read-only runtime data that shows the state of the resource at a given moment. When creating a new pod, you never need to provide the status part.&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;EX: let’s look at what a YAML definition for one of those pods looks like: I know this looks complicated, but it becomes simple once you understand the basics and know how to distinguish between the important parts and the minor details. Also, you can take comfort in the fact that when creating a new pod, the YAML you need to write is much shorter&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;---linkding&lt;/span&gt;.yml
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    cattle.io/timestamp: &lt;span class=&quot;s2&quot;&gt;&quot;2020-09-19T07:58:22Z&quot;&lt;/span&gt;
+    cni.projectcalico.org/podIP: 10.42.0.66/32
+    cni.projectcalico.org/podIPs: 10.42.0.66/32
+    field.cattle.io/ports: &lt;span class=&quot;s1&quot;&gt;'[[{&quot;containerPort&quot;:9090,&quot;dnsName&quot;:&quot;linkding-hostport&quot;,&quot;hostPort&quot;:9090,&quot;kind&quot;:&quot;HostPort&quot;,&quot;name&quot;:&quot;port&quot;,&quot;protocol&quot;:&quot;TCP&quot;,&quot;sourcePort&quot;:9090}]]'&lt;/span&gt;
+  creationTimestamp: null
+  generateName: linkding-5c77d5f4cf-
+  labels:
+    pod-template-hash: 5c77d5f4cf
+    workload.user.cattle.io/workloadselector: deployment-default-linkding
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+          f:cattle.io/timestamp: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+          f:field.cattle.io/ports: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:generateName: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:labels:
+          .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+          f:pod-template-hash: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+          f:workload.user.cattle.io/workloadselector: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:ownerReferences:
+          .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+          k:&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;uid&quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&quot;762057a3-c1d7-4fa1-91ca-01e961fbc72c&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;:
+            .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:apiVersion: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:blockOwnerDeletion: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:controller: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:kind: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:name: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:uid: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+      f:spec:
+        f:containers:
+          k:&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;name&quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&quot;linkding&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;:
+            .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:image: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:imagePullPolicy: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:livenessProbe:
+              .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:failureThreshold: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:initialDelaySeconds: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:periodSeconds: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:successThreshold: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:tcpSocket:
+                .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+                f:port: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:timeoutSeconds: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:name: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:ports:
+              .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              k:&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;containerPort&quot;&lt;/span&gt;:9090,&lt;span class=&quot;s2&quot;&gt;&quot;protocol&quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&quot;TCP&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;:
+                .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+                f:containerPort: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+                f:hostPort: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+                f:name: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+                f:protocol: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:readinessProbe:
+              .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:failureThreshold: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:initialDelaySeconds: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:periodSeconds: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:successThreshold: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:tcpSocket:
+                .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+                f:port: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:timeoutSeconds: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:resources: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:securityContext:
+              .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:allowPrivilegeEscalation: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:capabilities: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:privileged: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:readOnlyRootFilesystem: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:runAsNonRoot: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:stdin: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:terminationMessagePath: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:terminationMessagePolicy: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:tty: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:volumeMounts:
+              .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              k:&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;mountPath&quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&quot;/etc/linkding/data&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;:
+                .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+                f:mountPath: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+                f:name: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:dnsPolicy: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:enableServiceLinks: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:restartPolicy: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:schedulerName: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:securityContext: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:terminationGracePeriodSeconds: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:volumes:
+          .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+          k:&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;name&quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&quot;data&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;:
+            .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:hostPath:
+              .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:path: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+              f:type: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:name: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+    manager: kube-controller-manager
+    operation: Update
+    &lt;span class=&quot;nb&quot;&gt;time&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&quot;2020-09-19T07:58:22Z&quot;&lt;/span&gt;
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          f:cni.projectcalico.org/podIP: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+          f:cni.projectcalico.org/podIPs: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+    manager: calico
+    operation: Update
+    &lt;span class=&quot;nb&quot;&gt;time&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&quot;2020-09-19T07:58:26Z&quot;&lt;/span&gt;
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:status:
+        f:conditions:
+          k:&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;type&quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&quot;ContainersReady&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;:
+            .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:lastProbeTime: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:lastTransitionTime: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:status: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:type: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+          k:&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;type&quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&quot;Initialized&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;:
+            .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:lastProbeTime: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:lastTransitionTime: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:status: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:type: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+          k:&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;type&quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&quot;Ready&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;:
+            .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:lastProbeTime: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:lastTransitionTime: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:status: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:type: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:containerStatuses: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:hostIP: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:phase: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:podIP: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:podIPs:
+          .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+          k:&lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;ip&quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&quot;10.42.0.66&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;:
+            .: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+            f:ip: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+        f:startTime: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+    manager: kubelet
+    operation: Update
+    &lt;span class=&quot;nb&quot;&gt;time&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&quot;2020-09-19T07:59:15Z&quot;&lt;/span&gt;
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: &lt;span class=&quot;nb&quot;&gt;true
+    &lt;/span&gt;controller: &lt;span class=&quot;nb&quot;&gt;true
+    &lt;/span&gt;kind: ReplicaSet
+    name: linkding-5c77d5f4cf
+    uid: 762057a3-c1d7-4fa1-91ca-01e961fbc72c
+  selfLink: /api/v1/namespaces/default/pods/linkding-5c77d5f4cf-zlz6h
+spec:
+  containers:
+  - image: sissbruecker/linkding:latest
+    imagePullPolicy: Always
+    livenessProbe:
+      failureThreshold: 3
+      initialDelaySeconds: 10
+      periodSeconds: 2
+      successThreshold: 1
+      tcpSocket:
+        port: 9090
+      timeoutSeconds: 2
+    name: linkding
+    ports:
+    - containerPort: 9090
+      hostPort: 9090
+      name: port
+      protocol: TCP
+    readinessProbe:
+      failureThreshold: 3
+      initialDelaySeconds: 10
+      periodSeconds: 2
+      successThreshold: 2
+      tcpSocket:
+        port: 9090
+      timeoutSeconds: 2
+    resources: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+    securityContext:
+      allowPrivilegeEscalation: &lt;span class=&quot;nb&quot;&gt;false
+      &lt;/span&gt;capabilities: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+      privileged: &lt;span class=&quot;nb&quot;&gt;false
+      &lt;/span&gt;readOnlyRootFilesystem: &lt;span class=&quot;nb&quot;&gt;false
+      &lt;/span&gt;runAsNonRoot: &lt;span class=&quot;nb&quot;&gt;false
+    &lt;/span&gt;stdin: &lt;span class=&quot;nb&quot;&gt;true
+    &lt;/span&gt;terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    &lt;span class=&quot;nb&quot;&gt;tty&lt;/span&gt;: &lt;span class=&quot;nb&quot;&gt;true
+    &lt;/span&gt;volumeMounts:
+    - mountPath: /etc/linkding/data
+      name: data
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: default-token-zh8ch
+      readOnly: &lt;span class=&quot;nb&quot;&gt;true
+  &lt;/span&gt;dnsPolicy: ClusterFirst
+  enableServiceLinks: &lt;span class=&quot;nb&quot;&gt;true
+  &lt;/span&gt;nodeName: rancherserver
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+  serviceAccount: default
+  serviceAccountName: default
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - hostPath:
+      path: /data
+      &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&quot;&quot;&lt;/span&gt;
+    name: data
+  - name: default-token-zh8ch
+    secret:
+      defaultMode: 420
+      secretName: default-token-zh8ch
+status:
+  phase: Pending
+  qosClass: BestEffort
+&lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# This is what we actually write:&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# linkding.yaml&lt;/span&gt;
+apiVersion: v1
+kind: Pod
+metadata:
+  name: linkding
+spec:
+  containers:
+  - image: sissbruecker/linkding:latest
+    name: linkding
+    ports:
+    - containerPort: 9090
+      protocol: TCP
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;122-lets-create-a-pod&quot;&gt;1.2.2 Lets create a pod&lt;/h4&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# ---Creation----&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# The simplest way to create a pod is via the imperative kubectl run command.&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl run linkding &lt;span class=&quot;nt&quot;&gt;--image&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;sissbruecker/linkding:latest &lt;span class=&quot;nt&quot;&gt;--port&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;9090
+
+&lt;span class=&quot;nt&quot;&gt;--or--&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# To create a pod from file&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl apply &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; ./linkding.yaml
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;123-get-details-of-a-pod&quot;&gt;1.2.3 Get details of a pod&lt;/h4&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# ---Details---&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# Listing pods&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl get pods
+If you ran this &lt;span class=&quot;nb&quot;&gt;command &lt;/span&gt;immediately after the Pod was created, you might see:
+NAME       READY   STATUS   RESTARTS   AGE
+linkding   0/1     Pending   0         1s
+&lt;span class=&quot;c&quot;&gt;# The Pending state indicates that the Pod has been submitted but hasn’t been scheduled yet.&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Get small overview&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl explain pods
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl explain pod.spec
+
+&lt;span class=&quot;c&quot;&gt;# Getting the whole defination&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl get pod linkding &lt;span class=&quot;nt&quot;&gt;-o&lt;/span&gt; yaml
+
+&lt;span class=&quot;c&quot;&gt;# To get pod details&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl describe pods linkding
+Name:         linkding-5c77d5f4cf-zlz6h
+Namespace:    default
+Priority:     0
+Node:         rancherserver/10.0.1.69
+Start Time:   Sat, 19 Sep 2020 07:58:23 +0000
+Labels:       pod-template-hash&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;5c77d5f4cf
+              workload.user.cattle.io/workloadselector&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;deployment-default-linkding
+Annotations:  cattle.io/timestamp: 2020-09-19T07:58:22Z
+              cni.projectcalico.org/podIP: 10.42.0.120/32
+              cni.projectcalico.org/podIPs: 10.42.0.120/32
+              field.cattle.io/ports:
+                &lt;span class=&quot;o&quot;&gt;[[{&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;containerPort&quot;&lt;/span&gt;:9090,&lt;span class=&quot;s2&quot;&gt;&quot;dnsName&quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&quot;linkding-hostport&quot;&lt;/span&gt;,&lt;span class=&quot;s2&quot;&gt;&quot;hostPort&quot;&lt;/span&gt;:9090,&lt;span class=&quot;s2&quot;&gt;&quot;kind&quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&quot;HostPort&quot;&lt;/span&gt;,&lt;span class=&quot;s2&quot;&gt;&quot;name&quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&quot;port&quot;&lt;/span&gt;,&lt;span class=&quot;s2&quot;&gt;&quot;protocol&quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&quot;TCP&quot;&lt;/span&gt;,&lt;span class=&quot;s2&quot;&gt;&quot;sourcePort&quot;&lt;/span&gt;:9090&lt;span class=&quot;o&quot;&gt;}]&lt;/span&gt;...
+Status:       Running
+IP:           10.42.0.120
+IPs:
+  IP:           10.42.0.120
+Controlled By:  ReplicaSet/linkding-5c77d5f4cf
+Containers:
+  linkding:
+    Container ID:   docker://5afb45048bae434f94571685f822ba8922d86e829d10c0dd4d067cb7f3889ac2
+    Image:          sissbruecker/linkding:latest
+    Image ID:       docker-pullable://sissbruecker/linkding@sha256:96089547c4829f6578d35ec2ba4dbfb7afced22c971b692c3a7ed0105ca59af8
+    Port:           9090/TCP
+    Host Port:      9090/TCP
+    State:          Running
+      Started:      Wed, 23 Sep 2020 08:22:02 +0000
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    137
+      Started:      Wed, 23 Sep 2020 08:21:04 +0000
+      Finished:     Wed, 23 Sep 2020 08:21:50 +0000
+    Ready:          True
+    Restart Count:  3
+    Liveness:       tcp-socket :9090 &lt;span class=&quot;nv&quot;&gt;delay&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;10s &lt;span class=&quot;nb&quot;&gt;timeout&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;2s &lt;span class=&quot;nv&quot;&gt;period&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;2s &lt;span class=&quot;c&quot;&gt;#success=1 #failure=3&lt;/span&gt;
+    Readiness:      tcp-socket :9090 &lt;span class=&quot;nv&quot;&gt;delay&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;10s &lt;span class=&quot;nb&quot;&gt;timeout&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;2s &lt;span class=&quot;nv&quot;&gt;period&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;2s &lt;span class=&quot;c&quot;&gt;#success=2 #failure=3&lt;/span&gt;
+    Environment:    &amp;lt;none&amp;gt;
+    Mounts:
+      /etc/linkding/data from data &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;rw&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-zh8ch &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;ro&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+Conditions:
+  Type              Status
+  Initialized       True
+  Ready             True
+  ContainersReady   True
+  PodScheduled      True
+Volumes:
+  data:
+    Type:          HostPath &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;bare host directory volume&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+    Path:          /data
+    HostPathType:
+  default-token-zh8ch:
+    Type:        Secret &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;a volume populated by a Secret&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+    SecretName:  default-token-zh8ch
+    Optional:    &lt;span class=&quot;nb&quot;&gt;false
+&lt;/span&gt;QoS Class:       BestEffort
+Node-Selectors:  &amp;lt;none&amp;gt;
+Tolerations:     node.kubernetes.io/not-ready:NoExecute &lt;span class=&quot;k&quot;&gt;for &lt;/span&gt;300s
+                 node.kubernetes.io/unreachable:NoExecute &lt;span class=&quot;k&quot;&gt;for &lt;/span&gt;300s
+Events:
+  Type     Reason          Age                     From                    Message
+  &lt;span class=&quot;nt&quot;&gt;----&lt;/span&gt;     &lt;span class=&quot;nt&quot;&gt;------&lt;/span&gt;          &lt;span class=&quot;nt&quot;&gt;----&lt;/span&gt;                    &lt;span class=&quot;nt&quot;&gt;----&lt;/span&gt;                    &lt;span class=&quot;nt&quot;&gt;-------&lt;/span&gt;
+  Normal   SandboxChanged  9m1s                    kubelet, rancherserver  Pod sandbox changed, it will be killed and re-created.
+  Normal   Pulling         7m12s                   kubelet, rancherserver  Pulling image &lt;span class=&quot;s2&quot;&gt;&quot;sissbruecker/linkding:latest&quot;&lt;/span&gt;
+  Normal   Pulled          6m55s                   kubelet, rancherserver  Successfully pulled image &lt;span class=&quot;s2&quot;&gt;&quot;sissbruecker/linkding:latest&quot;&lt;/span&gt;
+  Normal   Created         6m44s                   kubelet, rancherserver  Created container linkding
+  Normal   Started         6m33s                   kubelet, rancherserver  Started container linkding
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;124-deletion-of-pods&quot;&gt;1.2.4 Deletion of pods&lt;/h4&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;## ---Deletion---&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# deleting pod by a name&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl delete pod linkding
+
+&lt;span class=&quot;c&quot;&gt;# Using the yaml, which is used when creating a pod&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl delete &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; ./linkding.yaml
+
+&lt;span class=&quot;c&quot;&gt;# delete multiple pods by a name&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl delete pods pod1 pod2
+
+&lt;span class=&quot;c&quot;&gt;# delete pods using the label selectors&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl delete pod &lt;span class=&quot;nt&quot;&gt;-l&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;creation_method&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;manual
+
+&lt;span class=&quot;c&quot;&gt;# deleting pods by deleting the whole namespace&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl delete ns custom-namespace
+
+&lt;span class=&quot;c&quot;&gt;# delete all pods in a namespace&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl delete pods &lt;span class=&quot;nt&quot;&gt;--all&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# delete all resources in a namespace&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl delete all &lt;span class=&quot;nt&quot;&gt;--all&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;125-accessing-the-pods&quot;&gt;1.2.5 Accessing the pods&lt;/h4&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# ---Accessing the pod---&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Using the port forwarding&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl port-forward linkding 9090:9090
+&lt;span class=&quot;c&quot;&gt;# A secure tunnel is created from your local machine, through the Kubernetes master, to the instance of the Pod running on one of the worker nodes. As long as the port-forward command is still running, you can access the Pod (in this case the kuard web interface) at http://localhost:9090.&lt;/span&gt;
+
+
+&lt;span class=&quot;c&quot;&gt;# Get the logs&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# When your application needs debugging, it’s helpful to be able to dig deeper than describe to understand what the application is doing. Kubernetes provides two commands for debugging running containers. The kubectl logs command downloads the current logs from the running instance:&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl logs linkding
+
+&lt;span class=&quot;c&quot;&gt;# If you are using multicontainer pods ( use container name )&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl logs linkding &lt;span class=&quot;nt&quot;&gt;-c&lt;/span&gt; &amp;lt;container&amp;gt;
+
+&lt;span class=&quot;c&quot;&gt;# Running commands in container with exec&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# Sometimes logs are insufficient, and to truly determine what’s going on you need to execute commands in the context of the container itself.&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl &lt;span class=&quot;nb&quot;&gt;exec&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-it&lt;/span&gt; linkding &lt;span class=&quot;nb&quot;&gt;date&lt;/span&gt;
+
+&lt;span class=&quot;nt&quot;&gt;------------------------------------------------------------------------------------------&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# ---Copying files to and from containers---&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# At times you may need to copy files from a remote container to a local machine for more in-depth exploration.&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl &lt;span class=&quot;nb&quot;&gt;cp&lt;/span&gt; &amp;lt;pod-name&amp;gt;:/website/main.js ./main.js
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl &lt;span class=&quot;nb&quot;&gt;cp&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$HOME&lt;/span&gt;/config.txt &amp;lt;pod-name&amp;gt;:/config.txt
+&lt;span class=&quot;c&quot;&gt;# Copying files into a container is an anti-pattern.&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;126-health-checks&quot;&gt;1.2.6 Health Checks&lt;/h4&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# ---Health Checks---&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# When you run your application as a container in Kubernetes, it is automatically kept alive for you using a process health check. This health check simply ensures that the main process of your application is always running. If it isn’t, Kubernetes restarts it.&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Add healthcheck&lt;/span&gt;
+apiVersion: v1
+kind: Pod
+metadata:
+  name: linkding
+spec:
+  containers:
+  - image: sissbruecker/linkding:latest
+    name: linkding
+    livenessProbe:
+      httpGet:
+        path: /healthy
+        port: 9090
+      initialDeleySeconds: 5
+      timeoutSeconds: 1
+      periodSeconds: 10
+      failureThreshold: 3
+    ports:
+    - containerPort: 9090
+      protocol: TCP
+
+&lt;span class=&quot;c&quot;&gt;# The preceding Pod manifest uses an httpGet probe to perform an HTTP GET request against the /healthy endpoint on port 9090 of the kuard container.&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# The probe sets an initialDelaySeconds of 5, and thus will not be called until 5 seconds after all the containers in the Pod are created. The probe must respond within the 1-second time‐out, and the HTTP status code must be equal to or greater than 200 and less than 400 to be considered successful.&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# Kubernetes will call the probe every 10 seconds. If more than three consecutive probes fail, the container will fail and restart.&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Types of Health Checks&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# In addition to HTTP checks, Kubernetes also supports tcpSocket health checks that open a TCP socket; if the connection is successful, the probe succeeds. This style of probe is useful for non-HTTP applications; for example, databases or other non– HTTP-based APIs.&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# Finally, Kubernetes allows exec probes. These execute a script or program in the context of the container. Following typical convention, if this script returns a zero exit code, the probe succeeds; otherwise, it fails. exec scripts are often useful for custom application validation logic that doesn’t fit neatly into an HTTP call.&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;127-resource-management&quot;&gt;1.2.7 Resource Management&lt;/h4&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# ---Resource Management---&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;## Resource Requests: Minimum Required Resources&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# A Pod requests the resources required to run its containers. Kubernetes guarantees that these resources are available to the Pod. The most commonly requested resources are CPU and memory, but Kubernetes has support for other resource types as well, such as GPUs and more&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;## Resource limits&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Requests are used when scheduling Pods to nodes. The Kubernetes scheduler will ensure that the sum of all requests of all Pods on a node does not exceed the capacity of the node&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Therefore, a Pod is guaranteed to have at least the requested resources when running on the node. Importantly, “request” specifies a minimum. It does not specify a maximum cap on the resources a Pod may use&lt;/span&gt;
+
+&lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
+apiVersion: v1
+kind: Pod
+metadata:
+  name: linkding
+spec:
+  containers:
+
+- image: sissbruecker/linkding:latest
+    name: linkding
+    resources:
+      requests:
+        cpu: &lt;span class=&quot;s2&quot;&gt;&quot;500m&quot;&lt;/span&gt;
+        memory: &lt;span class=&quot;s2&quot;&gt;&quot;128Mi&quot;&lt;/span&gt;
+      limits:
+        cpu: &lt;span class=&quot;s2&quot;&gt;&quot;1000m&quot;&lt;/span&gt;
+        memory: &lt;span class=&quot;s2&quot;&gt;&quot;256Mi&quot;&lt;/span&gt;
+    livenessProbe:
+      httpGet:
+        path: /healthy
+        port: 9090
+      initialDeleySeconds: 5
+      timeoutSeconds: 1
+      periodSeconds: 10
+      failureThreshold: 3
+    ports:
+  - containerPort: 9090
+      protocol: TCP
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;128-persistent-volumes-with-pods&quot;&gt;1.2.8 Persistent Volumes with Pods&lt;/h4&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# ---Persisting Data with Volumes---&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# When a Pod is deleted or a container restarts, any and all data in the container’s file‐system is also deleted&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# This is often a good thing, since you don’t want to leave around cruft that happened to be written by your stateless web application&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# In other cases, having access to persistent disk storage is an important part of a healthy application&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Kubernetes models such persistent storage&lt;/span&gt;
+
+&lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
+apiVersion: v1
+kind: Pod
+metadata:
+  name: linkding
+spec:
+  containers:
+
+- image: sissbruecker/linkding:latest
+    name: linkding
+    resources:
+      requests:
+        cpu: &lt;span class=&quot;s2&quot;&gt;&quot;500m&quot;&lt;/span&gt;
+        memory: &lt;span class=&quot;s2&quot;&gt;&quot;128Mi&quot;&lt;/span&gt;
+      limits:
+        cpu: &lt;span class=&quot;s2&quot;&gt;&quot;1000m&quot;&lt;/span&gt;
+        memory: &lt;span class=&quot;s2&quot;&gt;&quot;256Mi&quot;&lt;/span&gt;
+    livenessProbe:
+      httpGet:
+        path: /healthy
+        port: 9090
+      initialDeleySeconds: 5
+      timeoutSeconds: 1
+      periodSeconds: 10
+      failureThreshold: 3
+    volumeMounts:
+  - mountPath: &lt;span class=&quot;s2&quot;&gt;&quot;/data&quot;&lt;/span&gt;
+        name: &lt;span class=&quot;s2&quot;&gt;&quot;linkding-data&quot;&lt;/span&gt;
+    ports:
+  - containerPort: 9090
+      protocol: TCP
+
+&lt;span class=&quot;c&quot;&gt;# Different ways of using volumes with pods&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;## Communication/Synchronization&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# In the first example of a Pod, we saw how two containers used a shared volume to serve a site while keeping it synchronized to a remote Git location&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# To achieve this, the Pod uses an emptyDir volume. Such a volume is scoped to the Pod’s lifespan, but it can be shared between two containers, forming the basis for communication between our Git sync and web serving containers&lt;/span&gt;
+
+&lt;span class=&quot;nt&quot;&gt;-----------------------------------------------------------------------------------------&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;## Cache&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# An application may use a volume that is valuable for performance, but not required for correct operation of the application&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# For example, perhaps the application keeps prerendered thumbnails of larger images. Of course, they can be reconstructed from the original images, but that makes serving the thumbnails more expensive&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# You want such a cache to survive a container restart due to a health-check failure, and thus emptyDir works well for the cache use case as well&lt;/span&gt;
+
+&lt;span class=&quot;nt&quot;&gt;-----------------------------------------------------------------------------------------&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;## Persitent Data&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Sometimes you will use a volume for truly persistent data—data that is independent of the lifespan of a particular Pod, and should move between nodes in the cluster if a node fails or a Pod moves to a different machine for some reason&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# To achieve this, Kubernetes supports a wide variety of remote network storage volumes, including widely supported protocols like NFS and iSCSI as well as cloud provider network storage like Amazon’s Elastic Block Store, Azure’s Files and Disk Storage, as well as Google’s Persistent Disk&lt;/span&gt;
+
+&lt;span class=&quot;nt&quot;&gt;-----------------------------------------------------------------------------------------&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;## Mounting the host filesystem&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Other applications don’t actually need a persistent volume, but they do need some access to the underlying host filesystem. For example, they may need access to the /dev filesystem in order to perform raw block-level access to a device on the system&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# For these cases, Kubernetes supports the hostPath volume, which can mount arbitrary locations on the worker node into the container. The previous example uses the hostPath volume type. The volume created is /var/lib/ kuard on the host&lt;/span&gt;
+
+&lt;span class=&quot;nt&quot;&gt;-----------------------------------------------------------------------------------------&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;## Persisting Data Using Remote Disks&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Oftentimes, you want the data a Pod is using to stay with the Pod, even if it is restarted on a different host machine&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# To achieve this, you can mount a remote network storage volume into your Pod. When using network-based storage, Kubernetes automatically mounts and unmounts the appropriate storage whenever a Pod using that volume is scheduled onto a particular machine&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# There are numerous methods for mounting volumes over the network&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Kubernetes includes support for standard protocols such as NFS and iSCSI as well as cloud pro‐ vider–based storage APIs for the major cloud providers (both public and private)&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# In many cases, the cloud providers will also create the disk for you if it doesn’t already exist&lt;/span&gt;
+
+volumes:
+
+- name: &lt;span class=&quot;s2&quot;&gt;&quot;linkding&quot;&lt;/span&gt;
+    nfs:
+      server: my.nfs.server.local
+      path: &lt;span class=&quot;s2&quot;&gt;&quot;/exports&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;hr /&gt;</content><author><name></name></author><category term="Kubernetes" /><summary type="html"></summary></entry><entry><title type="html">Kubernetes 101</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/09/15/Kubernetes-Introduction.html" rel="alternate" type="text/html" title="Kubernetes 101" /><published>2020-09-15T00:00:00-05:00</published><updated>2020-09-15T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/09/15/Kubernetes-Introduction</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/09/15/Kubernetes-Introduction.html">&lt;hr /&gt;
+
+&lt;h2 id=&quot;10-what-is-kubernetes&quot;&gt;1.0 What is Kubernetes&lt;/h2&gt;
+
+&lt;p&gt;Kubernetes is an open-source platform/tool created by Google. It is written in GO-Lang. So currently Kubernetes is an open-source project under Apache 2.0 license. Sometimes in the industry, Kubernetes is also known as “K8s”. With Kubernetes, you can run any Linux container across private, public, and hybrid cloud environments. Kubernetes provides some edge functions, such as Loadbalancer, Service discovery, and Roled Based Access Control(RBAC).&lt;/p&gt;
+
+&lt;p&gt;Basically, kubernetes is a software that allows us to deploy, manage and scale applications. The applications will be packed in containers and kubernetes groups them into units. It allows us to span our application over thousands of servers while looking like one single unit.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Key Features of Kubernetes
+    &lt;ul&gt;
+      &lt;li&gt;Horizontal Scaling&lt;/li&gt;
+      &lt;li&gt;Auto Scaling&lt;/li&gt;
+      &lt;li&gt;Health check &amp;amp; Self-healing&lt;/li&gt;
+      &lt;li&gt;Load Balancer&lt;/li&gt;
+      &lt;li&gt;Service Discovery&lt;/li&gt;
+      &lt;li&gt;Automated rollbacks &amp;amp; rollouts&lt;/li&gt;
+      &lt;li&gt;Canary Deployment&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;20-why-we-need-kubernetes&quot;&gt;2.0 Why we need Kubernetes&lt;/h2&gt;
+
+&lt;p&gt;First, we need to familier with few terms:&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Monolithic Applications:&lt;/strong&gt; Years ago, most software applications were big monoliths, running either as a single process or as a small number of processes spread across a handful of servers. These legacy systems are still widespread today. They have slow release cycles and are updated relatively infrequently. At the end of every release cycle, developers pack- age up the whole system and hand it over to the ops team, who then deploys and monitors it. In case of hardware failures, the ops team manually migrates it to the remaining healthy servers. So these components that are all tightly coupled together and have to be developed, deployed, and managed as one entity, because they all run as a single OS process.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Problems with Monolithic Applications: Change of one part of the application require a redeployment of the whole application. Requires powerful servers, Uses Vertical Scaling ( which is Very Expensive ) and If one components creates problem, the whole application becomes unscalable.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;Microservices Applications:&lt;/strong&gt; Today, these big monolithic legacy applications are slowly being broken down into smaller, independently running components called microservices. Each microservice runs as an independent process and communicates with other microservices through simple, well defined interfaces ( APIs ). Microservices communicate through synchronous protocols such as HTTP, over which they usually expose RESTful (REpresentational State Transfer) APIs, or through asyn- chronous protocols such as AMQP (Advanced Message Queueing Protocol).&lt;/p&gt;
+
+&lt;p&gt;Microservices are decoupled from each other, they can be developed, deployed, updated,
+and scaled individually. This enables you to change components quickly and as often as
+necessary to keep up with today’s rapidly changing business requirements.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Problems with Microservices Based Applications: The bigger numbers of deployable components and increasingly larger datacenters, it becomes increasingly difficult to configure, manage, and keep the whole system running smoothly. It’s much harder to figure out where to put each of those components to achieve high resource utilization and thereby keep the hardware costs down and the one of biggest problem with scaling microservices is multiple apps that are running on same host mey have conflicting dependencies. One solution of this is applications could run in the exact same environment during development and in production so they have the exact same operating system, libraries, system configuration, networking environment, and everything else but this will not solve the conflicting, versions of libraries or different environment requirements to solve this issue we have great technology called containers. ( You are also provide Dedicated VM to particular service but it is not a ideal solution because it increases hardware cost and management)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Doing all this manually is hard work. We need automation, which includes automatic scheduling of those components to our servers, automatic configuration, supervision, and failure-handling. This is where Kubernetes comes in.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/MicroServices.png&quot; alt=&quot;Microservices&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Kubernetes provides you with a framework to run distributed systems resiliently. It takes care of scaling and failover for your application, provides deployment patterns, and more. For example, Kubernetes can easily manage a canary deployment for your system.&lt;/p&gt;
+
+&lt;p&gt;Before used Kubernetes, you need to prepare your infrastructure to deploy a new microservice. I believe it cost you a few days or weeks. Without Kubernetes, large teams would have to manually script the deployment workflows. With Kubernetes, you don’t need to create your deployment script manually and it will reduce the amount of time and resources spent on DevOps.&lt;/p&gt;
+
+&lt;h3 id=&quot;21-what-kubernetes-provides&quot;&gt;2.1 What kubernetes provides&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Service discovery and load balancing: Kubernetes can expose a container using the DNS name or using their own IP address. If traffic to a container is high, Kubernetes is able to load balance and distribute the network traffic so that the deployment is stable.&lt;/li&gt;
+  &lt;li&gt;Storage orchestration: Kubernetes allows you to automatically mount a storage system of your choice, such as local storages, public cloud providers, and more.
+Automated rollouts and rollbacks You can describe the desired state for your deployed containers using Kubernetes, and it can change the actual state to the desired state at a controlled rate. For example, you can automate Kubernetes to create new containers for your deployment, remove existing containers and adopt all their resources to the new container.&lt;/li&gt;
+  &lt;li&gt;Automatic bin packing: You provide Kubernetes with a cluster of nodes that it can use to run containerized tasks. You tell Kubernetes how much CPU and memory (RAM) each container needs. Kubernetes can fit containers onto your nodes to make the best use of your resources.&lt;/li&gt;
+  &lt;li&gt;Self-healing: Kubernetes restarts containers that fail, replaces containers, kills containers that don’t respond to your user-defined health check, and doesn’t advertise them to clients until they are ready to serve.&lt;/li&gt;
+  &lt;li&gt;Secret and configuration management: Kubernetes lets you store and manage sensitive information, such as passwords, OAuth tokens, and SSH keys. You can deploy and update secrets and application configuration without rebuilding your container images, and without exposing secrets in your stack configuration.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;22-what-kubernetes-not-provides&quot;&gt;2.2 What kubernetes not provides&lt;/h3&gt;
+
+&lt;p&gt;Kubernetes is a lot of good things, I hope to have been clear exposing all Kubernetes benefits. The main problem from Kubernetes newbie is that they discover it is not a PaaS (Platform as a Service) system like they suppose. Kubernetes is a lot of things but not an “all included” service. It is great and reduces the amount of work, especially on the sysadmin side, but doesn’t offer you any apart from the infrastructure.&lt;/p&gt;
+
+&lt;p&gt;Said that most of the things you are looking for in a fully-managed system are there: simplified deployments, scaling, load balancing, logging, and monitoring. Usually, you get a standard configuration from your hosting but you can theoretically customize it if you really need it.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;It does not limit the types of applications supported. Everything is written into the container so every container application, no matter on technology, can be run. The counterpart is that you still have to define the container by hand.&lt;/li&gt;
+  &lt;li&gt;It doesn’t offer an automated deployment. You just have to push to a docker repository your built images, no more. This is quite easy if you already work in a process with Continuous Integration, Delivery, and Deployment (CI/CD), but consider that without it will be quite tricky.&lt;/li&gt;
+  &lt;li&gt;It does not provide any application-level services, just infrastructure. If you need a database, you have to buy a service or run it into a dedicated container. Of course, taking charges of backups and so on.&lt;/li&gt;
+  &lt;li&gt;Most of the interactions with the system are by a command line that wraps API. That’s very good because it allows automating each setting. Commands syntax is very simple but, if you are looking to a system that is managed fully by a UI you are looking to the worst place.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;30-how-does-kubernetes-work&quot;&gt;3.0 How does Kubernetes work&lt;/h2&gt;
+
+&lt;p&gt;The system is composed of a master node and any number of worker nodes. When the developer submits a list of apps to the master, Kubernetes deploys them to the cluster of worker nodes. What node a component lands on doesn’t (and shouldn’t) matter—neither to the developer nor to the system administrator.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_Master.png&quot; alt=&quot;Kubernetes Master&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Kubernetes will run your containerized app somewhere in the cluster, provide information to its components on how to find each other, and keep all of them running.
+Because your application doesn’t care which node it’s running on, Kubernetes can
+relocate the app at any time, and by mixing and matching apps, achieve far better
+resource utilization than is possible with manual scheduling.&lt;/p&gt;
+
+&lt;h3 id=&quot;31-architecture-of-kubernetes-cluster&quot;&gt;3.1 Architecture of Kubernetes Cluster&lt;/h3&gt;
+
+&lt;p&gt;We’ve seen a bird’s-eye view of Kubernetes’ architecture. Now let’s take a closer look at what a Kubernetes cluster is composed of. At the hardware level, a Kubernetes cluster is composed of many nodes, which can be split into two types:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The master node, which hosts the Kubernetes Control Plane that controls and manages the whole Kubernetes system&lt;/li&gt;
+  &lt;li&gt;Worker nodes that run the actual applications you deploy&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_arch1.png&quot; alt=&quot;Kubernetes Architecture&quot; /&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;311-master--control-plane-&quot;&gt;3.1.1 Master ( Control Plane )&lt;/h4&gt;
+
+&lt;p&gt;The Control Plane is what controls the cluster and makes it function. It consists of
+multiple components that can run on a single master node or be split across multiple
+nodes and replicated to ensure high availability. These components are&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Kubernetes API Server&lt;/strong&gt;: The application that serves Kubernetes functionality through a RESTful interface and stores the state of the cluster ( which admin and other control plane communicated with ).&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Scheduler&lt;/strong&gt;: Scheduler watches API server for new Pod requests. It communicates with Nodes to create new pods and to assign work to nodes while allocating resources or imposing constraints.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Controller Manager&lt;/strong&gt;: Component on the master that runs controllers. Includes Node controller, Endpoint Controller, Namespace Controller, etc. ( Performs cluster-level functions, such as replicating components, keeping track of worker nodes, handling node failures, and so on )&lt;/p&gt;
+
+    &lt;ul&gt;
+      &lt;li&gt;Node Controller: Responsible for noticing and responding when nodes go down.&lt;/li&gt;
+      &lt;li&gt;Replication Controller: Responsible for maintaining the correct number of pods for every replication controller object in the system.&lt;/li&gt;
+      &lt;li&gt;Endpoints Controller: Populates the Endpoints object (that is, it joins Services and Pods).&lt;/li&gt;
+      &lt;li&gt;Service Account and Token Controllers: Create default accounts and API access tokens for new namespaces.&lt;/li&gt;
+      &lt;li&gt;Cloud-Controller-Manager: Cloud-controller-manager runs controllers that interact with the underlying cloud providers. The cloud-controller-manager binary is an alpha feature introduced in Kubernetes release 1.6. Cloud-controller-manager runs cloud-provider-specific controller loops only. You must disable these controller loops in the Kube-controller-manager. You can disable the controller loops by setting the –cloud-provider flag to external when starting the Kube-controller-manager.&lt;/li&gt;
+      &lt;li&gt;Node Controller: For checking the cloud provider to determine if a node has been deleted in the cloud after it stops responding.&lt;/li&gt;
+      &lt;li&gt;Route Controller: For setting up routes in the underlying cloud infrastructure.&lt;/li&gt;
+      &lt;li&gt;Service Controller: For creating, updating, and deleting cloud provider load balancers.&lt;/li&gt;
+      &lt;li&gt;Volume Controller: For creating, attaching, and mounting volumes, and interacting with the cloud provider to orchestrate volumes.&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;etcd&lt;/strong&gt;: A reliable distributed data store that persistently stores the cluster
+configuration.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The components of the Control Plane hold and control the state of the cluster, but
+they don’t run your applications. This is done by the (worker) nodes.&lt;/p&gt;
+
+&lt;h4 id=&quot;312-slave--worker-nodes-&quot;&gt;3.1.2 Slave ( Worker Nodes )&lt;/h4&gt;
+
+&lt;p&gt;The worker nodes are the machines that run your containerized applications. The
+task of running, monitoring, and providing services to your applications is done by
+the following components:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Docker, rkt, or another container runtime, which runs your containers&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Kubelet&lt;/strong&gt;: Kubectl registering the nodes with the cluster, watches for work assignments from the scheduler, instantiate new Pods, report back to the master.
+Container Engine: Responsible for managing containers, image pulling, stopping the container, starting the container, destroying the container, etc.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Kube Proxy&lt;/strong&gt;: Responsible for forwarding app user requests to the right pod (load-balances network traffic between application components).&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The sequence of deployment: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DevOps -&amp;gt; API Server -&amp;gt; Scheduler -&amp;gt; Cluster -&amp;gt;Nodes -&amp;gt; Kubelet -&amp;gt; Container Engine -&amp;gt; Spawn Container in Pod&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The sequence of App user request: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;App user -&amp;gt; Kube proxy -&amp;gt; Pod -&amp;gt; Container(Your app is run here)&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;32-the-six-layers-of-k8s&quot;&gt;3.2 The Six Layers of K8s&lt;/h3&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_Abstraction.png&quot; alt=&quot;Kubernetes Abstrction&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Deployments create and manage ReplicaSets, which create and manage Pods, which run on Nodes, which have a container runtime, which run the app code you put in your Docker image.&lt;/p&gt;
+
+&lt;p&gt;The levels shaded blue are higher-level K8s abstractions. The green levels represent Nodes and Node subprocess that you should be aware of, but may not touch.&lt;/p&gt;
+
+&lt;h4 id=&quot;321-deployments&quot;&gt;3.2.1 Deployments&lt;/h4&gt;
+
+&lt;p&gt;Although pods are the basic unit of computation in Kubernetes, they are not typically directly launched on a cluster. Instead, pods are usually managed by one more layer of abstraction: the deployment. A deployment’s primary purpose is to declare how many replicas of a pod should be running at a time. When a deployment is added to the cluster, it will automatically spin up the requested number of pods, and then monitor them. If a pod dies, the deployment will automatically re-create it. Using a deployment, you don’t have to deal with pods manually. You can just declare the desired state of the system, and it will be managed for you automatically.&lt;/p&gt;
+
+&lt;h4 id=&quot;322-replicaset&quot;&gt;3.2.2 ReplicaSet&lt;/h4&gt;
+
+&lt;p&gt;The Deployment creates a ReplicaSet that will ensure your app has the desired number of Pods. ReplicaSets will create and scale Pods based on the triggers you specify in your Deployment. Replication Controllers perform the same function as ReplicaSets, but Replication Controllers are old school. ReplicaSets are the smart way to manage replicated Pods in 2019.&lt;/p&gt;
+
+&lt;h4 id=&quot;323-pods&quot;&gt;3.2.3 Pods&lt;/h4&gt;
+
+&lt;p&gt;All containers will run in a pod. Pods abstract the network and storage away from the underlying containers. Your app will run here. Each pod has one unique IP address assigned which means one pod can communicate with each other like a traditional container in a docker environment. Each container inside the pod can reach all other pods into the virtual network, but cannot deep to the other container on other pods. That’s important to guarantee the pod abstraction: nobody has to know how the Pods are composed internally. Moreover, the IP assigned is volatile so you must use always the service name (resolved to the right IP directly). Pods are used as the unit of replication in Kubernetes. If your application becomes too popular and a single pod instance can’t carry the load, Kubernetes can be configured to deploy new replicas of your pod to the cluster as necessary. Even when not under heavy load, it is standard to have multiple copies of a pod running at any time in a production system to allow load balancing and failure resistance. Pods handle Volumes, Secrets, and configuration for containers. Pods are ephemeral. They are intended to be restarted automatically when they die.&lt;/p&gt;
+
+&lt;p&gt;Note: Worker Node is already explained in above section&lt;/p&gt;
+
+&lt;h3 id=&quot;33-key-terms-used-with-kubernetes&quot;&gt;3.3 Key Terms used with Kubernetes&lt;/h3&gt;
+
+&lt;h4 id=&quot;331-services&quot;&gt;3.3.1 Services&lt;/h4&gt;
+
+&lt;p&gt;The name “service” in informatics science is overused. In Kubernetes scope think to a service like something you want to serve. A Kubernetes service involves a set of pods and may offer a complex feature or just expose a single Pod with a single container. So you can have a service that provides a CMS feature, with database and web server inside, or two different services, one for the database and one for the webserver. That’s up to you. Basically it is abstraction layer on top of a set of ephemeral pods (think of this as the ‘face’ of a set of pods)&lt;/p&gt;
+
+&lt;h4 id=&quot;332-ingress&quot;&gt;3.3.2 Ingress&lt;/h4&gt;
+
+&lt;p&gt;By default, Kubernetes provides isolation between pods and the outside world. If you want to communicate with a service running in a pod, you have to open up a channel for communication. This is referred to as ingress. To do this there is an ingress controller that does something similar to a load balancer. It virtually forwards traffic from outside to the services. During this step, based on the ingress implementation you have chosen, you can add HTTPS encryption, route traffic based on the hostname or URL segments. The only service can be linked to the ingress controller, not Pods. There are multiple ways to add ingress to your cluster. The most common ways are by adding either an Ingress controller, or a LoadBalancer.&lt;/p&gt;
+
+&lt;h4 id=&quot;333-volume&quot;&gt;3.3.3 Volume&lt;/h4&gt;
+
+&lt;p&gt;By default Pod storage is volatile. This is important to know because at the first restart you will lose everything. Kubernetes volumes allow mapping some part of the hard drive of containers to a safe place. That space can be shared between containers. The mount point can be any part of the container, but a volume cannot be mount into another one.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;PersistentVolumes and PersistentVolumeClaims&lt;/strong&gt;: To help abstract away infrastructure specifics, K8s developed PersistentVolumes and PersistentVolumeClaims. Unfortunately the names are a bit misleading, because vanilla Volumes can have persistent storage, as well. PersisententVolumes (PV) and PersisentVolumeClaims (PVC) add complexity compared to using Volumes alone. However, PVs are useful for managing storage resources for large projects. With PVs, a K8s user still ends up using a Volume, but two steps are required first.&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;A PersistentVolume is provisioned by a Cluster Administrator (or it’s provisioned dynamically).&lt;/li&gt;
+  &lt;li&gt;An individual Cluster user who needs storage for a Pod creates PersistentVolumeClaim manifest. It specifies how much and what type of storage they need. K8s then finds and reserves the storage needed.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The user then creates a Pod with a Volume that uses the PVC. PersistentVolumes have lifecycles independent of any Pod. In fact, the Pod doesn’t even know about the PV, just the PVC. PVCs consume PV resources, analogously to how Pods consume Node resources.&lt;/p&gt;
+
+&lt;h4 id=&quot;334-namespaces&quot;&gt;3.3.4 Namespaces&lt;/h4&gt;
+
+&lt;p&gt;Think to namespace like the feature that makes Kubernetes multitenant. The namespace is the tenant level. Each namespace can partitioning resources to isolate services, ingress, and many other things. This feature is good to have a strong separation between application, delegate safely to different teams, and have separated environments in a single infrastructure. It is a virtual cluster on top of an underlying physical cluster&lt;/p&gt;
+
+&lt;h4 id=&quot;335-labels-and-selectors&quot;&gt;3.3.5 Labels and Selectors&lt;/h4&gt;
+
+&lt;p&gt;Labels are key-value pairs used to tag objects. Objects are the items that you create in a Kubernetes cluster (pods, deployments, replica sets, services, volumes etc). Selectors are used to collect objects based on tags.&lt;/p&gt;
+
+&lt;h4 id=&quot;336-statefulsets&quot;&gt;3.3.6 StatefulSets&lt;/h4&gt;
+
+&lt;p&gt;As we know, a ReplicaSet creates and manages Pods. If a Pod shuts down because a Node fails, a ReplicaSet can automatically replace the Pod on another Node. You should generally create a ReplicaSet through a Deployment rather than creating it directly, because it’s easier to update your app with a Deployment.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_States.png&quot; alt=&quot;States&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Sometimes your app will need to keep information about its state. You can think of state as the current status of your user’s interaction with your app. So in a video game it’s all the unique aspects of the user’s character at a point in time. What do you do when your app has state you need to keep track of? Use a StatefulSet.&lt;/p&gt;
+
+&lt;p&gt;Like a ReplicaSet, a StatefulSet manages deployment and scaling of a group of Pods based on a container spec. Unlike a Deployment, a StatefulSet’s Pods are not interchangeable. Each Pod has a unique, persistent identifier that the controller maintains over any rescheduling. StatefulSets for good for persistent, stateful backends like databases. The state information for the Pod is held in a Volume associated with the StatefulSet.&lt;/p&gt;
+
+&lt;h4 id=&quot;337-daemonsets&quot;&gt;3.3.7 DaemonSets&lt;/h4&gt;
+
+&lt;p&gt;DaemonSets are for continuous process. They run one Pod per Node. Each new Node added to the cluster automatically gets a Pod started by the DaemonSet. DaemonSets are useful for ongoing background tasks such as monitoring and log collection.
+StatefulSets and DaemonSets are not controlled by a Deployment. Although they are at the same level of abstraction as a ReplicaSet, there is not a higher level of abstraction for them in the current API.&lt;/p&gt;
+
+&lt;h4 id=&quot;338-etcd&quot;&gt;3.3.8 ETCD&lt;/h4&gt;
+
+&lt;p&gt;It stores the configuration information which can be used by each of the nodes in the cluster. It is a high availability key-value store that can be distributed among multiple nodes. It is accessible only by Kubernetes API server as it may have some sensitive information. It is a distributed key-value store which is accessible to all.
+ETCD is a distributed reliable key-value store used by Kubernetes to store all data used to manage the cluster. Think of it this way, when you have multiple nodes and multiple masters in your cluster, etcd stores all that information on all the nodes in the cluster in a distributed manner. ETCD is responsible for implementing locks within the cluster to ensure there are no conflicts between the Masters.&lt;/p&gt;
+
+&lt;h4 id=&quot;339-cluster-ip&quot;&gt;3.3.9 Cluster IP&lt;/h4&gt;
+
+&lt;p&gt;Only has a Virtual IP (also called Cluster IP). This service can be used within a cluster only Acts like a traffic router to your Pods inside the cluster. Each port exposed by a pod will need a service if you want a client to talk to it via that port. By default, the service port is the same as the port exposed by the Pod. Different methods to access this service: From any node inside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;cluster IP&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From the node where a replica of the Pod is running: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;pod IP&amp;gt;:&amp;lt;pod port&amp;gt;&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h4 id=&quot;3310-node-port&quot;&gt;3.3.10 Node Port&lt;/h4&gt;
+
+&lt;p&gt;For this service, a physical port on the node is mapped to the service port and the service connects to the Pod via the pod port. Remember, this will also have a Virtual IP (i.e. cluster IP). Different methods to access this service: From outside the cluster, if any node in the cluster has a public IP: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;node public IP&amp;gt;:&amp;lt;node port&amp;gt;&lt;/code&gt; From any node inside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;cluster IP&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From the node where a replica of the Pod is running: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;pod IP&amp;gt;:&amp;lt;pod port&amp;gt;&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h4 id=&quot;3311-load-balancer&quot;&gt;3.3.11 Load Balancer&lt;/h4&gt;
+
+&lt;p&gt;Giving public access to a node in your cluster is not a recommended method, When you want to give public access to a service, create a load balancer service (not getting into ingress at this stage). For each service that you want to give public access, you need to create a load balancer service, This type of service will generally work only in a cloud environment. Remember, this will also have a Virtual IP (i.e. cluster IP) This service will have a node port too Different methods to access this service: From outside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;load balancer dns&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From outside the cluster, if any node in the cluster has a public IP: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;node public IP&amp;gt;:&amp;lt;node port&amp;gt;&lt;/code&gt; From any node inside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;cluster IP&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From the node where a replica of the Pod is running: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;pod IP&amp;gt;:&amp;lt;pod port&amp;gt;&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h4 id=&quot;3312-external-name&quot;&gt;3.3.12 External Name&lt;/h4&gt;
+
+&lt;p&gt;This maps a service to endpoints completely outside of the cluster.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;40-befits-of-using-kubernetes&quot;&gt;4.0 Befits of using kubernetes&lt;/h2&gt;
+
+&lt;h3 id=&quot;41-kubernetes-will-keeping-your-containers-running&quot;&gt;4.1 Kubernetes will keeping your containers running&lt;/h3&gt;
+
+&lt;p&gt;Once the application is running, Kubernetes continuously makes sure that the deployed
+state of the application always matches the description you provided. For example, if
+you specify that you always want five instances of a web server running, Kubernetes will always keep exactly five instances running. If one of those instances stops working properly, like when its process crashes or when it stops responding, Kubernetes will restart it automatically. Similarly, if a whole worker node dies or becomes inaccessible, Kubernetes will select new nodes for all the containers that were running on the node and run them on the newly selected nodes.&lt;/p&gt;
+
+&lt;h3 id=&quot;42-scaling-the-number-of-copies&quot;&gt;4.2 Scaling the number of copies&lt;/h3&gt;
+
+&lt;p&gt;While the application is running, you can decide you want to increase or decrease the number of copies, and Kubernetes will spin up additional ones or stop the excess ones, respectively. You can even leave the job of deciding the optimal number of cop- ies to Kubernetes. It can automatically keep adjusting the number, based on real-time metrics, such as CPU load, memory consumption, queries per second, or any other metric your app exposes.&lt;/p&gt;
+
+&lt;h3 id=&quot;43-hitting-a-moving-target&quot;&gt;4.3 Hitting a moving target&lt;/h3&gt;
+
+&lt;p&gt;We’ve said that Kubernetes may need to move your containers around the cluster This can occur when the node they were running on has failed or because they were evicted from a node to make room for other containers. If the container is providing a service to external clients or other containers running in the cluster, how can they use the container properly if it’s constantly moving around the cluster? And how can clients connect to containers providing a service when those containers are replicated and spread across the whole cluster? To allow clients to easily find containers that provide a specific service, you can tell Kubernetes which containers provide the same service and Kubernetes will expose all of them at a single static IP address and expose that address to all applications run- ning in the cluster. This is done through environment variables, but clients can also look up the service IP through good old DNS. The kube-proxy will make sure connec- tions to the service are load balanced across all the containers that provide the service. The IP address of the service stays constant, so clients can always connect to its con- tainers, even when they’re moved around the cluster.&lt;/p&gt;
+
+&lt;h3 id=&quot;44-simplifying-application-deployment&quot;&gt;4.4 Simplifying application deployment&lt;/h3&gt;
+
+&lt;p&gt;Kubernetes exposes all its worker nodes as a single deployment platform,
+application developers can start deploying applications on their own and don’t need
+to know anything about the servers that make up the cluster. In essence, all the nodes are now a single bunch of computational resources that are waiting for applications to consume them. A developer doesn’t usually care what kind of server the application is running on, as long as the server can provide the application with adequate system resources. Certain cases do exist where the developer does care what kind of hardware the application should run on. ( Like some app needs SSD deployment instead of HDD )&lt;/p&gt;
+
+&lt;h3 id=&quot;45-achieving-better-utilization-of-hardware&quot;&gt;4.5 Achieving better utilization of hardware&lt;/h3&gt;
+
+&lt;p&gt;By setting up Kubernetes on your servers and using it to run your apps instead of running them manually, you’ve decoupled your app from the infrastructure. When you tell Kubernetes to run your application, you’re letting it choose the most appropriate node to run your application on based on the description of the application’s resource requirements and the available resources on each node. By using containers and not tying the app down to a specific node in your cluster, you’re allowing the app to freely move around the cluster at any time, so the different app components running on the cluster can be mixed and matched to be packed tightly onto the cluster nodes. This ensures the node’s hardware resources are utilized as best as possible.&lt;/p&gt;
+
+&lt;p&gt;The ability to move applications around the cluster at any time allows Kubernetes
+to utilize the infrastructure much better than what you can achieve manually.&lt;/p&gt;
+
+&lt;h3 id=&quot;46-health-checking-and-self-healing&quot;&gt;4.6 Health checking and self-healing&lt;/h3&gt;
+
+&lt;p&gt;Having a system that allows moving an application across the cluster at any time is also valuable in the event of server failures. As your cluster size increases, you’ll deal with failing computer components ever more frequently. Kubernetes monitors your app components and the nodes they run on and auto- matically reschedules them to other nodes in the event of a node failure. This frees the ops team from having to migrate app components manually and allows the team to immediately focus on fixing the node itself and returning it to the pool of available hardware resources instead of focusing on relocating the app.&lt;/p&gt;
+
+&lt;h3 id=&quot;47-automatic-scaling&quot;&gt;4.7 Automatic scaling&lt;/h3&gt;
+
+&lt;p&gt;Using Kubernetes to manage your deployed applications also means the ops team
+doesn’t need to constantly monitor the load of individual applications to react to sudden load spikes. As previously mentioned, Kubernetes can be told to monitor the resources used by each application and to keep adjusting the number of running instances of each application. If Kubernetes is running on cloud infrastructure, where adding additional nodes is as easy as requesting them through the cloud provider’s API, Kubernetes can even automatically scale the whole cluster size up or down based on the needs of the deployed applications.&lt;/p&gt;
+
+&lt;h3 id=&quot;48-simplifying-application-development&quot;&gt;4.8 Simplifying application development&lt;/h3&gt;
+
+&lt;p&gt;Then there’s the fact that developers don’t need to implement features that they would usually implement. This includes discovery of services and/or peers in a clustered application. Kubernetes does this instead of the app. Usually, the app only needs to look up certain environment variables or perform a DNS lookup. If that’s not enough, the application can query the Kubernetes API server directly to get that and/or other information. Querying the Kubernetes API server like that can even save developers from having to implement complicated mechanisms such as leader election.&lt;/p&gt;
+
+&lt;h3 id=&quot;49-storage-orchestration&quot;&gt;4.9 Storage orchestration&lt;/h3&gt;
+
+&lt;p&gt;Consequently, mount local or public cloud or network storage.&lt;/p&gt;
+
+&lt;h3 id=&quot;410-secret-and-configuration-management&quot;&gt;4.10 Secret and configuration management&lt;/h3&gt;
+
+&lt;p&gt;Create and update secrets and configs without rebuilding your image&lt;/p&gt;
+
+&lt;h3 id=&quot;411-horizontal-scaling&quot;&gt;4.11 Horizontal Scaling&lt;/h3&gt;
+
+&lt;p&gt;first, we need to know what are the horizontal and vertical scalings are:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Vertically Scaling : Adding more CPUs, memory, and other server components&lt;/li&gt;
+  &lt;li&gt;Horizontal Scaling : Setting up additional Servers and running multiple copies&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Kubernetes uses horizontal scaling, which provides greater flexibilities to the companies&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;50-ways-to-spin-up-kubernetes-cluster&quot;&gt;5.0 Ways to spin up kubernetes cluster&lt;/h2&gt;
+
+&lt;h3 id=&quot;51-kubeadm&quot;&gt;5.1 Kubeadm&lt;/h3&gt;
+
+&lt;p&gt;The official CNCF tool for provisioning Kubernetes clusters in a variety of shapes and forms (e.g. single-node, multi-node, HA, self-hosted)&lt;/p&gt;
+
+&lt;h3 id=&quot;52-minikube&quot;&gt;5.2 Minikube&lt;/h3&gt;
+
+&lt;p&gt;Minikube can run on Windows and MacOS, because it relies on virtualization (e.g. Virtualbox) to deploy a kubernetes cluster in a Linux VM. You can also run minikube directly on linux with or without virtualization. It also has some developer-friendly features, like add-ons.&lt;/p&gt;
+
+&lt;p&gt;From a user perspective minikube is a very beginner friendly tool. You start the cluster using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;minikube start&lt;/code&gt;, wait a few minutes and your &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kubectl&lt;/code&gt; is ready to go. To specify a Kubernetes version you can use the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;--kubernetes-version&lt;/code&gt; flag.&lt;/p&gt;
+
+&lt;p&gt;If you are new to Kubernetes the first class support for its dashboard that minikube offers may help you. With a simple minikube dashboard the application will open up giving you a nice overview of everything that is going on in your cluster. This is being achieved by minikube’s addon system that helps you integrating things like, Helm, Nvidia GPUs and an image registry with your cluster.&lt;/p&gt;
+
+&lt;h3 id=&quot;53-microk8s&quot;&gt;5.3 MicroK8s&lt;/h3&gt;
+
+&lt;p&gt;MicroK8s is a Kubernetes distribution from Canonical that is designed for fast and simple deployment, which makes it a good choice to run Kubernetes locally.&lt;/p&gt;
+
+&lt;p&gt;Microk8s is similar to minikube in that it spins up a single-node Kubernetes cluster with its own set of add-ons. If MicroK8s runs on Linux, it also offers the advantage of not requiring VMs. On Windows and macOS, MicroK8s uses a VM framework called Multipass to create VMs for the Kubernetes cluster.&lt;/p&gt;
+
+&lt;p&gt;Like minikube, microk8s is limited to a single-node Kubernetes cluster, with the added limitation of only running on Linux and only on Linux where snap is installed.&lt;/p&gt;
+
+&lt;h3 id=&quot;54-k3s&quot;&gt;5.4 K3s&lt;/h3&gt;
+
+&lt;p&gt;K3s is a minified version of Kubernetes developed by Rancher Labs. By removing dispensable features (legacy, alpha, non-default, in-tree plugins) and using lightweight components (e.g. sqlite3 instead of etcd3) they achieved a significant downsizing. This results in a single binary with a size of around 60 MB.&lt;/p&gt;
+
+&lt;p&gt;K3s runs on any Linux distribution without any additional external dependencies or tools. It is marketed by Rancher as a lightweight Kubernetes offering suitable for edge environments, IoT devices, CI pipelines, and even ARM devices, like Raspberry Pi’s. K3s achieves its lightweight goal by stripping a bunch of features out of the Kubernetes binaries (e.g. legacy, alpha, and cloud-provider-specific features), replacing docker with containerd, and using sqlite3 as the default DB (instead of etcd). As a result, this lightweight Kubernetes only consumes 512 MB of RAM and 200 MB of disk space. K3s has some nice features, like Helm Chart support out-of-the-box.&lt;/p&gt;
+
+&lt;p&gt;Unlike the previous two offerings, K3s can do multiple node Kubernetes cluster. However, due to technical limitations of SQLite, K3s currently does not support High Availability (HA), as in running multiple master nodes.&lt;/p&gt;
+
+&lt;p&gt;One feature that stands out is called auto deployment. It allows you to deploy your Kubernetes manifests and Helm charts by putting them in a specific directory. K3s watches for changes and takes care of applying them without any further interaction. This is especially useful for CI pipelines and IoT devices (both target use cases of K3s). Just create/update your configuration and K3s makes sure to keep your deployments up to date.&lt;/p&gt;
+
+&lt;h3 id=&quot;55-kind&quot;&gt;5.5 Kind&lt;/h3&gt;
+
+&lt;p&gt;Kind (Kubernetes-in-Docker), as the name implies, runs Kubernetes clusters in Docker containers. This is the official tool used by Kubernetes maintainers for Kubernetes v1.11+ conformance testing. It supports multi-node clusters as well as HA clusters. Because it runs K8s in Docker, kind can run on Windows, Mac, and Linux.&lt;/p&gt;
+
+&lt;p&gt;Kind is optimized first and foremost for CI pipelines, so it may not have some of the developer-friendly features of other offerings. Kind leads to a significantly faster startup speed compared to spawning VM.&lt;/p&gt;
+
+&lt;p&gt;Creating a cluster is very similar to minikube’s approach. Executing kind create cluster, playing the waiting game and afterwards you are good to go. By using different names (–name) kind allows you to create multiple instances in parallel.&lt;/p&gt;
+
+&lt;p&gt;If you are looking for a way to programmatically create a Kubernetes cluster, kind kindly (you have been for waiting for this, don’t you ) publishes its Go packages that are used under the hood.&lt;/p&gt;
+
+&lt;h3 id=&quot;56-k3d&quot;&gt;5.6 K3d&lt;/h3&gt;
+
+&lt;p&gt;A new project that aims to bring K3s-in-Docker (similar to kind).&lt;/p&gt;
+
+&lt;hr /&gt;</content><author><name></name></author><category term="Kubernetes" /><summary type="html"></summary></entry><entry><title type="html">Step-By-Step Process To Deploy Kubernetes On Your Raspberry PIs</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html" rel="alternate" type="text/html" title="Step-By-Step Process To Deploy Kubernetes On Your Raspberry PIs" /><published>2020-09-15T00:00:00-05:00</published><updated>2020-09-15T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html">&lt;hr /&gt;
 
 &lt;h2 id=&quot;overview&quot;&gt;Overview&lt;/h2&gt;
 
@@ -476,368 +1515,6 @@ spec:
 &lt;p&gt;You should now have an operational Kubernetes master and several worker nodes ready to accept workloads.&lt;/p&gt;
 
 &lt;p&gt;I hope MicroK8 will be a great help for newcomers into Kubernetes to try it out and learn Kubernetes by playing with it. If you gave it a shot &amp;amp; liked it, leave me a comment here!&lt;/p&gt;
-
-&lt;hr /&gt;</content><author><name></name></author><category term="Kubernetes" /><summary type="html"></summary></entry><entry><title type="html">Kubernetes 101</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/09/15/Kubernetes-Introduction.html" rel="alternate" type="text/html" title="Kubernetes 101" /><published>2020-09-15T00:00:00-05:00</published><updated>2020-09-15T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/09/15/Kubernetes-Introduction</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/09/15/Kubernetes-Introduction.html">&lt;hr /&gt;
-
-&lt;h2 id=&quot;10-what-is-kubernetes&quot;&gt;1.0 What is Kubernetes&lt;/h2&gt;
-
-&lt;p&gt;Kubernetes is an open-source platform/tool created by Google. It is written in GO-Lang. So currently Kubernetes is an open-source project under Apache 2.0 license. Sometimes in the industry, Kubernetes is also known as “K8s”. With Kubernetes, you can run any Linux container across private, public, and hybrid cloud environments. Kubernetes provides some edge functions, such as Loadbalancer, Service discovery, and Roled Based Access Control(RBAC).&lt;/p&gt;
-
-&lt;p&gt;Basically, kubernetes is a software that allows us to deploy, manage and scale applications. The applications will be packed in containers and kubernetes groups them into units. It allows us to span our application over thousands of servers while looking like one single unit.&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Key Features of Kubernetes
-    &lt;ul&gt;
-      &lt;li&gt;Horizontal Scaling&lt;/li&gt;
-      &lt;li&gt;Auto Scaling&lt;/li&gt;
-      &lt;li&gt;Health check &amp;amp; Self-healing&lt;/li&gt;
-      &lt;li&gt;Load Balancer&lt;/li&gt;
-      &lt;li&gt;Service Discovery&lt;/li&gt;
-      &lt;li&gt;Automated rollbacks &amp;amp; rollouts&lt;/li&gt;
-      &lt;li&gt;Canary Deployment&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&quot;20-why-we-need-kubernetes&quot;&gt;2.0 Why we need Kubernetes&lt;/h2&gt;
-
-&lt;p&gt;First, we need to familier with few terms:&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Monolithic Applications:&lt;/strong&gt; Years ago, most software applications were big monoliths, running either as a single process or as a small number of processes spread across a handful of servers. These legacy systems are still widespread today. They have slow release cycles and are updated relatively infrequently. At the end of every release cycle, developers pack- age up the whole system and hand it over to the ops team, who then deploys and monitors it. In case of hardware failures, the ops team manually migrates it to the remaining healthy servers. So these components that are all tightly coupled together and have to be developed, deployed, and managed as one entity, because they all run as a single OS process.&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Problems with Monolithic Applications: Change of one part of the application require a redeployment of the whole application. Requires powerful servers, Uses Vertical Scaling ( which is Very Expensive ) and If one components creates problem, the whole application becomes unscalable.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;strong&gt;Microservices Applications:&lt;/strong&gt; Today, these big monolithic legacy applications are slowly being broken down into smaller, independently running components called microservices. Each microservice runs as an independent process and communicates with other microservices through simple, well defined interfaces ( APIs ). Microservices communicate through synchronous protocols such as HTTP, over which they usually expose RESTful (REpresentational State Transfer) APIs, or through asyn- chronous protocols such as AMQP (Advanced Message Queueing Protocol).&lt;/p&gt;
-
-&lt;p&gt;Microservices are decoupled from each other, they can be developed, deployed, updated,
-and scaled individually. This enables you to change components quickly and as often as
-necessary to keep up with today’s rapidly changing business requirements.&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Problems with Microservices Based Applications: The bigger numbers of deployable components and increasingly larger datacenters, it becomes increasingly difficult to configure, manage, and keep the whole system running smoothly. It’s much harder to figure out where to put each of those components to achieve high resource utilization and thereby keep the hardware costs down and the one of biggest problem with scaling microservices is multiple apps that are running on same host mey have conflicting dependencies. One solution of this is applications could run in the exact same environment during development and in production so they have the exact same operating system, libraries, system configuration, networking environment, and everything else but this will not solve the conflicting, versions of libraries or different environment requirements to solve this issue we have great technology called containers. ( You are also provide Dedicated VM to particular service but it is not a ideal solution because it increases hardware cost and management)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Doing all this manually is hard work. We need automation, which includes automatic scheduling of those components to our servers, automatic configuration, supervision, and failure-handling. This is where Kubernetes comes in.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/MicroServices.png&quot; alt=&quot;Microservices&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Kubernetes provides you with a framework to run distributed systems resiliently. It takes care of scaling and failover for your application, provides deployment patterns, and more. For example, Kubernetes can easily manage a canary deployment for your system.&lt;/p&gt;
-
-&lt;p&gt;Before used Kubernetes, you need to prepare your infrastructure to deploy a new microservice. I believe it cost you a few days or weeks. Without Kubernetes, large teams would have to manually script the deployment workflows. With Kubernetes, you don’t need to create your deployment script manually and it will reduce the amount of time and resources spent on DevOps.&lt;/p&gt;
-
-&lt;h3 id=&quot;21-what-kubernetes-provides&quot;&gt;2.1 What kubernetes provides&lt;/h3&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Service discovery and load balancing: Kubernetes can expose a container using the DNS name or using their own IP address. If traffic to a container is high, Kubernetes is able to load balance and distribute the network traffic so that the deployment is stable.&lt;/li&gt;
-  &lt;li&gt;Storage orchestration: Kubernetes allows you to automatically mount a storage system of your choice, such as local storages, public cloud providers, and more.
-Automated rollouts and rollbacks You can describe the desired state for your deployed containers using Kubernetes, and it can change the actual state to the desired state at a controlled rate. For example, you can automate Kubernetes to create new containers for your deployment, remove existing containers and adopt all their resources to the new container.&lt;/li&gt;
-  &lt;li&gt;Automatic bin packing: You provide Kubernetes with a cluster of nodes that it can use to run containerized tasks. You tell Kubernetes how much CPU and memory (RAM) each container needs. Kubernetes can fit containers onto your nodes to make the best use of your resources.&lt;/li&gt;
-  &lt;li&gt;Self-healing: Kubernetes restarts containers that fail, replaces containers, kills containers that don’t respond to your user-defined health check, and doesn’t advertise them to clients until they are ready to serve.&lt;/li&gt;
-  &lt;li&gt;Secret and configuration management: Kubernetes lets you store and manage sensitive information, such as passwords, OAuth tokens, and SSH keys. You can deploy and update secrets and application configuration without rebuilding your container images, and without exposing secrets in your stack configuration.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&quot;22-what-kubernetes-not-provides&quot;&gt;2.2 What kubernetes not provides&lt;/h3&gt;
-
-&lt;p&gt;Kubernetes is a lot of good things, I hope to have been clear exposing all Kubernetes benefits. The main problem from Kubernetes newbie is that they discover it is not a PaaS (Platform as a Service) system like they suppose. Kubernetes is a lot of things but not an “all included” service. It is great and reduces the amount of work, especially on the sysadmin side, but doesn’t offer you any apart from the infrastructure.&lt;/p&gt;
-
-&lt;p&gt;Said that most of the things you are looking for in a fully-managed system are there: simplified deployments, scaling, load balancing, logging, and monitoring. Usually, you get a standard configuration from your hosting but you can theoretically customize it if you really need it.&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;It does not limit the types of applications supported. Everything is written into the container so every container application, no matter on technology, can be run. The counterpart is that you still have to define the container by hand.&lt;/li&gt;
-  &lt;li&gt;It doesn’t offer an automated deployment. You just have to push to a docker repository your built images, no more. This is quite easy if you already work in a process with Continuous Integration, Delivery, and Deployment (CI/CD), but consider that without it will be quite tricky.&lt;/li&gt;
-  &lt;li&gt;It does not provide any application-level services, just infrastructure. If you need a database, you have to buy a service or run it into a dedicated container. Of course, taking charges of backups and so on.&lt;/li&gt;
-  &lt;li&gt;Most of the interactions with the system are by a command line that wraps API. That’s very good because it allows automating each setting. Commands syntax is very simple but, if you are looking to a system that is managed fully by a UI you are looking to the worst place.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&quot;30-how-does-kubernetes-work&quot;&gt;3.0 How does Kubernetes work&lt;/h2&gt;
-
-&lt;p&gt;The system is composed of a master node and any number of worker nodes. When the developer submits a list of apps to the master, Kubernetes deploys them to the cluster of worker nodes. What node a component lands on doesn’t (and shouldn’t) matter—neither to the developer nor to the system administrator.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_Master.png&quot; alt=&quot;Kubernetes Master&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Kubernetes will run your containerized app somewhere in the cluster, provide information to its components on how to find each other, and keep all of them running.
-Because your application doesn’t care which node it’s running on, Kubernetes can
-relocate the app at any time, and by mixing and matching apps, achieve far better
-resource utilization than is possible with manual scheduling.&lt;/p&gt;
-
-&lt;h3 id=&quot;31-architecture-of-kubernetes-cluster&quot;&gt;3.1 Architecture of Kubernetes Cluster&lt;/h3&gt;
-
-&lt;p&gt;We’ve seen a bird’s-eye view of Kubernetes’ architecture. Now let’s take a closer look at what a Kubernetes cluster is composed of. At the hardware level, a Kubernetes cluster is composed of many nodes, which can be split into two types:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;The master node, which hosts the Kubernetes Control Plane that controls and manages the whole Kubernetes system&lt;/li&gt;
-  &lt;li&gt;Worker nodes that run the actual applications you deploy&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_arch1.png&quot; alt=&quot;Kubernetes Architecture&quot; /&gt;&lt;/p&gt;
-
-&lt;h4 id=&quot;311-master--control-plane-&quot;&gt;3.1.1 Master ( Control Plane )&lt;/h4&gt;
-
-&lt;p&gt;The Control Plane is what controls the cluster and makes it function. It consists of
-multiple components that can run on a single master node or be split across multiple
-nodes and replicated to ensure high availability. These components are&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;Kubernetes API Server&lt;/strong&gt;: The application that serves Kubernetes functionality through a RESTful interface and stores the state of the cluster ( which admin and other control plane communicated with ).&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;Scheduler&lt;/strong&gt;: Scheduler watches API server for new Pod requests. It communicates with Nodes to create new pods and to assign work to nodes while allocating resources or imposing constraints.&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;Controller Manager&lt;/strong&gt;: Component on the master that runs controllers. Includes Node controller, Endpoint Controller, Namespace Controller, etc. ( Performs cluster-level functions, such as replicating components, keeping track of worker nodes, handling node failures, and so on )&lt;/p&gt;
-
-    &lt;ul&gt;
-      &lt;li&gt;Node Controller: Responsible for noticing and responding when nodes go down.&lt;/li&gt;
-      &lt;li&gt;Replication Controller: Responsible for maintaining the correct number of pods for every replication controller object in the system.&lt;/li&gt;
-      &lt;li&gt;Endpoints Controller: Populates the Endpoints object (that is, it joins Services and Pods).&lt;/li&gt;
-      &lt;li&gt;Service Account and Token Controllers: Create default accounts and API access tokens for new namespaces.&lt;/li&gt;
-      &lt;li&gt;Cloud-Controller-Manager: Cloud-controller-manager runs controllers that interact with the underlying cloud providers. The cloud-controller-manager binary is an alpha feature introduced in Kubernetes release 1.6. Cloud-controller-manager runs cloud-provider-specific controller loops only. You must disable these controller loops in the Kube-controller-manager. You can disable the controller loops by setting the –cloud-provider flag to external when starting the Kube-controller-manager.&lt;/li&gt;
-      &lt;li&gt;Node Controller: For checking the cloud provider to determine if a node has been deleted in the cloud after it stops responding.&lt;/li&gt;
-      &lt;li&gt;Route Controller: For setting up routes in the underlying cloud infrastructure.&lt;/li&gt;
-      &lt;li&gt;Service Controller: For creating, updating, and deleting cloud provider load balancers.&lt;/li&gt;
-      &lt;li&gt;Volume Controller: For creating, attaching, and mounting volumes, and interacting with the cloud provider to orchestrate volumes.&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;etcd&lt;/strong&gt;: A reliable distributed data store that persistently stores the cluster
-configuration.&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;The components of the Control Plane hold and control the state of the cluster, but
-they don’t run your applications. This is done by the (worker) nodes.&lt;/p&gt;
-
-&lt;h4 id=&quot;312-slave--worker-nodes-&quot;&gt;3.1.2 Slave ( Worker Nodes )&lt;/h4&gt;
-
-&lt;p&gt;The worker nodes are the machines that run your containerized applications. The
-task of running, monitoring, and providing services to your applications is done by
-the following components:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;Docker, rkt, or another container runtime, which runs your containers&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;Kubelet&lt;/strong&gt;: Kubectl registering the nodes with the cluster, watches for work assignments from the scheduler, instantiate new Pods, report back to the master.
-Container Engine: Responsible for managing containers, image pulling, stopping the container, starting the container, destroying the container, etc.&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;Kube Proxy&lt;/strong&gt;: Responsible for forwarding app user requests to the right pod (load-balances network traffic between application components).&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;The sequence of deployment: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DevOps -&amp;gt; API Server -&amp;gt; Scheduler -&amp;gt; Cluster -&amp;gt;Nodes -&amp;gt; Kubelet -&amp;gt; Container Engine -&amp;gt; Spawn Container in Pod&lt;/code&gt;&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;The sequence of App user request: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;App user -&amp;gt; Kube proxy -&amp;gt; Pod -&amp;gt; Container(Your app is run here)&lt;/code&gt;&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&quot;32-the-six-layers-of-k8s&quot;&gt;3.2 The Six Layers of K8s&lt;/h3&gt;
-
-&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_Abstraction.png&quot; alt=&quot;Kubernetes Abstrction&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Deployments create and manage ReplicaSets, which create and manage Pods, which run on Nodes, which have a container runtime, which run the app code you put in your Docker image.&lt;/p&gt;
-
-&lt;p&gt;The levels shaded blue are higher-level K8s abstractions. The green levels represent Nodes and Node subprocess that you should be aware of, but may not touch.&lt;/p&gt;
-
-&lt;h4 id=&quot;321-deployments&quot;&gt;3.2.1 Deployments&lt;/h4&gt;
-
-&lt;p&gt;Although pods are the basic unit of computation in Kubernetes, they are not typically directly launched on a cluster. Instead, pods are usually managed by one more layer of abstraction: the deployment. A deployment’s primary purpose is to declare how many replicas of a pod should be running at a time. When a deployment is added to the cluster, it will automatically spin up the requested number of pods, and then monitor them. If a pod dies, the deployment will automatically re-create it. Using a deployment, you don’t have to deal with pods manually. You can just declare the desired state of the system, and it will be managed for you automatically.&lt;/p&gt;
-
-&lt;h4 id=&quot;322-replicaset&quot;&gt;3.2.2 ReplicaSet&lt;/h4&gt;
-
-&lt;p&gt;The Deployment creates a ReplicaSet that will ensure your app has the desired number of Pods. ReplicaSets will create and scale Pods based on the triggers you specify in your Deployment. Replication Controllers perform the same function as ReplicaSets, but Replication Controllers are old school. ReplicaSets are the smart way to manage replicated Pods in 2019.&lt;/p&gt;
-
-&lt;h4 id=&quot;323-pods&quot;&gt;3.2.3 Pods&lt;/h4&gt;
-
-&lt;p&gt;All containers will run in a pod. Pods abstract the network and storage away from the underlying containers. Your app will run here. Each pod has one unique IP address assigned which means one pod can communicate with each other like a traditional container in a docker environment. Each container inside the pod can reach all other pods into the virtual network, but cannot deep to the other container on other pods. That’s important to guarantee the pod abstraction: nobody has to know how the Pods are composed internally. Moreover, the IP assigned is volatile so you must use always the service name (resolved to the right IP directly). Pods are used as the unit of replication in Kubernetes. If your application becomes too popular and a single pod instance can’t carry the load, Kubernetes can be configured to deploy new replicas of your pod to the cluster as necessary. Even when not under heavy load, it is standard to have multiple copies of a pod running at any time in a production system to allow load balancing and failure resistance. Pods handle Volumes, Secrets, and configuration for containers. Pods are ephemeral. They are intended to be restarted automatically when they die.&lt;/p&gt;
-
-&lt;p&gt;Note: Worker Node is already explained in above section&lt;/p&gt;
-
-&lt;h3 id=&quot;33-key-terms-used-with-kubernetes&quot;&gt;3.3 Key Terms used with Kubernetes&lt;/h3&gt;
-
-&lt;h4 id=&quot;331-services&quot;&gt;3.3.1 Services&lt;/h4&gt;
-
-&lt;p&gt;The name “service” in informatics science is overused. In Kubernetes scope think to a service like something you want to serve. A Kubernetes service involves a set of pods and may offer a complex feature or just expose a single Pod with a single container. So you can have a service that provides a CMS feature, with database and web server inside, or two different services, one for the database and one for the webserver. That’s up to you. Basically it is abstraction layer on top of a set of ephemeral pods (think of this as the ‘face’ of a set of pods)&lt;/p&gt;
-
-&lt;h4 id=&quot;332-ingress&quot;&gt;3.3.2 Ingress&lt;/h4&gt;
-
-&lt;p&gt;By default, Kubernetes provides isolation between pods and the outside world. If you want to communicate with a service running in a pod, you have to open up a channel for communication. This is referred to as ingress. To do this there is an ingress controller that does something similar to a load balancer. It virtually forwards traffic from outside to the services. During this step, based on the ingress implementation you have chosen, you can add HTTPS encryption, route traffic based on the hostname or URL segments. The only service can be linked to the ingress controller, not Pods. There are multiple ways to add ingress to your cluster. The most common ways are by adding either an Ingress controller, or a LoadBalancer.&lt;/p&gt;
-
-&lt;h4 id=&quot;333-volume&quot;&gt;3.3.3 Volume&lt;/h4&gt;
-
-&lt;p&gt;By default Pod storage is volatile. This is important to know because at the first restart you will lose everything. Kubernetes volumes allow mapping some part of the hard drive of containers to a safe place. That space can be shared between containers. The mount point can be any part of the container, but a volume cannot be mount into another one.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;PersistentVolumes and PersistentVolumeClaims&lt;/strong&gt;: To help abstract away infrastructure specifics, K8s developed PersistentVolumes and PersistentVolumeClaims. Unfortunately the names are a bit misleading, because vanilla Volumes can have persistent storage, as well. PersisententVolumes (PV) and PersisentVolumeClaims (PVC) add complexity compared to using Volumes alone. However, PVs are useful for managing storage resources for large projects. With PVs, a K8s user still ends up using a Volume, but two steps are required first.&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;A PersistentVolume is provisioned by a Cluster Administrator (or it’s provisioned dynamically).&lt;/li&gt;
-  &lt;li&gt;An individual Cluster user who needs storage for a Pod creates PersistentVolumeClaim manifest. It specifies how much and what type of storage they need. K8s then finds and reserves the storage needed.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;The user then creates a Pod with a Volume that uses the PVC. PersistentVolumes have lifecycles independent of any Pod. In fact, the Pod doesn’t even know about the PV, just the PVC. PVCs consume PV resources, analogously to how Pods consume Node resources.&lt;/p&gt;
-
-&lt;h4 id=&quot;334-namespaces&quot;&gt;3.3.4 Namespaces&lt;/h4&gt;
-
-&lt;p&gt;Think to namespace like the feature that makes Kubernetes multitenant. The namespace is the tenant level. Each namespace can partitioning resources to isolate services, ingress, and many other things. This feature is good to have a strong separation between application, delegate safely to different teams, and have separated environments in a single infrastructure. It is a virtual cluster on top of an underlying physical cluster&lt;/p&gt;
-
-&lt;h4 id=&quot;335-labels-and-selectors&quot;&gt;3.3.5 Labels and Selectors&lt;/h4&gt;
-
-&lt;p&gt;Labels are key-value pairs used to tag objects. Objects are the items that you create in a Kubernetes cluster (pods, deployments, replica sets, services, volumes etc). Selectors are used to collect objects based on tags.&lt;/p&gt;
-
-&lt;h4 id=&quot;336-statefulsets&quot;&gt;3.3.6 StatefulSets&lt;/h4&gt;
-
-&lt;p&gt;As we know, a ReplicaSet creates and manages Pods. If a Pod shuts down because a Node fails, a ReplicaSet can automatically replace the Pod on another Node. You should generally create a ReplicaSet through a Deployment rather than creating it directly, because it’s easier to update your app with a Deployment.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_States.png&quot; alt=&quot;States&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Sometimes your app will need to keep information about its state. You can think of state as the current status of your user’s interaction with your app. So in a video game it’s all the unique aspects of the user’s character at a point in time. What do you do when your app has state you need to keep track of? Use a StatefulSet.&lt;/p&gt;
-
-&lt;p&gt;Like a ReplicaSet, a StatefulSet manages deployment and scaling of a group of Pods based on a container spec. Unlike a Deployment, a StatefulSet’s Pods are not interchangeable. Each Pod has a unique, persistent identifier that the controller maintains over any rescheduling. StatefulSets for good for persistent, stateful backends like databases. The state information for the Pod is held in a Volume associated with the StatefulSet.&lt;/p&gt;
-
-&lt;h4 id=&quot;337-daemonsets&quot;&gt;3.3.7 DaemonSets&lt;/h4&gt;
-
-&lt;p&gt;DaemonSets are for continuous process. They run one Pod per Node. Each new Node added to the cluster automatically gets a Pod started by the DaemonSet. DaemonSets are useful for ongoing background tasks such as monitoring and log collection.
-StatefulSets and DaemonSets are not controlled by a Deployment. Although they are at the same level of abstraction as a ReplicaSet, there is not a higher level of abstraction for them in the current API.&lt;/p&gt;
-
-&lt;h4 id=&quot;338-etcd&quot;&gt;3.3.8 ETCD&lt;/h4&gt;
-
-&lt;p&gt;It stores the configuration information which can be used by each of the nodes in the cluster. It is a high availability key-value store that can be distributed among multiple nodes. It is accessible only by Kubernetes API server as it may have some sensitive information. It is a distributed key-value store which is accessible to all.
-ETCD is a distributed reliable key-value store used by Kubernetes to store all data used to manage the cluster. Think of it this way, when you have multiple nodes and multiple masters in your cluster, etcd stores all that information on all the nodes in the cluster in a distributed manner. ETCD is responsible for implementing locks within the cluster to ensure there are no conflicts between the Masters.&lt;/p&gt;
-
-&lt;h4 id=&quot;339-cluster-ip&quot;&gt;3.3.9 Cluster IP&lt;/h4&gt;
-
-&lt;p&gt;Only has a Virtual IP (also called Cluster IP). This service can be used within a cluster only Acts like a traffic router to your Pods inside the cluster. Each port exposed by a pod will need a service if you want a client to talk to it via that port. By default, the service port is the same as the port exposed by the Pod. Different methods to access this service: From any node inside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;cluster IP&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From the node where a replica of the Pod is running: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;pod IP&amp;gt;:&amp;lt;pod port&amp;gt;&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h4 id=&quot;3310-node-port&quot;&gt;3.3.10 Node Port&lt;/h4&gt;
-
-&lt;p&gt;For this service, a physical port on the node is mapped to the service port and the service connects to the Pod via the pod port. Remember, this will also have a Virtual IP (i.e. cluster IP). Different methods to access this service: From outside the cluster, if any node in the cluster has a public IP: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;node public IP&amp;gt;:&amp;lt;node port&amp;gt;&lt;/code&gt; From any node inside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;cluster IP&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From the node where a replica of the Pod is running: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;pod IP&amp;gt;:&amp;lt;pod port&amp;gt;&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h4 id=&quot;3311-load-balancer&quot;&gt;3.3.11 Load Balancer&lt;/h4&gt;
-
-&lt;p&gt;Giving public access to a node in your cluster is not a recommended method, When you want to give public access to a service, create a load balancer service (not getting into ingress at this stage). For each service that you want to give public access, you need to create a load balancer service, This type of service will generally work only in a cloud environment. Remember, this will also have a Virtual IP (i.e. cluster IP) This service will have a node port too Different methods to access this service: From outside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;load balancer dns&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From outside the cluster, if any node in the cluster has a public IP: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;node public IP&amp;gt;:&amp;lt;node port&amp;gt;&lt;/code&gt; From any node inside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;cluster IP&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From the node where a replica of the Pod is running: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;pod IP&amp;gt;:&amp;lt;pod port&amp;gt;&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h4 id=&quot;3312-external-name&quot;&gt;3.3.12 External Name&lt;/h4&gt;
-
-&lt;p&gt;This maps a service to endpoints completely outside of the cluster.&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&quot;40-befits-of-using-kubernetes&quot;&gt;4.0 Befits of using kubernetes&lt;/h2&gt;
-
-&lt;h3 id=&quot;41-kubernetes-will-keeping-your-containers-running&quot;&gt;4.1 Kubernetes will keeping your containers running&lt;/h3&gt;
-
-&lt;p&gt;Once the application is running, Kubernetes continuously makes sure that the deployed
-state of the application always matches the description you provided. For example, if
-you specify that you always want five instances of a web server running, Kubernetes will always keep exactly five instances running. If one of those instances stops working properly, like when its process crashes or when it stops responding, Kubernetes will restart it automatically. Similarly, if a whole worker node dies or becomes inaccessible, Kubernetes will select new nodes for all the containers that were running on the node and run them on the newly selected nodes.&lt;/p&gt;
-
-&lt;h3 id=&quot;42-scaling-the-number-of-copies&quot;&gt;4.2 Scaling the number of copies&lt;/h3&gt;
-
-&lt;p&gt;While the application is running, you can decide you want to increase or decrease the number of copies, and Kubernetes will spin up additional ones or stop the excess ones, respectively. You can even leave the job of deciding the optimal number of cop- ies to Kubernetes. It can automatically keep adjusting the number, based on real-time metrics, such as CPU load, memory consumption, queries per second, or any other metric your app exposes.&lt;/p&gt;
-
-&lt;h3 id=&quot;43-hitting-a-moving-target&quot;&gt;4.3 Hitting a moving target&lt;/h3&gt;
-
-&lt;p&gt;We’ve said that Kubernetes may need to move your containers around the cluster This can occur when the node they were running on has failed or because they were evicted from a node to make room for other containers. If the container is providing a service to external clients or other containers running in the cluster, how can they use the container properly if it’s constantly moving around the cluster? And how can clients connect to containers providing a service when those containers are replicated and spread across the whole cluster? To allow clients to easily find containers that provide a specific service, you can tell Kubernetes which containers provide the same service and Kubernetes will expose all of them at a single static IP address and expose that address to all applications run- ning in the cluster. This is done through environment variables, but clients can also look up the service IP through good old DNS. The kube-proxy will make sure connec- tions to the service are load balanced across all the containers that provide the service. The IP address of the service stays constant, so clients can always connect to its con- tainers, even when they’re moved around the cluster.&lt;/p&gt;
-
-&lt;h3 id=&quot;44-simplifying-application-deployment&quot;&gt;4.4 Simplifying application deployment&lt;/h3&gt;
-
-&lt;p&gt;Kubernetes exposes all its worker nodes as a single deployment platform,
-application developers can start deploying applications on their own and don’t need
-to know anything about the servers that make up the cluster. In essence, all the nodes are now a single bunch of computational resources that are waiting for applications to consume them. A developer doesn’t usually care what kind of server the application is running on, as long as the server can provide the application with adequate system resources. Certain cases do exist where the developer does care what kind of hardware the application should run on. ( Like some app needs SSD deployment instead of HDD )&lt;/p&gt;
-
-&lt;h3 id=&quot;45-achieving-better-utilization-of-hardware&quot;&gt;4.5 Achieving better utilization of hardware&lt;/h3&gt;
-
-&lt;p&gt;By setting up Kubernetes on your servers and using it to run your apps instead of running them manually, you’ve decoupled your app from the infrastructure. When you tell Kubernetes to run your application, you’re letting it choose the most appropriate node to run your application on based on the description of the application’s resource requirements and the available resources on each node. By using containers and not tying the app down to a specific node in your cluster, you’re allowing the app to freely move around the cluster at any time, so the different app components running on the cluster can be mixed and matched to be packed tightly onto the cluster nodes. This ensures the node’s hardware resources are utilized as best as possible.&lt;/p&gt;
-
-&lt;p&gt;The ability to move applications around the cluster at any time allows Kubernetes
-to utilize the infrastructure much better than what you can achieve manually.&lt;/p&gt;
-
-&lt;h3 id=&quot;46-health-checking-and-self-healing&quot;&gt;4.6 Health checking and self-healing&lt;/h3&gt;
-
-&lt;p&gt;Having a system that allows moving an application across the cluster at any time is also valuable in the event of server failures. As your cluster size increases, you’ll deal with failing computer components ever more frequently. Kubernetes monitors your app components and the nodes they run on and auto- matically reschedules them to other nodes in the event of a node failure. This frees the ops team from having to migrate app components manually and allows the team to immediately focus on fixing the node itself and returning it to the pool of available hardware resources instead of focusing on relocating the app.&lt;/p&gt;
-
-&lt;h3 id=&quot;47-automatic-scaling&quot;&gt;4.7 Automatic scaling&lt;/h3&gt;
-
-&lt;p&gt;Using Kubernetes to manage your deployed applications also means the ops team
-doesn’t need to constantly monitor the load of individual applications to react to sudden load spikes. As previously mentioned, Kubernetes can be told to monitor the resources used by each application and to keep adjusting the number of running instances of each application. If Kubernetes is running on cloud infrastructure, where adding additional nodes is as easy as requesting them through the cloud provider’s API, Kubernetes can even automatically scale the whole cluster size up or down based on the needs of the deployed applications.&lt;/p&gt;
-
-&lt;h3 id=&quot;48-simplifying-application-development&quot;&gt;4.8 Simplifying application development&lt;/h3&gt;
-
-&lt;p&gt;Then there’s the fact that developers don’t need to implement features that they would usually implement. This includes discovery of services and/or peers in a clustered application. Kubernetes does this instead of the app. Usually, the app only needs to look up certain environment variables or perform a DNS lookup. If that’s not enough, the application can query the Kubernetes API server directly to get that and/or other information. Querying the Kubernetes API server like that can even save developers from having to implement complicated mechanisms such as leader election.&lt;/p&gt;
-
-&lt;h3 id=&quot;49-storage-orchestration&quot;&gt;4.9 Storage orchestration&lt;/h3&gt;
-
-&lt;p&gt;Consequently, mount local or public cloud or network storage.&lt;/p&gt;
-
-&lt;h3 id=&quot;410-secret-and-configuration-management&quot;&gt;4.10 Secret and configuration management&lt;/h3&gt;
-
-&lt;p&gt;Create and update secrets and configs without rebuilding your image&lt;/p&gt;
-
-&lt;h3 id=&quot;411-horizontal-scaling&quot;&gt;4.11 Horizontal Scaling&lt;/h3&gt;
-
-&lt;p&gt;first, we need to know what are the horizontal and vertical scalings are:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Vertically Scaling : Adding more CPUs, memory, and other server components&lt;/li&gt;
-  &lt;li&gt;Horizontal Scaling : Setting up additional Servers and running multiple copies&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Kubernetes uses horizontal scaling, which provides greater flexibilities to the companies&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&quot;50-ways-to-spin-up-kubernetes-cluster&quot;&gt;5.0 Ways to spin up kubernetes cluster&lt;/h2&gt;
-
-&lt;h3 id=&quot;51-kubeadm&quot;&gt;5.1 Kubeadm&lt;/h3&gt;
-
-&lt;p&gt;The official CNCF tool for provisioning Kubernetes clusters in a variety of shapes and forms (e.g. single-node, multi-node, HA, self-hosted)&lt;/p&gt;
-
-&lt;h3 id=&quot;52-minikube&quot;&gt;5.2 Minikube&lt;/h3&gt;
-
-&lt;p&gt;Minikube can run on Windows and MacOS, because it relies on virtualization (e.g. Virtualbox) to deploy a kubernetes cluster in a Linux VM. You can also run minikube directly on linux with or without virtualization. It also has some developer-friendly features, like add-ons.&lt;/p&gt;
-
-&lt;p&gt;From a user perspective minikube is a very beginner friendly tool. You start the cluster using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;minikube start&lt;/code&gt;, wait a few minutes and your &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kubectl&lt;/code&gt; is ready to go. To specify a Kubernetes version you can use the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;--kubernetes-version&lt;/code&gt; flag.&lt;/p&gt;
-
-&lt;p&gt;If you are new to Kubernetes the first class support for its dashboard that minikube offers may help you. With a simple minikube dashboard the application will open up giving you a nice overview of everything that is going on in your cluster. This is being achieved by minikube’s addon system that helps you integrating things like, Helm, Nvidia GPUs and an image registry with your cluster.&lt;/p&gt;
-
-&lt;h3 id=&quot;53-microk8s&quot;&gt;5.3 MicroK8s&lt;/h3&gt;
-
-&lt;p&gt;MicroK8s is a Kubernetes distribution from Canonical that is designed for fast and simple deployment, which makes it a good choice to run Kubernetes locally.&lt;/p&gt;
-
-&lt;p&gt;Microk8s is similar to minikube in that it spins up a single-node Kubernetes cluster with its own set of add-ons. If MicroK8s runs on Linux, it also offers the advantage of not requiring VMs. On Windows and macOS, MicroK8s uses a VM framework called Multipass to create VMs for the Kubernetes cluster.&lt;/p&gt;
-
-&lt;p&gt;Like minikube, microk8s is limited to a single-node Kubernetes cluster, with the added limitation of only running on Linux and only on Linux where snap is installed.&lt;/p&gt;
-
-&lt;h3 id=&quot;54-k3s&quot;&gt;5.4 K3s&lt;/h3&gt;
-
-&lt;p&gt;K3s is a minified version of Kubernetes developed by Rancher Labs. By removing dispensable features (legacy, alpha, non-default, in-tree plugins) and using lightweight components (e.g. sqlite3 instead of etcd3) they achieved a significant downsizing. This results in a single binary with a size of around 60 MB.&lt;/p&gt;
-
-&lt;p&gt;K3s runs on any Linux distribution without any additional external dependencies or tools. It is marketed by Rancher as a lightweight Kubernetes offering suitable for edge environments, IoT devices, CI pipelines, and even ARM devices, like Raspberry Pi’s. K3s achieves its lightweight goal by stripping a bunch of features out of the Kubernetes binaries (e.g. legacy, alpha, and cloud-provider-specific features), replacing docker with containerd, and using sqlite3 as the default DB (instead of etcd). As a result, this lightweight Kubernetes only consumes 512 MB of RAM and 200 MB of disk space. K3s has some nice features, like Helm Chart support out-of-the-box.&lt;/p&gt;
-
-&lt;p&gt;Unlike the previous two offerings, K3s can do multiple node Kubernetes cluster. However, due to technical limitations of SQLite, K3s currently does not support High Availability (HA), as in running multiple master nodes.&lt;/p&gt;
-
-&lt;p&gt;One feature that stands out is called auto deployment. It allows you to deploy your Kubernetes manifests and Helm charts by putting them in a specific directory. K3s watches for changes and takes care of applying them without any further interaction. This is especially useful for CI pipelines and IoT devices (both target use cases of K3s). Just create/update your configuration and K3s makes sure to keep your deployments up to date.&lt;/p&gt;
-
-&lt;h3 id=&quot;55-kind&quot;&gt;5.5 Kind&lt;/h3&gt;
-
-&lt;p&gt;Kind (Kubernetes-in-Docker), as the name implies, runs Kubernetes clusters in Docker containers. This is the official tool used by Kubernetes maintainers for Kubernetes v1.11+ conformance testing. It supports multi-node clusters as well as HA clusters. Because it runs K8s in Docker, kind can run on Windows, Mac, and Linux.&lt;/p&gt;
-
-&lt;p&gt;Kind is optimized first and foremost for CI pipelines, so it may not have some of the developer-friendly features of other offerings. Kind leads to a significantly faster startup speed compared to spawning VM.&lt;/p&gt;
-
-&lt;p&gt;Creating a cluster is very similar to minikube’s approach. Executing kind create cluster, playing the waiting game and afterwards you are good to go. By using different names (–name) kind allows you to create multiple instances in parallel.&lt;/p&gt;
-
-&lt;p&gt;If you are looking for a way to programmatically create a Kubernetes cluster, kind kindly (you have been for waiting for this, don’t you ) publishes its Go packages that are used under the hood.&lt;/p&gt;
-
-&lt;h3 id=&quot;56-k3d&quot;&gt;5.6 K3d&lt;/h3&gt;
-
-&lt;p&gt;A new project that aims to bring K3s-in-Docker (similar to kind).&lt;/p&gt;
 
 &lt;hr /&gt;</content><author><name></name></author><category term="Kubernetes" /><summary type="html"></summary></entry><entry><title type="html">Docker Hard Parts [Part - 2]</title><link href="https://hacstac.github.io/Notes/docker/2020/09/01/Docker-Hard-Parts.html" rel="alternate" type="text/html" title="Docker Hard Parts [Part - 2]" /><published>2020-09-01T00:00:00-05:00</published><updated>2020-09-01T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/docker/2020/09/01/Docker-Hard-Parts</id><content type="html" xml:base="https://hacstac.github.io/Notes/docker/2020/09/01/Docker-Hard-Parts.html">&lt;h2 id=&quot;70-building-images-automatically-with-dockerfiles&quot;&gt;7.0 Building Images automatically with DockerFiles&lt;/h2&gt;
 
