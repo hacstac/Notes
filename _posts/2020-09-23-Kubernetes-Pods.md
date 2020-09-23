@@ -38,7 +38,7 @@ same time giving the processes the illusion of running together.
 
 We want containers inside each group to share certain resources, although not all, so that they’re not fully isolated. Kubernetes achieves this by config- uring Docker to have all containers of a pod share the same set of Linux namespaces instead of each container having its own set. Because all containers of a pod run under the same Network and UTS namespaces (we’re talking about Linux namespaces here), they all share the same hostname and network interfaces. Similarly, all containers of a pod run under the same IPC namespace and can communicate through IPC. In the latest Kubernetes and Docker versions, they can also share the same PID namespace, but that feature isn’t enabled by default. But when it comes to the filesystem, things are a little different. Because most of the container’s filesystem comes from the container image, by default, the filesystem of each container is fully isolated from other containers.
 
-#### 1.1.2 how containers share the same IP and Port space in pods
+#### 1.1.2 How containers share the same IP and Port space in pods
 
 One thing to stress here is that because containers in a pod run in the same Network namespace, they share the same IP address and port space. This means processes running in containers of the same pod need to take care not to bind to the same port numbers or they’ll run into port conflicts. But this only concerns containers in the same pod. Containers of different pods can never run into port conflicts, because each pod has a separate port space. All the containers in a pod also have the same loopback network interface, so a container can communicate with other containers in the same pod through localhost. All pods in a Kubernetes cluster reside in a single flat, shared, network-address space, which means every pod can access every other pod at the other pod’s IP address. No NAT (Network Address Translation) gateways exist between them. When two pods send network packets between each other, they’ll each see the actual IP address of the other as the source IP in the packet.
 
@@ -72,7 +72,7 @@ The Kubernetes API server accepts and processes Pod manifests before storing the
 
 ---
 
-### 1.2 Creating Pods
+### 1.2 Let get into the pods
 
 Pods and other Kubernetes resources are usually created by posting a JSON or YAML
 manifest to the Kubernetes REST API endpoint. Also, we can use other, simpler ways
@@ -634,9 +634,7 @@ spec:
 
 ## Communication/Synchronization
 
-# In the first example of a Pod, we saw how two containers used a shared volume to serve a site while keeping it synchronized to a remote Git location
-
-# To achieve this, the Pod uses an emptyDir volume. Such a volume is scoped to the Pod’s lifespan, but it can be shared between two containers, forming the basis for communication between our Git sync and web serving containers
+# To achieve this, the Pod uses an emptyDir volume. Such a volume is scoped to the Pod’s lifespan, but it can be shared between two containers.
 
 -----------------------------------------------------------------------------------------
 ## Cache
@@ -659,7 +657,7 @@ spec:
 
 # Other applications don’t actually need a persistent volume, but they do need some access to the underlying host filesystem. For example, they may need access to the /dev filesystem in order to perform raw block-level access to a device on the system
 
-# For these cases, Kubernetes supports the hostPath volume, which can mount arbitrary locations on the worker node into the container. The previous example uses the hostPath volume type. The volume created is /var/lib/ kuard on the host
+# For these cases, Kubernetes supports the hostPath volume, which can mount arbitrary locations on the worker node into the container. The previous example uses the hostPath volume type.
 
 -----------------------------------------------------------------------------------------
 ## Persisting Data Using Remote Disks
@@ -670,7 +668,7 @@ spec:
 
 # There are numerous methods for mounting volumes over the network
 
-# Kubernetes includes support for standard protocols such as NFS and iSCSI as well as cloud pro‐ vider–based storage APIs for the major cloud providers (both public and private)
+# Kubernetes includes support for standard protocols such as NFS and iSCSI as well as cloud provider–based storage APIs for the major cloud providers (both public and private)
 
 # In many cases, the cloud providers will also create the disk for you if it doesn’t already exist
 
