@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Kubernetes Controllers | Notebook</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Kubernetes Controllers" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="DeepDive in Kubernetes Controllers" />
+<meta property="og:description" content="DeepDive in Kubernetes Controllers" />
+<link rel="canonical" href="https://hacstac.github.io/Notes/kubernetes/2020/09/27/Kubernetes-Controllers.html" />
+<meta property="og:url" content="https://hacstac.github.io/Notes/kubernetes/2020/09/27/Kubernetes-Controllers.html" />
+<meta property="og:site_name" content="Notebook" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-09-27T00:00:00-05:00" />
+<script type="application/ld+json">
+{"description":"DeepDive in Kubernetes Controllers","url":"https://hacstac.github.io/Notes/kubernetes/2020/09/27/Kubernetes-Controllers.html","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://hacstac.github.io/Notes/kubernetes/2020/09/27/Kubernetes-Controllers.html"},"headline":"Kubernetes Controllers","dateModified":"2020-09-27T00:00:00-05:00","datePublished":"2020-09-27T00:00:00-05:00","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/Notes/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://hacstac.github.io/Notes/feed.xml" title="Notebook" /><link rel="shortcut icon" type="image/x-icon" href="/Notes/images/favicon.ico"><link href="https://unpkg.com/@primer/css/dist/primer.css" rel="stylesheet" />
+<link rel="stylesheet" href="//use.fontawesome.com/releases/v5.0.7/css/all.css">
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/Notes/">Notebook</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/Notes/about/">About Me</a><a class="page-link" href="/Notes/search/">Search</a><a class="page-link" href="/Notes/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Kubernetes Controllers</h1><p class="page-description">DeepDive in Kubernetes Controllers</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2020-09-27T00:00:00-05:00" itemprop="datePublished">
+        Sep 27, 2020
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      27 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/Notes/categories/#Kubernetes">Kubernetes</a>
+        
+      
+      </p>
+    
+
+    </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul class="section-nav">
+<li class="toc-entry toc-h2"><a href="#10-replication-controller--deprecated-">1.0 Replication Controller [ Deprecated ]</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#11-the-opration-of-a-replication-controller">1.1 The opration of a Replication Controller</a></li>
+<li class="toc-entry toc-h3"><a href="#12-three-main-parts-of-replication-controller">1.2 Three main parts of Replication Controller</a></li>
+<li class="toc-entry toc-h3"><a href="#13-controller-reconciliation-loop">1.3 Controller Reconciliation Loop</a></li>
+<li class="toc-entry toc-h3"><a href="#14-effect-of-changing-the-controllers-label-selector-or-pod-template">1.4 Effect of changing the controller’s label selector or pod template</a></li>
+<li class="toc-entry toc-h3"><a href="#15-benefits-of-replication-controller">1.5 Benefits of Replication Controller</a></li>
+<li class="toc-entry toc-h3"><a href="#16-lets-get-into-the-replication-controller">1.6 Lets get into the Replication Controller</a></li>
+<li class="toc-entry toc-h3"><a href="#17-moving-pods-in-and-out-of-the-scope-of-a-replicationcontroller">1.7 Moving pods in and out of the scope of a ReplicationController</a></li>
+<li class="toc-entry toc-h3"><a href="#18-changing-pod-template">1.8 Changing pod template</a></li>
+<li class="toc-entry toc-h3"><a href="#19-horizontally-scaling-pods">1.9 Horizontally scaling pods</a></li>
+<li class="toc-entry toc-h3"><a href="#110-deleting-a-replication-controller">1.10 Deleting a Replication Controller</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#20-replicasets">2.0 ReplicaSets</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#21-comparing-a-replicaset-to-a-replicationcontroller">2.1 Comparing a ReplicaSet to a ReplicationController</a></li>
+<li class="toc-entry toc-h3"><a href="#22-reconciliation-loops">2.2 Reconciliation Loops</a></li>
+<li class="toc-entry toc-h3"><a href="#23-quarantining-containers">2.3 Quarantining Containers</a></li>
+<li class="toc-entry toc-h3"><a href="#24-deepdive-with-replicaset">2.4 DeepDive with ReplicaSet</a></li>
+<li class="toc-entry toc-h3"><a href="#25-using-the-replicaset-more-expressive-label-selectors">2.5 Using the ReplicaSet more expressive label selectors</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#30-daemonsets">3.0 DaemonSets</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#31-daemonset-scheduler">3.1 DaemonSet Scheduler</a></li>
+<li class="toc-entry toc-h3"><a href="#32-deepdive-with-daemonset">3.2 DeepDive with DaemonSet</a></li>
+<li class="toc-entry toc-h3"><a href="#33-limiting-daemonsets-to-specific-nodes">3.3 Limiting DaemonSets to Specific Nodes</a></li>
+<li class="toc-entry toc-h3"><a href="#34-updating-a-daemonset">3.4 Updating a DaemonSet</a></li>
+<li class="toc-entry toc-h3"><a href="#35-deleting-a-daemonset">3.5 Deleting a DaemonSet</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#40-running-pods-that-perform-a-single-completable-task">4.0 Running pods that perform a single completable task</a></li>
+<li class="toc-entry toc-h2"><a href="#50--scheduling-jobs-to-run-periodically-or-once-in-the-future">5.0  Scheduling Jobs to run periodically or once in the future</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#51-creating-a-cronjob">5.1 Creating a Cronjob</a></li>
+<li class="toc-entry toc-h3"><a href="#52-understanding-how-scheduled-jobs-are-run">5.2 Understanding how scheduled jobs are run</a></li>
+</ul>
+</li>
+</ul><hr>
+
+<h2 id="10-replication-controller--deprecated-">
+<a class="anchor" href="#10-replication-controller--deprecated-" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.0 Replication Controller [ Deprecated ]</h2>
+
+<p>A ReplicationController is a Kubernetes resource that ensures its pods are always kept running. If the pod disappears for any reason, such as in the event of a node disappearing from the cluster or because the pod was evicted from the node, the ReplicationController notices the missing pod and creates a replacement pod.</p>
+
+<p><img src="https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/ReplicationController.png" alt="Replication Controller"></p>
+
+<p>In the figure we saw that if a node goes down and takes two pods with it. Pod A was created directly and is therefore an unmanaged pod, while pod B is managed by a ReplicationController. After the node fails, the ReplicationController creates a
+new pod (pod B2) to replace the missing pod B, whereas pod A is lost completely—
+nothing will ever recreate it.</p>
+
+<h3 id="11-the-opration-of-a-replication-controller">
+<a class="anchor" href="#11-the-opration-of-a-replication-controller" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.1 The opration of a Replication Controller</h3>
+
+<p>A ReplicationController constantly monitors the list of running pods and makes sure the actual number of pods of a “type” always matches the desired number. If too few such pods are running, it creates new replicas from a pod template. If too many such pods are running, it removes the excess replicas.</p>
+
+<h3 id="12-three-main-parts-of-replication-controller">
+<a class="anchor" href="#12-three-main-parts-of-replication-controller" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.2 Three main parts of Replication Controller</h3>
+
+<ul>
+  <li>A label selector, which determines what pods are in the ReplicationController’s scope</li>
+  <li>A replica count, which specifies the desired number of pods that should be running</li>
+  <li>A pod template, which is used when creating new pod replicas</li>
+</ul>
+
+<h3 id="13-controller-reconciliation-loop">
+<a class="anchor" href="#13-controller-reconciliation-loop" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.3 Controller Reconciliation Loop</h3>
+
+<p>A ReplicationController’s job is to make sure that an exact number of pods always
+matches its label selector. If it doesn’t, the ReplicationController takes the appropriate action to reconcile the actual with the desired number.</p>
+
+<p><img src="https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/ReplicationController_Reconciliation.png" alt="Reconciliation"></p>
+
+<h3 id="14-effect-of-changing-the-controllers-label-selector-or-pod-template">
+<a class="anchor" href="#14-effect-of-changing-the-controllers-label-selector-or-pod-template" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.4 Effect of changing the controller’s label selector or pod template</h3>
+
+<p>Changes to the label selector and the pod template have no effect on existing pods. Changing the label selector makes the existing pods fall out of the scope of the ReplicationController, so the controller stops caring about them. ReplicationCon- trollers also don’t care about the actual “contents” of its pods (the container images, environment variables, and other things) after they create the pod. The template therefore only affects new pods created by this ReplicationController.</p>
+
+<h3 id="15-benefits-of-replication-controller">
+<a class="anchor" href="#15-benefits-of-replication-controller" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.5 Benefits of Replication Controller</h3>
+
+<ul>
+  <li>It makes sure a pod (or multiple pod replicas) is always running by starting a
+new pod when an existing one goes missing.</li>
+  <li>When a cluster node fails, it creates replacement replicas for all the pods that
+were running on the failed node (those that were under the Replication-
+Controller’s control).</li>
+  <li>It enables easy horizontal scaling of pods—both manual and automatic</li>
+</ul>
+
+<h3 id="16-lets-get-into-the-replication-controller">
+<a class="anchor" href="#16-lets-get-into-the-replication-controller" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.6 Lets get into the Replication Controller</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Create a YAML file to create a Replication Controller</span>
+
+<span class="nt">---cyberchef_rc</span>.yml
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: cyberchef
+spec:
+  replicas: 3
+  selector:
+    app: cyberchef
+  template:
+    metadata:
+      labels:
+        app: cyberchef
+    spec:
+      containers:
+        - name: cyberchef
+          image: mpepping/cyberchef
+          ports:
+            - containerPort: 8000
+
+<span class="nv">$ </span>kubectl create <span class="nt">-f</span> ./cyberchef_rc.yml
+
+<span class="nt">------------------------------------------------------------------------------------------</span>
+<span class="c"># Get Pods</span>
+<span class="nv">$ </span>kubectl get pods
+NAME              READY   STATUS    RESTARTS   AGE
+cyberchef-gzg6n   1/1     Running   0          5m11s
+cyberchef-h4crn   1/1     Running   0          5m11s
+cyberchef-vlp7f   1/1     Running   0          5m11s
+
+<span class="c"># Trying to delete the pod</span>
+<span class="nv">$ </span>kubectl delete pod cyberchef-vlp7f
+
+<span class="c"># Replication Controller Immediately spins up a new pod</span>
+<span class="nv">$ </span>kubectl get pods
+NAME              READY   STATUS    RESTARTS   AGE
+cyberchef-gzg6n   1/1     Running   0          6m30s
+cyberchef-h4crn   1/1     Running   0          6m30s
+cyberchef-hs9cp   1/1     Running   0          9s
+
+<span class="nt">------------------------------------------------------------------------------------------</span>
+<span class="c"># Getting details of replication controller</span>
+<span class="nv">$ </span>kubectl get rc
+NAME        DESIRED   CURRENT   READY   AGE
+cyberchef   3         3         3       8m16s
+
+<span class="nt">------------------------------------------------------------------------------------------</span>
+<span class="c"># Getting additional details about rc</span>
+<span class="nv">$ </span>kubectl describe rc
+Name:         cyberchef
+Namespace:    default
+Selector:     <span class="nv">app</span><span class="o">=</span>cyberchef
+Labels:       <span class="nv">app</span><span class="o">=</span>cyberchef
+Annotations:  &lt;none&gt;
+Replicas:     3 current / 3 desired
+Pods Status:  3 Running / 0 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+  Labels:  <span class="nv">app</span><span class="o">=</span>cyberchef
+  Containers:
+   cyberchef:
+    Image:        mpepping/cyberchef
+    Port:         8000/TCP
+    Host Port:    0/TCP
+    Environment:  &lt;none&gt;
+    Mounts:       &lt;none&gt;
+  Volumes:        &lt;none&gt;
+Events:
+  Type    Reason            Age    From                    Message
+  <span class="nt">----</span>    <span class="nt">------</span>            <span class="nt">----</span>   <span class="nt">----</span>                    <span class="nt">-------</span>
+  Normal  SuccessfulCreate  9m33s  replication-controller  Created pod: cyberchef-vlp7f
+  Normal  SuccessfulCreate  9m33s  replication-controller  Created pod: cyberchef-h4crn
+  Normal  SuccessfulCreate  9m33s  replication-controller  Created pod: cyberchef-gzg6n
+  Normal  SuccessfulCreate  3m12s  replication-controller  Created pod: cyberchef-hs9cp
+</code></pre></div></div>
+
+<h3 id="17-moving-pods-in-and-out-of-the-scope-of-a-replicationcontroller">
+<a class="anchor" href="#17-moving-pods-in-and-out-of-the-scope-of-a-replicationcontroller" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.7 Moving pods in and out of the scope of a ReplicationController</h3>
+
+<p>Pods created by a ReplicationController aren’t tied to the ReplicationController in any way. At any moment, a ReplicationController manages pods that match its label selector. By changing a pod’s labels, it can be removed from or added to the scope of a ReplicationController. It can even be moved from one ReplicationController to another.</p>
+
+<p>If you change a pod’s labels so they no longer match a ReplicationController’s label selector, the pod becomes like any other manually created pod. It’s no longer managed by anything. If the node running the pod fails, the pod is obviously not rescheduled. But keep in mind that when you changed the pod’s labels, the replication controller noticed one pod was missing and spun up a new pod to replace it.</p>
+
+<p>There in below example, we now have four pods altogether: one that isn’t managed by our ReplicationController and three that are. Among them is the newly created pod. After we change the pod’s label from app=cyberchef to app=testing, the ReplicationController no longer cares about the pod. Because the controller’s replica count is set to 3 and only two pods match the label selector so replication controller will spin a new pod and this changed lebal pod is keep running but no one can manage this pod, so we can test this and perform operation on this.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>kubectl get pods
+NAME              READY   STATUS    RESTARTS   AGE
+cyberchef-gbrgh   1/1     Running   0          12h
+cyberchef-h728j   1/1     Running   0          12h
+cyberchef-npql7   1/1     Running   0          12h
+
+<span class="nv">$ </span>kubectl label pod cyberchef-h728j <span class="nb">type</span><span class="o">=</span>vulnerable
+
+<span class="nv">$ </span>kubectl get pods <span class="nt">--show-labels</span>
+NAME              READY   STATUS    RESTARTS   AGE   LABELS
+cyberchef-gbrgh   1/1     Running   0          12h   <span class="nv">app</span><span class="o">=</span>cyberchef
+cyberchef-h728j   1/1     Running   0          12h   <span class="nv">app</span><span class="o">=</span>cyberchef,type<span class="o">=</span>vulnerable
+cyberchef-npql7   1/1     Running   0          12h   <span class="nv">app</span><span class="o">=</span>cyberchef
+
+<span class="nv">$ </span>kubectl label pod cyberchef-h728j <span class="nv">app</span><span class="o">=</span>testing <span class="nt">--overwrite</span>
+
+<span class="nv">$ </span>kubectl get pods <span class="nt">-L</span> app
+
+NAME              READY   STATUS    RESTARTS   AGE     APP
+cyberchef-gbrgh   1/1     Running   0          13h     cyberchef
+cyberchef-h728j   1/1     Running   0          13h     testing
+cyberchef-kwn7r   1/1     Running   0          2m44s   cyberchef
+cyberchef-npql7   1/1     Running   0          13h     cyberchef
+
+<span class="nv">$ </span>kubectl get rc
+NAME        DESIRED   CURRENT   READY   AGE
+cyberchef   3         3         3       13h
+</code></pre></div></div>
+
+<h3 id="18-changing-pod-template">
+<a class="anchor" href="#18-changing-pod-template" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.8 Changing pod template</h3>
+
+<p>A ReplicationController’s pod template can be modified at any time. Changing the pod
+template is like replacing a cookie cutter with another one. It will only affect the cookies you cut out afterward and will have no effect on the ones you’ve already cut. To modify the old pods, you’d need to delete them and let the ReplicationController replace them with new ones based on the new template.</p>
+
+<p>Editing a ReplicationController like this to change the container image in the pod
+template, deleting the existing pods, and letting them be replaced with new ones from
+the new template could be used for upgrading pods</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># This will open the ReplicationController’s YAML definition in your default text editor.</span>
+<span class="c"># Find the pod template section and add an additional label to the metadata</span>
+<span class="c">#  After you save your changes and exit the editor, kubectl will update the ReplicationController and print the following message:  replicationcontroller/cyberchef edited</span>
+<span class="nv">$ </span>kubectl edit rc cyberchef
+</code></pre></div></div>
+
+<h3 id="19-horizontally-scaling-pods">
+<a class="anchor" href="#19-horizontally-scaling-pods" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.9 Horizontally scaling pods</h3>
+
+<p>Scaling the number of pods up or down is as easy as changing the value of the rep- licas field in the ReplicationController resource. After the change, the Replication- Controller will either see too many pods exist (when scaling down) and delete part of them, or see too few of them (when scaling up) and create additional pods.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># By kubectl command</span>
+<span class="nv">$ </span>kubectl scale rc cyberchef <span class="nt">--replicas</span><span class="o">=</span>4
+
+<span class="c"># By changing Yaml</span>
+<span class="nv">$ </span>kubeclt edit rc cyberchef
+<span class="c"># Edit replicas section</span>
+
+<span class="nv">$ </span>kubectl get rc
+NAME        DESIRED   CURRENT   READY   AGE
+cyberchef   4         4         4       2m
+</code></pre></div></div>
+
+<h3 id="110-deleting-a-replication-controller">
+<a class="anchor" href="#110-deleting-a-replication-controller" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.10 Deleting a Replication Controller</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># This will delete rc as well all the pods</span>
+<span class="nv">$ </span>kubectl delete rc cyberchef
+
+<span class="c"># If you want to keep running your pods and delete the replication controller</span>
+<span class="nv">$ </span>kubectl delete rc cyberchef <span class="nt">--cascade</span><span class="o">=</span><span class="nb">false</span>
+<span class="c"># Now pods are running their own</span>
+</code></pre></div></div>
+
+<hr>
+
+<h2 id="20-replicasets">
+<a class="anchor" href="#20-replicasets" aria-hidden="true"><span class="octicon octicon-link"></span></a>2.0 ReplicaSets</h2>
+
+<p>A ReplicaSet acts as a cluster-wide Pod manager, ensuring that the right types and number of Pods are running at all times.</p>
+
+<p>Initially, ReplicationControllers were the only Kubernetes component for replicating
+pods and rescheduling them when nodes failed. Later, a similar resource called a
+ReplicaSet was introduced. It’s a new generation of ReplicationController and
+replaces it completely (ReplicationControllers will eventually be deprecated). ReplicaSet also use same policy as replicationController, ReplicaSets create and manage Pods, they do not own the Pods they create. ReplicaSets use label queries to identify the set of Pods they should be managing.</p>
+
+<p>If we going in deep detail, Despite the value placed on declarative configuration of software, there are times when it is easier to build something up imperatively. In particular, early on you may be simply deploying a single Pod with a container image without a ReplicaSet manag‐ ing it. But at some point you may want to expand your singleton container into a replicated service and create and manage an array of similar containers. You may have even defined a load balancer that is serving traffic to that single Pod. If ReplicaSets owned the Pods they created, then the only way to start replicating your Pod would be to delete it and then relaunch it via a ReplicaSet. This might be disruptive, as there would be a moment in time when there would be no copies of your container running. However, because ReplicaSets are decoupled from the Pods they manage, you can simply create a ReplicaSet that will “adopt” the existing Pod, and scale out additional copies of those containers. In this way, you can seamlessly move from a single imperative Pod to a replicated set of Pods managed by a ReplicaSet.</p>
+
+<h3 id="21-comparing-a-replicaset-to-a-replicationcontroller">
+<a class="anchor" href="#21-comparing-a-replicaset-to-a-replicationcontroller" aria-hidden="true"><span class="octicon octicon-link"></span></a>2.1 Comparing a ReplicaSet to a ReplicationController</h3>
+
+<p>A ReplicaSet behaves exactly like a ReplicationController, but it has more expressive pod selectors. Whereas a ReplicationController’s label selector only allows matching pods that include a certain label, a ReplicaSet’s selector also allows matching pods that lack a certain label or pods that include a certain label key, regardless of its value. Also, for example, a single ReplicationController can’t match pods with the label env=production and those with the label env=devel at the same time. It can only match either pods with the env=production label or pods with the env=devel label. But a sin- gle ReplicaSet can match both sets of pods and treat them as a single group. Similarly, a ReplicationController can’t match pods based merely on the presence of a label key, regardless of its value, whereas a ReplicaSet can. For example, a Replica- Set can match all pods that include a label with the key env, whatever its actual value is (you can think of it as env=*).</p>
+
+<h3 id="22-reconciliation-loops">
+<a class="anchor" href="#22-reconciliation-loops" aria-hidden="true"><span class="octicon octicon-link"></span></a>2.2 Reconciliation Loops</h3>
+
+<p>The central concept behind a reconciliation loop is the notion of desired state versus observed or current state. Desired state is the state you want. With a ReplicaSet, it is the desired number of replicas and the definition of the Pod to replicate. For example, “the desired state is that there are three replicas of a Pod running the cyberchef”.</p>
+
+<p>In contrast, the current state is the currently observed state of the system. For example, “there are only two cyberchef Pods currently running.” The reconciliation loop is constantly running, observing the current state of the world and taking action to try to make the observed state match the desired state. For instance, with the previous examples, the reconciliation loop would create a new cyberchef Pod in an effort to make the observed state match the desired state of three replicas.</p>
+
+<p>There are many benefits to the reconciliation loop approach to managing state. It is
+an inherently goal-driven, self-healing system, yet it can often be easily expressed in a few lines of code. As a concrete example of this, note that the reconciliation loop for ReplicaSets is a single loop, yet it handles user actions to scale up or scale down the ReplicaSet as well as node failures or nodes rejoining the cluster after being absent.</p>
+
+<h3 id="23-quarantining-containers">
+<a class="anchor" href="#23-quarantining-containers" aria-hidden="true"><span class="octicon octicon-link"></span></a>2.3 Quarantining Containers</h3>
+
+<p>Oftentimes, when a server misbehaves, Pod-level health checks will automatically restart that Pod. But if your health checks are incomplete, a Pod can be misbehaving but still be part of the replicated set. In these situations, while it would work to simply kill the Pod, that would leave your developers with only logs to debug the problem. Instead, you can modify the set of labels on the sick Pod. Doing so will disassociate it from the ReplicaSet (and service) so that you can debug the Pod. The ReplicaSet con‐ troller will notice that a Pod is missing and create a new copy, but because the Pod is still running it is available to developers for interactive debugging, which is significantly more valuable than debugging from logs.</p>
+
+<h3 id="24-deepdive-with-replicaset">
+<a class="anchor" href="#24-deepdive-with-replicaset" aria-hidden="true"><span class="octicon octicon-link"></span></a>2.4 DeepDive with ReplicaSet</h3>
+
+<p>You’re creating a resource of type ReplicaSet which has much the same contents as the ReplicationController you created earlier. The only difference is in the selector. Instead of listing labels the pods need to have directly under the selector property, you’re specifying them under selector .matchLabels. This is the simpler (and less expressive) way of defining label selectors in a ReplicaSet.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Creating a YAML for ReplicaSet:</span>
+<span class="nt">---cyberchef_rs</span>.yml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: cyberchef
+  labels:
+    app: cyberchef
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cyberchef
+  template:
+    metadata:
+      labels:
+        app: cyberchef
+    spec:
+      containers:
+        - name: cyberchef
+          image: mpepping/cyberchef:testing
+          ports:
+            - containerPort: 8000
+
+<span class="c"># To submit the cyberChef replicaSet to the kubernetes API:</span>
+<span class="nv">$ </span>kubectl apply <span class="nt">-f</span> ./cyberchef_rs.yml
+
+<span class="nt">------------------------------------------------------------------------------------------</span>
+<span class="nv">$ </span>kubectl get rs
+NAME        DESIRED   CURRENT   READY   AGE
+cyberchef   3         3         3       40m
+
+<span class="nt">------------------------------------------------------------------------------------------</span>
+<span class="c"># To get further details:</span>
+<span class="nv">$ </span>kubectl describe rs
+Name:         cyberchef
+Namespace:    default
+Selector:     <span class="nv">app</span><span class="o">=</span>cyberchef
+Labels:       <span class="nv">app</span><span class="o">=</span>cyberchef
+Annotations:  &lt;none&gt;
+Replicas:     3 current / 3 desired
+Pods Status:  3 Running / 0 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+  Labels:  <span class="nv">app</span><span class="o">=</span>cyberchef
+  Containers:
+   cyberchef:
+    Image:        mpepping/cyberchef:testing
+    Port:         8000/TCP
+    Host Port:    0/TCP
+    Environment:  &lt;none&gt;
+    Mounts:       &lt;none&gt;
+  Volumes:        &lt;none&gt;
+Events:
+  Type    Reason            Age   From                   Message
+  <span class="nt">----</span>    <span class="nt">------</span>            <span class="nt">----</span>  <span class="nt">----</span>                   <span class="nt">-------</span>
+  Normal  SuccessfulCreate  41m   replicaset-controller  Created pod: cyberchef-l68b2
+  Normal  SuccessfulCreate  41m   replicaset-controller  Created pod: cyberchef-8hg5p
+  Normal  SuccessfulCreate  41m   replicaset-controller  Created pod: cyberchef-qfqrk
+
+<span class="nt">------------------------------------------------------------------------------------------</span>
+<span class="c"># Finding a replicaSet from a pod</span>
+<span class="c"># Method1:  Check for annotation : kubernetes.io/created-by</span>
+<span class="nv">$ </span>kubectl get pods &lt;pod-name&gt; <span class="nt">-o</span> yaml
+
+<span class="nt">------------------------------------------------------------------------------------------</span>
+<span class="c"># Method2: Check for the kind</span>
+<span class="nv">$ </span>kubectl get pods cyberchef-qm28m <span class="nt">-o</span> yaml | <span class="nb">grep </span>kind
+kind: ReplicaSet
+
+<span class="nt">------------------------------------------------------------------------------------------</span>
+<span class="c"># Finding a Set of pods for a replicaSet</span>
+<span class="c"># use the selector to filter out the pods that a replicaSet is using</span>
+<span class="nv">$ </span>kubectl get pods <span class="nt">-l</span> <span class="nv">app</span><span class="o">=</span>cyberchef
+NAME              READY   STATUS    RESTARTS   AGE
+cyberchef-qm28m   1/1     Running   0          15m
+cyberchef-r6fff   1/1     Running   0          15m
+cyberchef-scjlr   1/1     Running   0          15m
+
+<span class="nt">------------------------------------------------------------------------------------------</span>
+<span class="c">## Scaling ReplicaSets</span>
+<span class="c"># ReplicaSets are scaled up or down by updating the spec.replicas key on the ReplicaSet object stored in Kubernetes.</span>
+<span class="c"># Easiest way to achieve this using scale command</span>
+<span class="nv">$ </span>kubectl scale replicasets cyberchef <span class="nt">--replicas</span><span class="o">=</span>4
+<span class="c"># Note : change ReplicaSet configuration file count as best practices, so use this imperative scale option only on emergency sitautions otherwise update the replicas from the files.</span>
+
+<span class="nt">------------------------------------------------------------------------------------------</span>
+<span class="c"># Autoscaling a ReplicaSet</span>
+<span class="c"># If we understand this with a scenario, if the application uses the high cpu and memory kubernetes will automatically scale the application.</span>
+<span class="c"># This scaling is based on responses of some custom application metrics.</span>
+<span class="c"># Kubernetes can handle all of these scenarios via Horizontal Pod Autoscaling (HPA).</span>
+
+<span class="c">## Autoscaling based on cpu</span>
+<span class="nv">$ </span>kubectl autoscale rs cyberchef <span class="nt">--min</span><span class="o">=</span>2 <span class="nt">--max</span><span class="o">=</span>5 <span class="nt">--cpu-percent</span><span class="o">=</span>80
+<span class="c"># This command creates an autoscaler that scales between two and five replicas with a CPU threshold of 80%.</span>
+<span class="c"># To view, modify, or delete this resource you can use the standard kubectl commands and the horizontalpodautoscalers resource.</span>
+<span class="c"># horizontalpodautoscalers is quite a bit to type, but it can be shortened to hpa:</span>
+<span class="nv">$ </span>kubectl get hpa
+
+<span class="nt">------------------------------------------------------------------------------------------</span>
+<span class="c"># To Delete ReplicaSets</span>
+<span class="nv">$ </span>kubectl delete rs cyberchef
+
+<span class="c"># If you don’t want to delete the Pods that are being managed by the ReplicaSet, you can set the --cascade flag to false to ensure only the ReplicaSet object is deleted and not the Pods:</span>
+<span class="nv">$ </span>kubectl delete rs kuard <span class="nt">--cascade</span><span class="o">=</span><span class="nb">false</span>
+</code></pre></div></div>
+
+<h3 id="25-using-the-replicaset-more-expressive-label-selectors">
+<a class="anchor" href="#25-using-the-replicaset-more-expressive-label-selectors" aria-hidden="true"><span class="octicon octicon-link"></span></a>2.5 Using the ReplicaSet more expressive label selectors</h3>
+
+<p>The main improvements of ReplicaSets over ReplicationControllers are their more expressive label selectors. You intentionally used the simpler matchLabels selector in the first ReplicaSet example to see that ReplicaSets are no different from ReplicationControllers. Now, you’ll rewrite the selector to use the more powerful matchExpressions property.</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">selector</span><span class="pi">:</span>
+  <span class="na">matchExpressions</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="na">key</span><span class="pi">:</span> <span class="s">app</span>
+      <span class="na">operator</span><span class="pi">:</span> <span class="s">In</span>
+      <span class="na">values</span><span class="pi">:</span>
+        <span class="pi">-</span> <span class="s">cyberchef</span>
+</code></pre></div></div>
+
+<p>You can add additional expressions to the selector. As in the example, each expression
+must contain a key, an operator, and possibly (depending on the operator) a list of
+values. You’ll see four valid operators:</p>
+
+<ul>
+  <li>In—Label’s value must match one of the specified values.</li>
+  <li>NotIn—Label’s value must not match any of the specified values.</li>
+  <li>Exists—Pod must include a label with the specified key (the value isn’t important). When using this operator, you shouldn’t specify the values field.</li>
+  <li>DoesNotExist—Pod must not include a label with the specified key. The values
+property must not be specified.</li>
+</ul>
+
+<p>If you specify multiple expressions, all those expressions must evaluate to true for the selector to match a pod. If you specify both matchLabels and matchExpressions, all the labels must match and all the expressions must evaluate to true for the pod to match the selector.</p>
+
+<hr>
+
+<h2 id="30-daemonsets">
+<a class="anchor" href="#30-daemonsets" aria-hidden="true"><span class="octicon octicon-link"></span></a>3.0 DaemonSets</h2>
+
+<p>DaemonSet:  Running exactly one pod on each node</p>
+
+<p>To run a pod on all cluster nodes, you create a DaemonSet object, which is much like a ReplicationController or a ReplicaSet, except that pods created by a DaemonSet already have a target node specified and skip the Kubernetes Scheduler. Whereas a ReplicaSet (or ReplicationController) makes sure that a desired number of pod replicas exist in the cluster, a DaemonSet doesn’t have any notion of a desired replica count. It doesn’t need it because its job is to ensure that a pod matching its pod selector is running on each node.</p>
+
+<p>A DaemonSet ensures a copy of a Pod is running across a set of nodes in a Kuber‐ netes cluster. DaemonSets are used to deploy system daemons such as log collectors and monitoring agents, which typically must run on every node. DaemonSets share similar functionality with ReplicaSets; both create Pods that are expected to be long-running services and ensure that the desired state and the observed state of the cluster match.</p>
+
+<p>If a node goes down, the DaemonSet doesn’t cause the pod to be created else-
+where. But when a new node is added to the cluster, the DaemonSet immediately
+deploys a new pod instance to it. It also does the same if someone inadvertently
+deletes one of the pods, leaving the node without the DaemonSet’s pod. Like a Replica-
+Set, a DaemonSet creates the pod from the pod template configured in it.</p>
+
+<p>You can use labels to run DaemonSet Pods on specific nodes; for example, you may want to run specialized intrusion-detection software on nodes that are exposed to the edge network.</p>
+
+<h3 id="31-daemonset-scheduler">
+<a class="anchor" href="#31-daemonset-scheduler" aria-hidden="true"><span class="octicon octicon-link"></span></a>3.1 DaemonSet Scheduler</h3>
+
+<p>By default a DaemonSet will create a copy of a Pod on every node unless a node selec‐
+tor is used, which will limit eligible nodes to those with a matching set of labels. DaemonSets determine which node a Pod will run on at Pod creation time by specifying the nodeName field in the Pod spec. As a result, Pods created by DaemonSets are ignored by the Kubernetes scheduler.</p>
+
+<p>Like ReplicaSets, DaemonSets are managed by a reconciliation control loop that measures the desired state (a Pod is present on all nodes) with the observed state (is the Pod present on a particular node?). Given this information, the DaemonSet controller creates a Pod on each node that doesn’t currently have a matching Pod.</p>
+
+<p>If a new node is added to the cluster, then the DaemonSet controller notices that it is missing a Pod and adds the Pod to the new node.</p>
+
+<h3 id="32-deepdive-with-daemonset">
+<a class="anchor" href="#32-deepdive-with-daemonset" aria-hidden="true"><span class="octicon octicon-link"></span></a>3.2 DeepDive with DaemonSet</h3>
+
+<p>DaemonSets are created by submitting a DaemonSet configuration to the Kubernetes API server.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># we can only run these pods on selected labels, like if some nodes have ssd's and we want to run those pods only on ssd based nodes.</span>
+<span class="c"># Like in below example we use node selector to choose only those pods that have ssd's.</span>
+
+<span class="nt">--cyberchef_daemonSet</span>.yml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cyberchef
+  labels:
+    app: cyberchef
+spec:
+  selector:
+    matchLabels:
+      app: cyberchef
+  template:
+    metadata:
+      labels:
+        app: cyberchef
+    spec:
+      nodeSelector:
+        disk: ssd
+      containers:
+        - name: cyberchef
+          image: mpepping/cyberchef
+          ports:
+            - containerPort: 8000
+
+<span class="c"># To Supply to Kubernetes API</span>
+<span class="nv">$ </span>kubectl apply <span class="nt">-f</span> ./cyberchef_daemonSet.yml
+
+<span class="nt">------------------------------------------------------------------------------------</span>
+<span class="c"># Get the DaemonSet</span>
+<span class="nv">$ </span>kubectl get ds
+kubectl get daemonset
+NAME        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
+cyberchef   2         2         0       2            0           &lt;none&gt;          4s
+
+<span class="nt">------------------------------------------------------------------------------------</span>
+<span class="c"># Get the pods</span>
+<span class="nv">$ </span>kubectl get pods
+NAME              READY   STATUS    RESTARTS   AGE
+cyberchef-dnrx9   1/1     Running   0          53s
+cyberchef-gfhcl   1/1     Running   0          53s
+
+<span class="nt">------------------------------------------------------------------------------------</span>
+<span class="c"># Get further details</span>
+<span class="nv">$ </span>kubectl describe daemonset cyberchef
+Name:           cyberchef
+Selector:       <span class="nv">app</span><span class="o">=</span>cyberchef
+Node-Selector:  &lt;none&gt;
+Labels:         <span class="nv">app</span><span class="o">=</span>cyberchef
+Annotations:    deprecated.daemonset.template.generation: 1
+Desired Number of Nodes Scheduled: 2
+Current Number of Nodes Scheduled: 2
+Number of Nodes Scheduled with Up-to-date Pods: 2
+Number of Nodes Scheduled with Available Pods: 2
+Number of Nodes Misscheduled: 0
+Pods Status:  2 Running / 0 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+  Labels:  <span class="nv">app</span><span class="o">=</span>cyberchef
+  Containers:
+   cyberchef:
+    Image:        mpepping/cyberchef
+    Port:         8000/TCP
+    Host Port:    0/TCP
+    Environment:  &lt;none&gt;
+    Mounts:       &lt;none&gt;
+  Volumes:        &lt;none&gt;
+Events:
+  Type    Reason            Age   From                  Message
+  <span class="nt">----</span>    <span class="nt">------</span>            <span class="nt">----</span>  <span class="nt">----</span>                  <span class="nt">-------</span>
+  Normal  SuccessfulCreate  111s  daemonset-controller  Created pod: cyberchef-gfhcl
+  Normal  SuccessfulCreate  111s  daemonset-controller  Created pod: cyberchef-dnrx9
+
+
+<span class="nt">------------------------------------------------------------------------------------</span>
+<span class="c"># Get the nodes</span>
+<span class="nv">$ </span>kubectl get nodes
+NAME           STATUS   ROLES    AGE     VERSION
+minikube       Ready    master   2d17h   v1.19.2
+minikube-m02   Ready    &lt;none&gt;   2d16h   v1.19.2
+minikube-m03   Ready    &lt;none&gt;   5m      v1.19.2
+
+<span class="c"># To check pod running on which node</span>
+<span class="nv">$ </span>kubectl get pods <span class="nt">-o</span> wide
+NAME              READY   STATUS    RESTARTS   AGE    IP           NODE           NOMINATED NODE   READINESS GATES
+cyberchef-dnrx9   1/1     Running   0          4m5s   172.17.0.2   minikube-m02   &lt;none&gt;           &lt;none&gt;
+cyberchef-gfhcl   1/1     Running   0          4m5s   172.17.0.5   minikube       &lt;none&gt;           &lt;none&gt;
+
+<span class="nt">------------------------------------------------------------------------------------</span>
+<span class="c"># To limiting daemonSets to specific nodes</span>
+<span class="c"># Change the labels of the node</span>
+<span class="nv">$ </span>kubectl label node minikube-m03 <span class="nv">disk</span><span class="o">=</span>hdd <span class="nt">--overwrite</span>
+
+<span class="c"># Show Labels</span>
+<span class="nv">$ </span>kubectl get nodes <span class="nt">--show-labels</span>
+NAME           STATUS   ROLES    AGE    VERSION   LABELS
+minikube       Ready    master   2d17h   v1.19.2  beta.kubernetes.io/arch<span class="o">=</span>amd64,beta.kubernetes.io/os<span class="o">=</span>linux,disk<span class="o">=</span>ssd ...
+minikube-m03   Ready    master   2d17h   v1.19.2   beta.kubernetes.io/arch<span class="o">=</span>amd64,beta.kubernetes.io/os<span class="o">=</span>linux,disk<span class="o">=</span>hdd ...
+minikube-m02   Ready    master   2d17h   v1.19.2   beta.kubernetes.io/arch<span class="o">=</span>amd64,beta.kubernetes.io/os<span class="o">=</span>linux,disk<span class="o">=</span>ssd ...
+</code></pre></div></div>
+
+<h3 id="33-limiting-daemonsets-to-specific-nodes">
+<a class="anchor" href="#33-limiting-daemonsets-to-specific-nodes" aria-hidden="true"><span class="octicon octicon-link"></span></a>3.3 Limiting DaemonSets to Specific Nodes</h3>
+
+<p>The most common use case for DaemonSets is to run a Pod across every node in a Kubernetes cluster. However, there are some cases where you want to deploy a Pod to only a subset of nodes. For example, maybe you have a workload that requires a GPU or access to fast storage only available on a subset of nodes in your cluster. In cases like these, node labels can be used to tag specific nodes that meet workload requirements.</p>
+
+<ul>
+  <li>Adding Lables to Nodes</li>
+</ul>
+
+<p>DaemonSets to specific nodes is to add the desired set of labels to a subset of nodes. This can be achieved using the kubectl label command.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl label nodes minikube <span class="nv">ssd</span><span class="o">=</span><span class="nb">true
+
+</span>kubectl get nodes <span class="nt">--selector</span> <span class="nv">ssd</span><span class="o">=</span><span class="nb">true
+</span>NAME           STATUS   AGE     VERSION
+minikube       Ready    2d17h   v1.19.2
+minikube-m02   Ready    2d17h   v1.19.2
+</code></pre></div></div>
+
+<ul>
+  <li>NodeSelector</li>
+</ul>
+
+<p>Node selectors can be used to limit what nodes a Pod can run on in a given Kuber‐
+netes cluster. Node selectors are defined as part of the Pod spec when creating a DaemonSet.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># I specified this on previous cyberchef daemon example</span>
+<span class="nt">---x</span>.yml
+apiVersion:
+kind:
+metadata:
+spec:
+  template:
+    metadata:
+    spec:
+      nodeSelector:
+        ssd: <span class="s2">"true"</span>
+</code></pre></div></div>
+
+<h3 id="34-updating-a-daemonset">
+<a class="anchor" href="#34-updating-a-daemonset" aria-hidden="true"><span class="octicon octicon-link"></span></a>3.4 Updating a DaemonSet</h3>
+
+<p>DaemonSets are great for deploying services across an entire cluster, but what about
+upgrades? Prior to Kubernetes 1.6, the only way to update Pods managed by a DaemonSet was to update the DaemonSet and then manually delete each Pod that was managed by the DaemonSet so that it would be re-created with the new configuration.</p>
+
+<p>DaemonSets can be rolled out using the same RollingUpdate strategy that deployments use. You can configure the update strategy using the spec.updateStrategy.type field, which should have the value RollingUpdate. When a DaemonSet has an update strategy of RollingUpdate, any change to the spec.template field (or subfields) in the DaemonSet will initiate a rolling update.</p>
+
+<p>The RollingUpdate strategy gradually updates members of a DaemonSet until all of the Pods are running the new configuration. There are two parameters that control the rolling update of a DaemonSet:</p>
+
+<ul>
+  <li>spec.minReadySeconds, which determines how long a Pod must be “ready” before the rolling update proceeds to upgrade subsequent Pods</li>
+  <li>spec.updateStrategy.rollingUpdate.maxUnavailable, which indicates how many Pods may be simultaneously updated by the rolling update</li>
+</ul>
+
+<p>Once a rolling update has started, you can use the kubectl rollout commands to
+see the current status of a DaemonSet rollout. For example, kubectl rollout status daemonSets cyberchef will show the current rollout status of a DaemonSet named cyberchef.</p>
+
+<h3 id="35-deleting-a-daemonset">
+<a class="anchor" href="#35-deleting-a-daemonset" aria-hidden="true"><span class="octicon octicon-link"></span></a>3.5 Deleting a DaemonSet</h3>
+
+<p>Deleting a DaemonSet is pretty straightforward using the kubectl delete command. Just be sure to supply the correct name of the DaemonSet you would like to delete:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Delete using specification</span>
+<span class="nv">$ </span>kubectl delete <span class="nt">-f</span> ./cyberchef_daemon.yaml
+
+<span class="c"># Delete using daemonSet</span>
+<span class="nv">$ </span>kubectl delete ds cyberchef
+</code></pre></div></div>
+
+<hr>
+
+<h2 id="40-running-pods-that-perform-a-single-completable-task">
+<a class="anchor" href="#40-running-pods-that-perform-a-single-completable-task" aria-hidden="true"><span class="octicon octicon-link"></span></a>4.0 Running pods that perform a single completable task</h2>
+
+<p>ReplicationControllers, ReplicaSets, and DaemonSets run continuous tasks that are never considered completed. Processes in such pods are restarted when they exit. But in a completable task, after its process terminates, it should not be restarted again.</p>
+
+<p>In the event of a node failure, the pods on that node that are managed by a Job will be rescheduled to other nodes the way ReplicaSet pods are. In the event of a failure of the process itself (when the process returns an error exit code), the Job can be configured to either restart the container or not.</p>
+
+<p>For example, Jobs are useful for ad hoc tasks, where it’s crucial that the task finishes properly. You could run the task in an unmanaged pod and wait for it to finish, but in the event of a node failing or the pod being evicted from the node while it is performing its task, you’d need to manually recreate it. Doing this manually doesn’t make sense—especially if the job takes hours to complete.</p>
+
+<p>An example</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="nt">---batch_job</span>.yml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: batch-job
+spec:
+  template:
+    metadata:
+      labels:
+        app: batch-job
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: pi
+        image: perl
+        <span class="nb">command</span>: <span class="o">[</span><span class="s2">"perl"</span>,  <span class="s2">"-Mbignum=bpi"</span>, <span class="s2">"-wle"</span>, <span class="s2">"print bpi(50)"</span><span class="o">]</span>
+
+<span class="nv">$ </span>kubectl apply <span class="nt">-f</span> ./batch_job.yml
+
+<span class="c"># Get the jobs</span>
+<span class="nv">$ </span>kubectl get <span class="nb">jobs
+</span>NAME        COMPLETIONS   DURATION   AGE
+batch-job   1/1           44s        46s
+
+<span class="c"># Get the pods</span>
+<span class="nv">$ </span>kubectl get pods
+NAME              READY   STATUS      RESTARTS   AGE
+batch-job-8tb2j   1/1     Running     0          1m
+
+<span class="c"># Showing the running job</span>
+<span class="nv">$ </span>kubectl logs batch-job-8tb2j
+3.1415926535897932384626433832795028841971693993751
+
+<span class="c"># After completing the job</span>
+NAME              READY   STATUS      RESTARTS   AGE
+batch-job-8tb2j   0/1     Completed   0          2m
+
+<span class="nt">--------------------------------------------------------------------------------------</span>
+<span class="c">## If you want to run multiple pods instances in a job</span>
+<span class="c"># Jobs may be configured to create more than one pod instance and run them in parallel or sequentially.</span>
+<span class="c"># This is done by setting the completions and the parallelism properties in the Job spec</span>
+<span class="nt">---</span>
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: multi-completion-batch-job
+spec:
+  completions: 5
+  template:
+    &lt;template is the same as <span class="k">in </span>listing 4.11&gt;
+
+<span class="c"># This Job will run five pods one after the other. It initially creates one pod, and when the pod’s container finishes, it creates the second pod, and so on, until five pods complete successfully. If one of the pods fails, the Job creates a new pod, so the Job may create more than five pods overall.</span>
+
+<span class="nt">--------------------------------------------------------------------------------------</span>
+<span class="c"># Instead of running single Job pods one after the other, you can also make the Job run multiple pods in parallel. You specify how many pods are allowed to run in parallel with the parallelism Job spec property, as shown in the following listing.</span>
+
+<span class="nt">---</span>
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: multi-completion-batch-job
+spec:
+  completions: 5
+  parallelism: 2
+  template:
+    &lt;same as <span class="k">in </span>listing 4.11&gt;
+
+<span class="nt">--------------------------------------------------------------------------------------</span>
+<span class="c"># Scaling a Job : You can even change a Job’s parallelism property while the Job is running.</span>
+<span class="c"># This is similar to scaling a ReplicaSet or ReplicationController, and can be done with the kubectl scale command:</span>
+<span class="nv">$ </span>kubectl scale job batch-job <span class="nt">--replicas</span> 3
+</code></pre></div></div>
+
+<hr>
+
+<h2 id="50--scheduling-jobs-to-run-periodically-or-once-in-the-future">
+<a class="anchor" href="#50--scheduling-jobs-to-run-periodically-or-once-in-the-future" aria-hidden="true"><span class="octicon octicon-link"></span></a>5.0  Scheduling Jobs to run periodically or once in the future</h2>
+
+<p>Job resources run their pods immediately when you create the Job resource. But many
+batch jobs need to be run at a specific time in the future or repeatedly in the specified interval. In Linux and UNIX-like operating systems, these jobs are better known as cron jobs. Kubernetes supports them, too.</p>
+
+<p>A cron job in Kubernetes is configured by creating a CronJob resource. The
+schedule for running the job is specified in the well-known cron format, so if you’re
+familiar with regular cron jobs, you’ll understand Kubernetes’ CronJobs in a matter
+of seconds.</p>
+
+<p>At the configured time, Kubernetes will create a Job resource according to the Job template configured in the CronJob object. When the Job resource is created, one or more pod replicas will be created and started according to the Job’s pod template, as you learned in the previous section. There’s nothing more to it.</p>
+
+<h3 id="51-creating-a-cronjob">
+<a class="anchor" href="#51-creating-a-cronjob" aria-hidden="true"><span class="octicon octicon-link"></span></a>5.1 Creating a Cronjob</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="nt">---cronjob</span>.yml
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: hello
+spec:
+  schedule: <span class="s2">"*/1 * * * *"</span>
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - <span class="nt">-c</span>
+            - <span class="nb">date</span><span class="p">;</span> <span class="nb">echo </span>Hello from the Kubernetes cluster
+          restartPolicy: OnFailure
+</code></pre></div></div>
+
+<h3 id="52-understanding-how-scheduled-jobs-are-run">
+<a class="anchor" href="#52-understanding-how-scheduled-jobs-are-run" aria-hidden="true"><span class="octicon octicon-link"></span></a>5.2 Understanding how scheduled jobs are run</h3>
+
+<p>Job resources will be created from the CronJob resource at approximately the scheduled time. The Job then creates the pods.</p>
+
+<p>It may happen that the Job or pod is created and run relatively late. You may have a hard requirement for the job to not be started too far over the scheduled time. In that case, you can specify a deadline by specifying the startingDeadlineSeconds field in the CronJob.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># In thi example one of the times the job is supposed to run is 10:30:00.</span>
+<span class="c"># If it doesn’t start by 10:30:15 for whatever reason, the job will not run and will be shown as Failed.</span>
+
+<span class="nt">---</span>
+apiVersion: batch/v1beta1
+kind: CronJob
+spec:
+  schedule: <span class="s2">"0,15,30,45 ****"</span>
+  startingDeadlineSeconds: 15
+</code></pre></div></div>
+
+<hr>
+
+  </div><a class="u-url" href="/Notes/kubernetes/2020/09/27/Kubernetes-Controllers.html" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/Notes/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/Notes/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/Notes/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>A Daily Notebook for @Akash</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/AkashRajvanshi" title="AkashRajvanshi"><svg class="svg-icon grey"><use xlink:href="/Notes/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/Akash_Rajvanshi" title="Akash_Rajvanshi"><svg class="svg-icon grey"><use xlink:href="/Notes/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
