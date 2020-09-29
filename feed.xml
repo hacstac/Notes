@@ -1,4 +1,554 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://hacstac.github.io/Notes/feed.xml" rel="self" type="application/atom+xml" /><link href="https://hacstac.github.io/Notes/" rel="alternate" type="text/html" /><updated>2020-09-27T08:50:05-05:00</updated><id>https://hacstac.github.io/Notes/feed.xml</id><title type="html">Notebook</title><subtitle>A Daily Notebook for @Akash</subtitle><entry><title type="html">Kubernetes Controllers</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/09/27/Kubernetes-Controllers.html" rel="alternate" type="text/html" title="Kubernetes Controllers" /><published>2020-09-27T00:00:00-05:00</published><updated>2020-09-27T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/09/27/Kubernetes-Controllers</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/09/27/Kubernetes-Controllers.html">&lt;hr /&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://hacstac.github.io/Notes/feed.xml" rel="self" type="application/atom+xml" /><link href="https://hacstac.github.io/Notes/" rel="alternate" type="text/html" /><updated>2020-09-29T12:45:11-05:00</updated><id>https://hacstac.github.io/Notes/feed.xml</id><title type="html">Notebook</title><subtitle>A Daily Notebook for @Akash</subtitle><entry><title type="html">Kubernetes Service Discovery</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/09/29/Kubernetes-Service-Discovery.html" rel="alternate" type="text/html" title="Kubernetes Service Discovery" /><published>2020-09-29T00:00:00-05:00</published><updated>2020-09-29T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/09/29/Kubernetes-Service-Discovery</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/09/29/Kubernetes-Service-Discovery.html">&lt;hr /&gt;
+
+&lt;h2 id=&quot;11-what-is-service-discovery&quot;&gt;1.1 What is Service Discovery&lt;/h2&gt;
+
+&lt;p&gt;A Kubernetes Service is a resource you create to make a single, constant point of entry to a group of pods providing the same service. Each service has an IP address and port that never change while the service exists. Clients can open connections to that IP and port, and those connections are then routed to one of the pods backing that service. This way, clients of a service don’t need to know the location of individual pods providing the service, allowing those pods to be moved around the cluster at any time.&lt;/p&gt;
+
+&lt;p&gt;Service-discovery is tool that help to solve the problem of finding which processes are listening at which addresses for which services. A good service-discovery system will enable users to resolve this information quickly and reliably. A good system is also low-latency; clients are updated soon after the information associated with a service changes.&lt;/p&gt;
+
+&lt;p&gt;If we understand this with an example: Where you have a frontend web server and a backend data base server. There may be multiple pods that all act as the frontend, but there may only be a single backend database pod. You need to solve two problems to make the system function:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;External clients need to connect to the frontend pods without caring if there’s
+only a single web server or hundreds.&lt;/li&gt;
+  &lt;li&gt;The frontend pods need to connect to the backend database. Because the database runs inside a pod, it may be moved around the cluster over time, causing its IP address to change. You don’t want to reconfigure the frontend pods every time the backend database is moved.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;By creating a service for the frontend pods and configuring it to be accessible from outside the cluster, you expose a single, constant IP address through which external clients can connect to the pods. Similarly, by also creating a service for the backend pod, you create a stable address for the backend pod. The service address doesn’t change even if the pod’s IP address changes. Additionally, by creating the service, you also enable the frontend pods to easily find the backend service by its name through either environment variables or DNS.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Service_Discovery.png&quot; alt=&quot;Service Discovery&quot; /&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;12-why-we-need-service-discovery&quot;&gt;1.2 Why we need service discovery&lt;/h2&gt;
+
+&lt;p&gt;To solve the problem of multi node networking, where each pods share same private network and all those pods should be accessible through a single IP address. To access these pods outside a private network, we need a Kubernetes Services.&lt;/p&gt;
+
+&lt;p&gt;If we consider a scenario, where in non kubernetes env where a sysadmin would configure each client app by specifying the exact IP address or hostname of the server providing the service in the client’s configuration files, doing the same in Kubernetes wouldn’t work, because:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Pods are ephemeral—They may come and go at any time, whether it’s because a pod is removed from a node to make room for other pods, because someone scaled down the number of pods, or because a cluster node has failed.&lt;/li&gt;
+  &lt;li&gt;Kubernetes assigns an IP address to a pod after the pod has been scheduled to a node and before it’s started —Clients thus can’t know the IP address of the server pod up front.&lt;/li&gt;
+  &lt;li&gt;Horizontal scaling means multiple pods may provide the same service—Each of those pods has its own IP address. Clients shouldn’t care how many pods are backing the service and what their IPs are. They shouldn’t have to keep a list of all the individual IPs of pods.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;That’s why we need Kubernetes Services.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;13--the-service-object&quot;&gt;1.3  The Service Object&lt;/h2&gt;
+
+&lt;p&gt;Real service discovery in Kubernetes starts with a Service object. A Service object is a way to create a named label selector. As we will see, the Service object does some other nice things for us, too.&lt;/p&gt;
+
+&lt;p&gt;Just as the kubectl run command is an easy way to create a Kubernetes deployment,
+we can use kubectl expose to create a service. Let’s create some deployments and
+services so we can see how they work:&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;## 1.0 Create a Deployment&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Boot the deployment directly by the kubectl command like ( given belowe ) or use a YAML file to setup a deployment.&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# Boot up the Deployment&lt;/span&gt;
+kubectl run cyberchef &lt;span class=&quot;nt&quot;&gt;--image&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;mpepping/cyberchef &lt;span class=&quot;nt&quot;&gt;--replicas&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;3 &lt;span class=&quot;nt&quot;&gt;--port&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;8000 &lt;span class=&quot;nt&quot;&gt;--labels&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;ver=1, env=dev&quot;&lt;/span&gt;
+
+&lt;span class=&quot;nt&quot;&gt;--------------------------------------------------------------------------------------&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;## 2.0 Expose a Deployment&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Creating the service using the YAML&lt;/span&gt;
+
+&lt;span class=&quot;nt&quot;&gt;---cyberchef_service&lt;/span&gt;.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: cyberchef
+spec:
+  ports:
+  - port: 80 &lt;span class=&quot;c&quot;&gt;# Host Port&lt;/span&gt;
+    targetPort: 8000 &lt;span class=&quot;c&quot;&gt;# Container Port&lt;/span&gt;
+  selector:
+    app: cyberchef
+
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl create &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; ./cyberchef_service.yml
+
+&lt;span class=&quot;nt&quot;&gt;--------------------------------------------------------------------------------------&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;## 3.0 Get the Services&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Get the clusterIP using getting the service&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl get svc &lt;span class=&quot;nt&quot;&gt;-o&lt;/span&gt; wide
+NAME         CLUSTER-IP         PORT&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;S&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;           SELECTOR
+cyberchef    10.115.242.13      80/TCP            &lt;span class=&quot;nv&quot;&gt;ver&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;1, &lt;span class=&quot;nb&quot;&gt;env&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;dev
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The list shows that the IP address assigned to the service is 10.115.242.13. Because this is the cluster IP, it’s only accessible from inside the cluster. The primary purpose of services is exposing groups of pods to other pods in the cluster, but you’ll usually also want to expose services externally.&lt;/p&gt;
+
+&lt;h3 id=&quot;131-testing-your-service-from-within-the-cluster&quot;&gt;1.3.1 Testing your service from within the cluster&lt;/h3&gt;
+
+&lt;p&gt;You can send requests to your service from within the cluster in a few ways:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The obvious way is to create a pod that will send the request to the service’s cluster IP and log the response. You can then examine the pod’s log to see what the service’s response was.&lt;/li&gt;
+  &lt;li&gt;You can ssh into one of the Kubernetes nodes and use the curl command.&lt;/li&gt;
+  &lt;li&gt;You can execute the curl command inside one of your existing pods through the kubectl exec command.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;remotely-executing-commands-in-running-containers&quot;&gt;Remotely executing commands in running containers&lt;/h4&gt;
+
+&lt;p&gt;The kubectl exec command allows you to remotely run arbitrary commands inside an existing container of a pod. This comes in handy when you want to examine the contents, state, and/or environment of a container. List the pods with the kubectl get pods command and choose one as your target for the exec command.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl &lt;span class=&quot;nb&quot;&gt;exec &lt;/span&gt;cyberchef-d987s &lt;span class=&quot;nt&quot;&gt;--&lt;/span&gt; curl &lt;span class=&quot;nt&quot;&gt;-s&lt;/span&gt; http://10.115.242.13
+&amp;lt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;--&lt;/span&gt;
+    CyberChef - The Cyber Swiss Army Knife
+.......
+.......
+&lt;span class=&quot;nt&quot;&gt;--&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
+&amp;lt; Full Front Page HTML &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;132-configuring-session-affinity-on-the-service&quot;&gt;1.3.2 Configuring session affinity on the service&lt;/h3&gt;
+
+&lt;p&gt;If you execute the same command a few more times, you should hit a different pod with every invocation, because the service proxy normally forwards each connection to a randomly selected backing pod, even if the connections are coming from the same client. If, on the other hand, you want all requests made by a certain client to be redirected to the same pod every time, you can set the service’s sessionAffinity property to ClientIP&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;apiVersion&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;v1&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;kind&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Service&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;spec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;sessionAffinity&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ClientIP&lt;/span&gt;
+  &lt;span class=&quot;s&quot;&gt;...&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This makes the service proxy redirect all requests originating from the same client IP to the same pod. As an exercise, you can create an additional service with session affinity set to ClientIP and try sending requests to it.&lt;/p&gt;
+
+&lt;h3 id=&quot;133-exposing-multiple-ports-in-the-same-service&quot;&gt;1.3.3 Exposing multiple ports in the same service&lt;/h3&gt;
+
+&lt;p&gt;Your service exposes only a single port, but services can also support multiple ports. For example, if your pods listened on two ports—let’s say 8080 for HTTP and 8443 for HTTPS—you could use a single service to forward both port 80 and 443 to the pod’s ports 8080 and 8443. You don’t need to create two different services in such cases. Using a single, multi-port service exposes all the service’s ports through a single cluster IP.&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;apiVersion&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;v1&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;kind&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Service&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;metadata&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;spec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;ports&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;http&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;port&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;80&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;targetPort&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;8080&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;https&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;port&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;443&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;targetPort&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;8443&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;selector&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;app&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;134-discovering-services&quot;&gt;1.3.4 Discovering services&lt;/h3&gt;
+
+&lt;h4 id=&quot;method-1-discovering-services-through-env-variables&quot;&gt;Method 1: Discovering services through env variables&lt;/h4&gt;
+
+&lt;p&gt;When a pod is started, Kubernetes initializes a set of environment variables pointing to each service that exists at that moment. If you create the service before creating the client pods, processes in those pods can get the IP address and port of the service by inspecting their environment variables.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# To check out the env variables&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl &lt;span class=&quot;nb&quot;&gt;exec &lt;/span&gt;cyberchef-d978l2 &lt;span class=&quot;nb&quot;&gt;env
+&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+&lt;span class=&quot;nv&quot;&gt;HOSTNAME&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;cyberchef-d978l2
+&lt;span class=&quot;nv&quot;&gt;KUBERNETES_SERVICE_HOST&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;10.115.115.10
+&lt;span class=&quot;nv&quot;&gt;KUBERNETES_SERVICE_PORT&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;80
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Environment variables are one way of looking up the IP and port of a service, but isn’t this usually the domain of DNS. Let look at the DNS way&lt;/p&gt;
+
+&lt;h4 id=&quot;method-2-discovering-services-through-dns&quot;&gt;Method 2: Discovering services through DNS&lt;/h4&gt;
+
+&lt;p&gt;In the kubernetes env, One of the pod called as kube-dns. The kube-system namespace also includes a corresponding service with the same name. As the name suggests, the pod runs a DNS server, which all other pods running in the cluster are automatically configured to use (Kubernetes does that by modifying each container’s /etc/resolv.conf file). Any DNS query performed by a process running in a pod will be handled by Kubernetes’ own DNS server, which knows all the services running in your system.&lt;/p&gt;
+
+&lt;p&gt;Each service gets a DNS entry in the internal DNS server, and client pods that know the name of the service can access it through its fully qualified domain name (FQDN) instead of resorting to environment variables. Now we connect to the service through its FQDN&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# Ex frontend.default.svc.cluster.local&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# frontend = Service Name&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# default = NameSpace&lt;/span&gt;
+&lt;span class=&quot;c&quot;&gt;# svc.cluster.local = Configurable cluster domain suffix&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl &lt;span class=&quot;nb&quot;&gt;exec &lt;/span&gt;it cyberchef-973l2 bash
+-&amp;gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;curl http://cyberchef.default.svc.cluster.local
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;135-connect-to-services-from-outside-the-cluster&quot;&gt;1.3.5 Connect to services from outside the cluster&lt;/h3&gt;
+
+&lt;p&gt;In most cases we need apps will exposed to external services through the Kubernetes services feature. Instead of having the service redirect connections to pods in the cluster, you want it to redirect to external IP(s) and port(s). This allows you to take advantage of both service load balancing and service discovery. Client pods running in the cluster can connect to the external service like they connect to internal services.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Service Endpoints: An Endpoints resource (yes, plural) is a list of IP addresses and ports exposing a service. The Endpoints resource is like any other Kubernetes resource, so you can display its basic info with &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kubectl get endpoints&lt;/code&gt;:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;creating-the-service-endpoints&quot;&gt;Creating the service endpoints&lt;/h4&gt;
+
+&lt;p&gt;If you create a service without a pod selector, Kubernetes won’t even create the
+Endpoints resource (after all, without a selector, it can’t know which pods to include
+in the service). It’s up to you to create the Endpoints resource to specify the list of endpoints for the service. To create a service with manually managed endpoints, you need to create both a Service and an Endpoints resource.&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;# Creating an endpoints resource for a service without a selector&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;apiVersion&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;v1&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;kind&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Endpoints&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;metadata&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef-service&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;subsets&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;addresses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;ip&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;11.11.11.11&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# Ip of endpoint that the service will forward connections to&lt;/span&gt;
+    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;ip&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;22.22.22.22&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;ports&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;port&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;80&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The Endpoints object needs to have the same name as the service and contain the list
+of target IP addresses and ports for the service. After both the Service and the Endpoints resource are posted to the server, the service is ready to be used like any regular service with a pod selector. Containers created after the service is created will include the environment variables for the service, and all connections to its IP:port pair will be load balanced between the service’s endpoints.&lt;/p&gt;
+
+&lt;h4 id=&quot;creating-an-alias-for-an-external-service&quot;&gt;Creating an alias for an external service&lt;/h4&gt;
+
+&lt;p&gt;Instead of exposing an external service by manually configuring the service’s End-
+points, a simpler method allows you to refer to an external service by its fully qualified domain name (FQDN).&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;apiVersion&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;v1&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;kind&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Service&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;metadata&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef-service&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;spec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ExternalName&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;externalName&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;someapi.somecompany.com&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# API Endpoint&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;ports&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;port&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;80&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;After the service is created, pods can connect to the external service through the cyberchef-service.default.svc.cluster.local domain name (or even external- service) instead of using the service’s actual FQDN. This hides the actual service name and its location from pods consuming the service, allowing you to modify the service definition and point it to a different service any time later, by only changing the externalName attribute or by changing the type back to ClusterIP and creating an Endpoints object for the service—either manually or by specifying a label selector on the service and having it created automatically.&lt;/p&gt;
+
+&lt;h3 id=&quot;136-exposing-services-to-external-clients&quot;&gt;1.3.6 Exposing services to external clients&lt;/h3&gt;
+
+&lt;p&gt;We need apps like web server to the outside, so external can access them.&lt;/p&gt;
+
+&lt;p&gt;You have a few ways to make a service accessible externally:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Setting the service type to &lt;strong&gt;NodePort&lt;/strong&gt;—For a NodePort service, each cluster node
+opens a port on the node itself (hence the name) and redirects traffic received
+on that port to the underlying service. The service isn’t accessible only at the
+internal cluster IP and port, but also through a dedicated port on all nodes.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Setting the service type to &lt;strong&gt;LoadBalancer&lt;/strong&gt;, an extension of the NodePort type— This makes the service accessible through a dedicated load balancer, provisioned
+from the cloud infrastructure Kubernetes is running on. The load balancer redirects traffic to the node port across all the nodes. Clients connect to the service
+through the load balancer’s IP.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Creating an &lt;strong&gt;Ingress&lt;/strong&gt; resource, a radically different mechanism for exposing multiple services through a single IP address— It operates at the HTTP level (network layer 7) and can thus offer more features than layer 4 services.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&quot;1361-nodeport&quot;&gt;1.3.6.1 NodePort&lt;/h4&gt;
+
+&lt;p&gt;Creating a NodePort service, you make Kubernetes reserve a port on all its nodes (the same port number is used across all of them) and forward incoming connections to the pods that are part of the service. This is similar to a regular service (their actual type is ClusterIP), but a NodePort service can be accessed not only through the service’s internal cluster IP, but also through any node’s IP and the reserved node port.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;---cyberchef_nodeport&lt;/span&gt;.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: cyberchef-nodeport
+spec:
+  &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;: NodePort
+  ports:
+  - port: 80
+    targetPort: 8000
+    nodePort: 30123
+  selector:
+  app: cyberchef
+
+&lt;span class=&quot;nt&quot;&gt;--or--&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Directly using the kubectl&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl expose deployment cyberchef &lt;span class=&quot;nt&quot;&gt;--type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;NodePort &lt;span class=&quot;nt&quot;&gt;--port&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;80 &lt;span class=&quot;nt&quot;&gt;--targetPort&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;8000
+
+&lt;span class=&quot;c&quot;&gt;# Examining a NodePort service&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl get svc cyberchef
+NAME             CLUSTER-IP       EXTERNAL-IP    PORT&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;S&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;        AGE
+cyberchef        10.111.254.223   &amp;lt;nodes&amp;gt;        80:30123/TCP   2m
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Look at the EXTERNAL-IP column. It shows &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;nodes&lt;/code&gt;, indicating the service is accessible
+through the IP address of any cluster node. The PORT(S) column shows both the internal port of the cluster IP (80) and the node port (30123).&lt;/p&gt;
+
+&lt;p&gt;When an external client connects to a service through the node port (this also includes cases when it goes through the load balancer first), the randomly chosen pod may or may not be running on the same node that received the connection. An additional network hop is required to reach the pod, but this may not always be desirable. You can prevent this additional hop by configuring the service to redirect external traffic only to pods running on the node that received the connection. This is done by setting the externalTrafficPolicy field in the service’s spec section:&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;spec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;externalTrafficPolicy&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Local&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;If a service definition includes this setting and an external connection is opened
+through the service’s node port, the service proxy will choose a locally running pod. If no local pods exist, the connection will hang (it won’t be forwarded to a random global pod, the way connections are when not using the annotation). You therefore need to ensure the load balancer forwards connections only to nodes that have at least one such pod.&lt;/p&gt;
+
+&lt;h4 id=&quot;1362-external-loadbalancer&quot;&gt;1.3.6.2 External LoadBalancer&lt;/h4&gt;
+
+&lt;p&gt;Finally, if you have support from the cloud that you are running on (and your cluster is configured to take advantage of it), you can use the LoadBalancer type. This builds on the NodePort type by additionally configuring the cloud to create a new load balancer and direct it at nodes in your cluster. Edit the cyberchef service again (kubectl edit service cyberchef) and change spec.type to LoadBalancer.&lt;/p&gt;
+
+&lt;p&gt;If you do a kubectl get services right away you’ll see that the EXTERNAL-IP column for cyberchef now says &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;pending&lt;/code&gt;. Wait a bit and you should see a public address assigned by your cloud. You can look in the console for your cloud account and see the configuration work that Kubernetes did for you.&lt;/p&gt;
+
+&lt;p&gt;If Kubernetes is running in an environment that doesn’t support LoadBalancer
+services, the load balancer will not be provisioned, but the service will still behave like a NodePort service. That’s because a LoadBalancer service is an extension of a NodePort service.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;---cyberchef_loadbalancer&lt;/span&gt;.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: cyberchef
+spec:
+  &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8000
+    selector:
+      app: cyberchef
+
+&lt;span class=&quot;c&quot;&gt;# Connecting through a load balancer&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl get svc cyberchef
+NAME             CLUSTER-IP       EXTERNAL-IP     PORT&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;S&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;        AGE
+cyberchef        10.111.254.223   210.110.15.4    80:30123/TCP   2m
+&lt;span class=&quot;c&quot;&gt;# Access at http://210.110.15.4&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;1363--ingress&quot;&gt;1.3.6.3  Ingress&lt;/h4&gt;
+
+&lt;p&gt;One important reason is that each LoadBalancer service requires its own load balancer with its own public IP address, whereas an Ingress only requires one, even when providing access to dozens of services. When a client sends an HTTP request to the Ingress, the host and path in the request determine which service the request is forwarded to Ingresses operate at the application layer of the network stack (HTTP) and can provide features such as cookie-based session affinity and the like, which services can’t.&lt;/p&gt;
+
+&lt;p&gt;To make ingress work, you need to install ingress as per your kubernetes enviornment.&lt;/p&gt;
+
+&lt;div class=&quot;language-yml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;apiVersion&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;extensions/v1beta1&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;kind&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Ingress&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;metadata&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;spec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;rules&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;host&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef.example.com&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;http&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;paths&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;backend&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;serviceName&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef-nodeport&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;servicePort&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;80&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This defines an Ingress with a single rule, which makes sure all HTTP requests received by the Ingress controller, in which the host cyberchef.example.com is requested, will be sent to the cyberchef-nodeport service on port 80.&lt;/p&gt;
+
+&lt;p&gt;To access your service through &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;http://cyberchef.example.com&lt;/code&gt;, you’ll need to make sure the domain name resolves to the IP of the Ingress controller.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# List Ingress&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl get ingresses
+NAME       HOSTS                  ADDRESS         PORTS   AGE
+cyberchef  cyberchef.example.com  192.168.99.100  80      29m
+
+&lt;span class=&quot;c&quot;&gt;# Note: Make sure you need to add this to your hosts file ( /etc/hosts )&lt;/span&gt;
+192.168.99.100  cyberchef.example.com
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;How ingress works??
+The client first performed a DNS lookup of cyberchef.example.com, and the DNS server (or the local operating system) returned the IP of the Ingress controller. The client then sent an HTTP request to the Ingress controller and specified cyberchef.example.com in the Host header. From that header, the controller determined which service the client is trying to access, looked up the pod IPs through the Endpoints object associated with the service, and forwarded the client’s request to one of the pods.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Exposing multiple services through the same ingress&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nn&quot;&gt;---&lt;/span&gt;
+&lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;host&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;apps.example.com&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;http&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;paths&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/cyberchef&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;backend&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;serviceName&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;servicePort&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;80&lt;/span&gt;
+    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/linkding&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;backend&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;serviceName&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;linkding&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;servicePort&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;80&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Exposing diff services to diff hosts&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nn&quot;&gt;---&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;spec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;rules&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;host&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef.example.com&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;http&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+     &lt;span class=&quot;na&quot;&gt;paths&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+     &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/&lt;/span&gt;
+       &lt;span class=&quot;na&quot;&gt;backend&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+         &lt;span class=&quot;na&quot;&gt;serviceName&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef&lt;/span&gt;
+         &lt;span class=&quot;na&quot;&gt;servicePort&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;80&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;host&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;linkding.example.com&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;http&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;paths&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;backend&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;serviceName&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;linkding&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;servicePort&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;80&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Configuring Ingress to handle TLS traffic ( for HTTPS )&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;When a client opens a TLS connection to an Ingress controller, the controller terminates the TLS connection. The communication between the client and the controller is encrypted, whereas the communication between the controller and the backend pod isn’t. The application running in the pod doesn’t need to support TLS. For example, if the pod runs a web server, it can accept only HTTP traffic and let the Ingress controller take care of everything related to TLS. To enable the controller to do that, you need to attach a certificate and a private key to the Ingress. The two need to be stored in a Kubernetes resource called a Secret, which is then referenced in the Ingress manifest.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;openssl genrsa &lt;span class=&quot;nt&quot;&gt;--out&lt;/span&gt; tls.key 2048
+openssl req &lt;span class=&quot;nt&quot;&gt;-new&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-x509&lt;/span&gt; tls.key &lt;span class=&quot;nt&quot;&gt;-out&lt;/span&gt; tls.cert &lt;span class=&quot;nt&quot;&gt;-days&lt;/span&gt; 360 &lt;span class=&quot;nt&quot;&gt;-subj&lt;/span&gt; /CN&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;cyberchef.example.com
+
+kubectl create secret tls tls-secret &lt;span class=&quot;nt&quot;&gt;--cert&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;tls.cert &lt;span class=&quot;nt&quot;&gt;--key&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;tls.key
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The private key and the certificate are now stored in the Secret called tls-secret. Now, you can update your Ingress object so it will also accept HTTPS requests for cyberchef.example.com.&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;apiVersion&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;extensions/v1beta1&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;kind&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Ingress&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;metadata&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;spec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;tls&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;hosts&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef.example.com&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;secretName&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;tls-secret&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;rules&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;host&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef.example.com&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;http&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;paths&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;backend&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;serviceName&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef-nodeport&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;servicePort&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;80&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# Create Ingress&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl apply &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; cyberchef-ingress-tls.yaml
+
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;curl &lt;span class=&quot;nt&quot;&gt;-k&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-v&lt;/span&gt; https://cyberchef.example.com/cyberchef
+&lt;span class=&quot;k&quot;&gt;*&lt;/span&gt; About to connect&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; to cyberchef.example.com port 443 &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;c&quot;&gt;#0)&lt;/span&gt;
+...
+&lt;span class=&quot;k&quot;&gt;*&lt;/span&gt; Server certificate:
+&lt;span class=&quot;k&quot;&gt;*&lt;/span&gt;
+ subject: &lt;span class=&quot;nv&quot;&gt;CN&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;cyberchef.example.com
+...
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; GET /cyberchef HTTP/1.1
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; ...
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;137-signaling-when-a-pod-is-ready-to-accept-connections&quot;&gt;1.3.7 Signaling when a pod is ready to accept connections&lt;/h3&gt;
+
+&lt;p&gt;Consider a scenario where a new pod started with proper labels is created, it becomes part of the service and requests start to be redirected to the pod. But what if the pod isn’t ready to start serving requests immediately?&lt;/p&gt;
+
+&lt;p&gt;The pod may need time to load either configuration or data, or it may need to perform a warm-up procedure to prevent the first user request from taking too long and affecting the user experience. In such cases you don’t want the pod to start receiving requests immediately, especially when the already-running instances can process requests properly and quickly. It makes sense to not forward requests to a pod that’s in the process of starting up until it’s fully ready.&lt;/p&gt;
+
+&lt;h4 id=&quot;readiness-probes&quot;&gt;Readiness probes&lt;/h4&gt;
+
+&lt;p&gt;The readiness probe is invoked periodically and determines whether the specific pod should receive client requests or not. When a container’s readiness probe returns success, it’s signaling that the container is ready to accept requests.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;How readiness probes works
+When a container is started, Kubernetes can be configured to wait for a configurable amount of time to pass before performing the first readiness check. After that, it invokes the probe periodically and acts based on the result of the readiness probe. If a pod reports that it’s not ready,&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;TYPES OF READINESS PROBES
+    &lt;ul&gt;
+      &lt;li&gt;An Exec probe, where a process is executed. The container’s status is determined by the process’ exit status code.&lt;/li&gt;
+      &lt;li&gt;An HTTP GET probe, which sends an HTTP GET request to the container and the HTTP status code of the response determines whether the container is ready or not.&lt;/li&gt;
+      &lt;li&gt;A TCP Socket probe, which opens a TCP connection to a specified port of the
+container. If the connection is established, the container is considered ready.&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Difference between liveness probe and rediness probe
+Liveness probes keep pods healthy by killing off unhealthy containers and replacing
+them with new, healthy ones, whereas readiness probes make sure that only pods that
+are ready to serve requests receive them.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Why we need readiness probe
+Imagine that a group of pods (for example, pods running application servers) depends on a service provided by another pod (a backend database, for example). If at any point one of the frontend pods experiences connectivity problems and can’t reach the database anymore, it may be wise for its readiness probe to signal to Kubernetes that the pod isn’t ready to serve any requests at that time. If other pod instances aren’t experiencing the same type of connectivity issues, they can serve requests normally. A readiness probe makes sure clients only talk to those healthy pods and never notice there’s anything wrong with the system.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;apiVersion&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;v1&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;kind&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ReplicationController&lt;/span&gt;
+&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;spec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;s&quot;&gt;...&lt;/span&gt;
+  &lt;span class=&quot;s&quot;&gt;template&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;...&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;spec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;containers&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;image&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;mpepping/cyberchef&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;readinessProbe&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;exec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;na&quot;&gt;command&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ls&lt;/span&gt;
+          &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/var/ready&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The readiness probe will periodically perform the command ls /var/ready inside the container. The ls command returns exit code zero if the file exists, or a non-zero exit code otherwise. If the file exists, the readiness probe will succeed; otherwise, it will fail. Note: To check status check logs.&lt;/p&gt;
+
+&lt;p&gt;This mock readiness probe is useful only for demonstrating what readiness probes do.
+In the real world, the readiness probe should return success or failure depending on whether the app can (and wants to) receive client requests or not. Manually removing pods from services should be performed by either deleting the pod or changing the pod’s labels instead of manually flipping a switch in the probe.&lt;/p&gt;
+
+&lt;h3 id=&quot;138-using-a-headless-service-for-discovering-individual-pods&quot;&gt;1.3.8 Using a headless service for discovering individual pods&lt;/h3&gt;
+
+&lt;p&gt;If you want to connect to all of the pods. you need a IP of an individual pod, which is can’t possible in default configuration in kubernetes.  One option is to have the client call the Kubernetes API server and get the list of pods and their IP addresses through an API call, but because you should always strive to keep your apps Kubernetes-agnostic, using the API server isn’t ideal.&lt;/p&gt;
+
+&lt;p&gt;Luckily, Kubernetes allows clients to discover pod IPs through DNS lookups. Usually, when you perform a DNS lookup for a service, the DNS server returns a single IP—the service’s cluster IP. But if you tell Kubernetes you don’t need a cluster IP for your service (you do this by setting the clusterIP field to None in the service specification ), the DNS server will return the pod IPs instead of the single service IP.&lt;/p&gt;
+
+&lt;p&gt;Instead of returning a single DNS A record, the DNS server will return multiple A records for the service, each pointing to the IP of an individual pod backing the ser- vice at that moment. Clients can therefore do a simple DNS A record lookup and get the IPs of all the pods that are part of the service. The client can then use that information to connect to one, many, or all of them.&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;# All you need to do is to set ClusterIP to None&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;apiVersion&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;v1&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;kind&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Service&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;metadata&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef-headless&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;spec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;clusterIP&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;None&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;ports&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;port&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;80&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;targetPort&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;8000&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;selector&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;app&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;cyberchef&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# Setup and dns lookup container ( We need nslookup and dif : tutum/dnsutils )&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl run dnsutils &lt;span class=&quot;nt&quot;&gt;--image&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;tutum/dnsutils &lt;span class=&quot;nt&quot;&gt;--generator&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;run-pod/v1 &lt;span class=&quot;nt&quot;&gt;--command&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;sleep &lt;/span&gt;infinity
+
+&lt;span class=&quot;c&quot;&gt;# Perform DNSLookup for headless&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl &lt;span class=&quot;nb&quot;&gt;exec &lt;/span&gt;dnsutils nslookup cyberchef-headless
+...
+Name: cyberchef-headless.default.svc.cluster.local
+Address: 10.108.1.4
+
+Name: cyberchef-headless.default.svc.cluster.local
+Address: 10.108.2.5 &lt;span class=&quot;c&quot;&gt;# Pod IP&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Perform DNSLookup for non-headless&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl &lt;span class=&quot;nb&quot;&gt;exec &lt;/span&gt;dnsutils nslookup cyberchef
+...
+Name: cyberchef.default.svc.cluster.local
+Address: 10.111.249.153 &lt;span class=&quot;c&quot;&gt;## ClusterIP&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;139-troubleshooting-best-practices&quot;&gt;1.3.9 Troubleshooting Best Practices&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;First, make sure you’re connecting to the service’s cluster IP from within the cluster, not from the outside.&lt;/li&gt;
+  &lt;li&gt;Don’t bother pinging the service IP to figure out if the service is accessible (remember, the service’s cluster IP is a virtual IP and pinging it will never work).&lt;/li&gt;
+  &lt;li&gt;If you’ve defined a readiness probe, make sure it’s succeeding; otherwise the pod won’t be part of the service.&lt;/li&gt;
+  &lt;li&gt;To confirm that a pod is part of the service, examine the corresponding Endpoints object with kubectl get endpoints.&lt;/li&gt;
+  &lt;li&gt;If you’re trying to access the service through its FQDN or a part of it (for example, myservice.mynamespace.svc.cluster.local or myservice.mynamespace) and it doesn’t work, see if you can access it using its cluster IP instead of the FQDN.&lt;/li&gt;
+  &lt;li&gt;Check whether you’re connecting to the port exposed by the service and not the target port.&lt;/li&gt;
+  &lt;li&gt;Try connecting to the pod IP directly to confirm your pod is accepting connec- tions on the correct port.&lt;/li&gt;
+  &lt;li&gt;If you can’t even access your app through the pod’s IP, make sure your app isn’t only binding to localhost.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;</content><author><name></name></author><category term="Kubernetes" /><summary type="html"></summary></entry><entry><title type="html">Kubernetes Controllers</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/09/27/Kubernetes-Controllers.html" rel="alternate" type="text/html" title="Kubernetes Controllers" /><published>2020-09-27T00:00:00-05:00</published><updated>2020-09-27T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/09/27/Kubernetes-Controllers</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/09/27/Kubernetes-Controllers.html">&lt;hr /&gt;
 
 &lt;h2 id=&quot;10-replication-controller--deprecated-&quot;&gt;1.0 Replication Controller [ Deprecated ]&lt;/h2&gt;
 
@@ -1382,368 +1932,6 @@ volumes:
       path: &lt;span class=&quot;s2&quot;&gt;&quot;/exports&quot;&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;hr /&gt;</content><author><name></name></author><category term="Kubernetes" /><summary type="html"></summary></entry><entry><title type="html">Kubernetes 101</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/09/15/Kubernetes-Introduction.html" rel="alternate" type="text/html" title="Kubernetes 101" /><published>2020-09-15T00:00:00-05:00</published><updated>2020-09-15T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/09/15/Kubernetes-Introduction</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/09/15/Kubernetes-Introduction.html">&lt;hr /&gt;
-
-&lt;h2 id=&quot;10-what-is-kubernetes&quot;&gt;1.0 What is Kubernetes&lt;/h2&gt;
-
-&lt;p&gt;Kubernetes is an open-source platform/tool created by Google. It is written in GO-Lang. So currently Kubernetes is an open-source project under Apache 2.0 license. Sometimes in the industry, Kubernetes is also known as “K8s”. With Kubernetes, you can run any Linux container across private, public, and hybrid cloud environments. Kubernetes provides some edge functions, such as Loadbalancer, Service discovery, and Roled Based Access Control(RBAC).&lt;/p&gt;
-
-&lt;p&gt;Basically, kubernetes is a software that allows us to deploy, manage and scale applications. The applications will be packed in containers and kubernetes groups them into units. It allows us to span our application over thousands of servers while looking like one single unit.&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Key Features of Kubernetes
-    &lt;ul&gt;
-      &lt;li&gt;Horizontal Scaling&lt;/li&gt;
-      &lt;li&gt;Auto Scaling&lt;/li&gt;
-      &lt;li&gt;Health check &amp;amp; Self-healing&lt;/li&gt;
-      &lt;li&gt;Load Balancer&lt;/li&gt;
-      &lt;li&gt;Service Discovery&lt;/li&gt;
-      &lt;li&gt;Automated rollbacks &amp;amp; rollouts&lt;/li&gt;
-      &lt;li&gt;Canary Deployment&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&quot;20-why-we-need-kubernetes&quot;&gt;2.0 Why we need Kubernetes&lt;/h2&gt;
-
-&lt;p&gt;First, we need to familier with few terms:&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Monolithic Applications:&lt;/strong&gt; Years ago, most software applications were big monoliths, running either as a single process or as a small number of processes spread across a handful of servers. These legacy systems are still widespread today. They have slow release cycles and are updated relatively infrequently. At the end of every release cycle, developers pack- age up the whole system and hand it over to the ops team, who then deploys and monitors it. In case of hardware failures, the ops team manually migrates it to the remaining healthy servers. So these components that are all tightly coupled together and have to be developed, deployed, and managed as one entity, because they all run as a single OS process.&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Problems with Monolithic Applications: Change of one part of the application require a redeployment of the whole application. Requires powerful servers, Uses Vertical Scaling ( which is Very Expensive ) and If one components creates problem, the whole application becomes unscalable.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;strong&gt;Microservices Applications:&lt;/strong&gt; Today, these big monolithic legacy applications are slowly being broken down into smaller, independently running components called microservices. Each microservice runs as an independent process and communicates with other microservices through simple, well defined interfaces ( APIs ). Microservices communicate through synchronous protocols such as HTTP, over which they usually expose RESTful (REpresentational State Transfer) APIs, or through asyn- chronous protocols such as AMQP (Advanced Message Queueing Protocol).&lt;/p&gt;
-
-&lt;p&gt;Microservices are decoupled from each other, they can be developed, deployed, updated,
-and scaled individually. This enables you to change components quickly and as often as
-necessary to keep up with today’s rapidly changing business requirements.&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Problems with Microservices Based Applications: The bigger numbers of deployable components and increasingly larger datacenters, it becomes increasingly difficult to configure, manage, and keep the whole system running smoothly. It’s much harder to figure out where to put each of those components to achieve high resource utilization and thereby keep the hardware costs down and the one of biggest problem with scaling microservices is multiple apps that are running on same host mey have conflicting dependencies. One solution of this is applications could run in the exact same environment during development and in production so they have the exact same operating system, libraries, system configuration, networking environment, and everything else but this will not solve the conflicting, versions of libraries or different environment requirements to solve this issue we have great technology called containers. ( You are also provide Dedicated VM to particular service but it is not a ideal solution because it increases hardware cost and management)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Doing all this manually is hard work. We need automation, which includes automatic scheduling of those components to our servers, automatic configuration, supervision, and failure-handling. This is where Kubernetes comes in.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/MicroServices.png&quot; alt=&quot;Microservices&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Kubernetes provides you with a framework to run distributed systems resiliently. It takes care of scaling and failover for your application, provides deployment patterns, and more. For example, Kubernetes can easily manage a canary deployment for your system.&lt;/p&gt;
-
-&lt;p&gt;Before used Kubernetes, you need to prepare your infrastructure to deploy a new microservice. I believe it cost you a few days or weeks. Without Kubernetes, large teams would have to manually script the deployment workflows. With Kubernetes, you don’t need to create your deployment script manually and it will reduce the amount of time and resources spent on DevOps.&lt;/p&gt;
-
-&lt;h3 id=&quot;21-what-kubernetes-provides&quot;&gt;2.1 What kubernetes provides&lt;/h3&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Service discovery and load balancing: Kubernetes can expose a container using the DNS name or using their own IP address. If traffic to a container is high, Kubernetes is able to load balance and distribute the network traffic so that the deployment is stable.&lt;/li&gt;
-  &lt;li&gt;Storage orchestration: Kubernetes allows you to automatically mount a storage system of your choice, such as local storages, public cloud providers, and more.
-Automated rollouts and rollbacks You can describe the desired state for your deployed containers using Kubernetes, and it can change the actual state to the desired state at a controlled rate. For example, you can automate Kubernetes to create new containers for your deployment, remove existing containers and adopt all their resources to the new container.&lt;/li&gt;
-  &lt;li&gt;Automatic bin packing: You provide Kubernetes with a cluster of nodes that it can use to run containerized tasks. You tell Kubernetes how much CPU and memory (RAM) each container needs. Kubernetes can fit containers onto your nodes to make the best use of your resources.&lt;/li&gt;
-  &lt;li&gt;Self-healing: Kubernetes restarts containers that fail, replaces containers, kills containers that don’t respond to your user-defined health check, and doesn’t advertise them to clients until they are ready to serve.&lt;/li&gt;
-  &lt;li&gt;Secret and configuration management: Kubernetes lets you store and manage sensitive information, such as passwords, OAuth tokens, and SSH keys. You can deploy and update secrets and application configuration without rebuilding your container images, and without exposing secrets in your stack configuration.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&quot;22-what-kubernetes-not-provides&quot;&gt;2.2 What kubernetes not provides&lt;/h3&gt;
-
-&lt;p&gt;Kubernetes is a lot of good things, I hope to have been clear exposing all Kubernetes benefits. The main problem from Kubernetes newbie is that they discover it is not a PaaS (Platform as a Service) system like they suppose. Kubernetes is a lot of things but not an “all included” service. It is great and reduces the amount of work, especially on the sysadmin side, but doesn’t offer you any apart from the infrastructure.&lt;/p&gt;
-
-&lt;p&gt;Said that most of the things you are looking for in a fully-managed system are there: simplified deployments, scaling, load balancing, logging, and monitoring. Usually, you get a standard configuration from your hosting but you can theoretically customize it if you really need it.&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;It does not limit the types of applications supported. Everything is written into the container so every container application, no matter on technology, can be run. The counterpart is that you still have to define the container by hand.&lt;/li&gt;
-  &lt;li&gt;It doesn’t offer an automated deployment. You just have to push to a docker repository your built images, no more. This is quite easy if you already work in a process with Continuous Integration, Delivery, and Deployment (CI/CD), but consider that without it will be quite tricky.&lt;/li&gt;
-  &lt;li&gt;It does not provide any application-level services, just infrastructure. If you need a database, you have to buy a service or run it into a dedicated container. Of course, taking charges of backups and so on.&lt;/li&gt;
-  &lt;li&gt;Most of the interactions with the system are by a command line that wraps API. That’s very good because it allows automating each setting. Commands syntax is very simple but, if you are looking to a system that is managed fully by a UI you are looking to the worst place.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&quot;30-how-does-kubernetes-work&quot;&gt;3.0 How does Kubernetes work&lt;/h2&gt;
-
-&lt;p&gt;The system is composed of a master node and any number of worker nodes. When the developer submits a list of apps to the master, Kubernetes deploys them to the cluster of worker nodes. What node a component lands on doesn’t (and shouldn’t) matter—neither to the developer nor to the system administrator.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_Master.png&quot; alt=&quot;Kubernetes Master&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Kubernetes will run your containerized app somewhere in the cluster, provide information to its components on how to find each other, and keep all of them running.
-Because your application doesn’t care which node it’s running on, Kubernetes can
-relocate the app at any time, and by mixing and matching apps, achieve far better
-resource utilization than is possible with manual scheduling.&lt;/p&gt;
-
-&lt;h3 id=&quot;31-architecture-of-kubernetes-cluster&quot;&gt;3.1 Architecture of Kubernetes Cluster&lt;/h3&gt;
-
-&lt;p&gt;We’ve seen a bird’s-eye view of Kubernetes’ architecture. Now let’s take a closer look at what a Kubernetes cluster is composed of. At the hardware level, a Kubernetes cluster is composed of many nodes, which can be split into two types:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;The master node, which hosts the Kubernetes Control Plane that controls and manages the whole Kubernetes system&lt;/li&gt;
-  &lt;li&gt;Worker nodes that run the actual applications you deploy&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_arch1.png&quot; alt=&quot;Kubernetes Architecture&quot; /&gt;&lt;/p&gt;
-
-&lt;h4 id=&quot;311-master--control-plane-&quot;&gt;3.1.1 Master ( Control Plane )&lt;/h4&gt;
-
-&lt;p&gt;The Control Plane is what controls the cluster and makes it function. It consists of
-multiple components that can run on a single master node or be split across multiple
-nodes and replicated to ensure high availability. These components are&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;Kubernetes API Server&lt;/strong&gt;: The application that serves Kubernetes functionality through a RESTful interface and stores the state of the cluster ( which admin and other control plane communicated with ).&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;Scheduler&lt;/strong&gt;: Scheduler watches API server for new Pod requests. It communicates with Nodes to create new pods and to assign work to nodes while allocating resources or imposing constraints.&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;Controller Manager&lt;/strong&gt;: Component on the master that runs controllers. Includes Node controller, Endpoint Controller, Namespace Controller, etc. ( Performs cluster-level functions, such as replicating components, keeping track of worker nodes, handling node failures, and so on )&lt;/p&gt;
-
-    &lt;ul&gt;
-      &lt;li&gt;Node Controller: Responsible for noticing and responding when nodes go down.&lt;/li&gt;
-      &lt;li&gt;Replication Controller: Responsible for maintaining the correct number of pods for every replication controller object in the system.&lt;/li&gt;
-      &lt;li&gt;Endpoints Controller: Populates the Endpoints object (that is, it joins Services and Pods).&lt;/li&gt;
-      &lt;li&gt;Service Account and Token Controllers: Create default accounts and API access tokens for new namespaces.&lt;/li&gt;
-      &lt;li&gt;Cloud-Controller-Manager: Cloud-controller-manager runs controllers that interact with the underlying cloud providers. The cloud-controller-manager binary is an alpha feature introduced in Kubernetes release 1.6. Cloud-controller-manager runs cloud-provider-specific controller loops only. You must disable these controller loops in the Kube-controller-manager. You can disable the controller loops by setting the –cloud-provider flag to external when starting the Kube-controller-manager.&lt;/li&gt;
-      &lt;li&gt;Node Controller: For checking the cloud provider to determine if a node has been deleted in the cloud after it stops responding.&lt;/li&gt;
-      &lt;li&gt;Route Controller: For setting up routes in the underlying cloud infrastructure.&lt;/li&gt;
-      &lt;li&gt;Service Controller: For creating, updating, and deleting cloud provider load balancers.&lt;/li&gt;
-      &lt;li&gt;Volume Controller: For creating, attaching, and mounting volumes, and interacting with the cloud provider to orchestrate volumes.&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;etcd&lt;/strong&gt;: A reliable distributed data store that persistently stores the cluster
-configuration.&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;The components of the Control Plane hold and control the state of the cluster, but
-they don’t run your applications. This is done by the (worker) nodes.&lt;/p&gt;
-
-&lt;h4 id=&quot;312-slave--worker-nodes-&quot;&gt;3.1.2 Slave ( Worker Nodes )&lt;/h4&gt;
-
-&lt;p&gt;The worker nodes are the machines that run your containerized applications. The
-task of running, monitoring, and providing services to your applications is done by
-the following components:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;Docker, rkt, or another container runtime, which runs your containers&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;Kubelet&lt;/strong&gt;: Kubectl registering the nodes with the cluster, watches for work assignments from the scheduler, instantiate new Pods, report back to the master.
-Container Engine: Responsible for managing containers, image pulling, stopping the container, starting the container, destroying the container, etc.&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;&lt;strong&gt;Kube Proxy&lt;/strong&gt;: Responsible for forwarding app user requests to the right pod (load-balances network traffic between application components).&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;The sequence of deployment: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DevOps -&amp;gt; API Server -&amp;gt; Scheduler -&amp;gt; Cluster -&amp;gt;Nodes -&amp;gt; Kubelet -&amp;gt; Container Engine -&amp;gt; Spawn Container in Pod&lt;/code&gt;&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;The sequence of App user request: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;App user -&amp;gt; Kube proxy -&amp;gt; Pod -&amp;gt; Container(Your app is run here)&lt;/code&gt;&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&quot;32-the-six-layers-of-k8s&quot;&gt;3.2 The Six Layers of K8s&lt;/h3&gt;
-
-&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_Abstraction.png&quot; alt=&quot;Kubernetes Abstrction&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Deployments create and manage ReplicaSets, which create and manage Pods, which run on Nodes, which have a container runtime, which run the app code you put in your Docker image.&lt;/p&gt;
-
-&lt;p&gt;The levels shaded blue are higher-level K8s abstractions. The green levels represent Nodes and Node subprocess that you should be aware of, but may not touch.&lt;/p&gt;
-
-&lt;h4 id=&quot;321-deployments&quot;&gt;3.2.1 Deployments&lt;/h4&gt;
-
-&lt;p&gt;Although pods are the basic unit of computation in Kubernetes, they are not typically directly launched on a cluster. Instead, pods are usually managed by one more layer of abstraction: the deployment. A deployment’s primary purpose is to declare how many replicas of a pod should be running at a time. When a deployment is added to the cluster, it will automatically spin up the requested number of pods, and then monitor them. If a pod dies, the deployment will automatically re-create it. Using a deployment, you don’t have to deal with pods manually. You can just declare the desired state of the system, and it will be managed for you automatically.&lt;/p&gt;
-
-&lt;h4 id=&quot;322-replicaset&quot;&gt;3.2.2 ReplicaSet&lt;/h4&gt;
-
-&lt;p&gt;The Deployment creates a ReplicaSet that will ensure your app has the desired number of Pods. ReplicaSets will create and scale Pods based on the triggers you specify in your Deployment. Replication Controllers perform the same function as ReplicaSets, but Replication Controllers are old school. ReplicaSets are the smart way to manage replicated Pods in 2019.&lt;/p&gt;
-
-&lt;h4 id=&quot;323-pods&quot;&gt;3.2.3 Pods&lt;/h4&gt;
-
-&lt;p&gt;All containers will run in a pod. Pods abstract the network and storage away from the underlying containers. Your app will run here. Each pod has one unique IP address assigned which means one pod can communicate with each other like a traditional container in a docker environment. Each container inside the pod can reach all other pods into the virtual network, but cannot deep to the other container on other pods. That’s important to guarantee the pod abstraction: nobody has to know how the Pods are composed internally. Moreover, the IP assigned is volatile so you must use always the service name (resolved to the right IP directly). Pods are used as the unit of replication in Kubernetes. If your application becomes too popular and a single pod instance can’t carry the load, Kubernetes can be configured to deploy new replicas of your pod to the cluster as necessary. Even when not under heavy load, it is standard to have multiple copies of a pod running at any time in a production system to allow load balancing and failure resistance. Pods handle Volumes, Secrets, and configuration for containers. Pods are ephemeral. They are intended to be restarted automatically when they die.&lt;/p&gt;
-
-&lt;p&gt;Note: Worker Node is already explained in above section&lt;/p&gt;
-
-&lt;h3 id=&quot;33-key-terms-used-with-kubernetes&quot;&gt;3.3 Key Terms used with Kubernetes&lt;/h3&gt;
-
-&lt;h4 id=&quot;331-services&quot;&gt;3.3.1 Services&lt;/h4&gt;
-
-&lt;p&gt;The name “service” in informatics science is overused. In Kubernetes scope think to a service like something you want to serve. A Kubernetes service involves a set of pods and may offer a complex feature or just expose a single Pod with a single container. So you can have a service that provides a CMS feature, with database and web server inside, or two different services, one for the database and one for the webserver. That’s up to you. Basically it is abstraction layer on top of a set of ephemeral pods (think of this as the ‘face’ of a set of pods)&lt;/p&gt;
-
-&lt;h4 id=&quot;332-ingress&quot;&gt;3.3.2 Ingress&lt;/h4&gt;
-
-&lt;p&gt;By default, Kubernetes provides isolation between pods and the outside world. If you want to communicate with a service running in a pod, you have to open up a channel for communication. This is referred to as ingress. To do this there is an ingress controller that does something similar to a load balancer. It virtually forwards traffic from outside to the services. During this step, based on the ingress implementation you have chosen, you can add HTTPS encryption, route traffic based on the hostname or URL segments. The only service can be linked to the ingress controller, not Pods. There are multiple ways to add ingress to your cluster. The most common ways are by adding either an Ingress controller, or a LoadBalancer.&lt;/p&gt;
-
-&lt;h4 id=&quot;333-volume&quot;&gt;3.3.3 Volume&lt;/h4&gt;
-
-&lt;p&gt;By default Pod storage is volatile. This is important to know because at the first restart you will lose everything. Kubernetes volumes allow mapping some part of the hard drive of containers to a safe place. That space can be shared between containers. The mount point can be any part of the container, but a volume cannot be mount into another one.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;PersistentVolumes and PersistentVolumeClaims&lt;/strong&gt;: To help abstract away infrastructure specifics, K8s developed PersistentVolumes and PersistentVolumeClaims. Unfortunately the names are a bit misleading, because vanilla Volumes can have persistent storage, as well. PersisententVolumes (PV) and PersisentVolumeClaims (PVC) add complexity compared to using Volumes alone. However, PVs are useful for managing storage resources for large projects. With PVs, a K8s user still ends up using a Volume, but two steps are required first.&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;A PersistentVolume is provisioned by a Cluster Administrator (or it’s provisioned dynamically).&lt;/li&gt;
-  &lt;li&gt;An individual Cluster user who needs storage for a Pod creates PersistentVolumeClaim manifest. It specifies how much and what type of storage they need. K8s then finds and reserves the storage needed.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;The user then creates a Pod with a Volume that uses the PVC. PersistentVolumes have lifecycles independent of any Pod. In fact, the Pod doesn’t even know about the PV, just the PVC. PVCs consume PV resources, analogously to how Pods consume Node resources.&lt;/p&gt;
-
-&lt;h4 id=&quot;334-namespaces&quot;&gt;3.3.4 Namespaces&lt;/h4&gt;
-
-&lt;p&gt;Think to namespace like the feature that makes Kubernetes multitenant. The namespace is the tenant level. Each namespace can partitioning resources to isolate services, ingress, and many other things. This feature is good to have a strong separation between application, delegate safely to different teams, and have separated environments in a single infrastructure. It is a virtual cluster on top of an underlying physical cluster&lt;/p&gt;
-
-&lt;h4 id=&quot;335-labels-and-selectors&quot;&gt;3.3.5 Labels and Selectors&lt;/h4&gt;
-
-&lt;p&gt;Labels are key-value pairs used to tag objects. Objects are the items that you create in a Kubernetes cluster (pods, deployments, replica sets, services, volumes etc). Selectors are used to collect objects based on tags.&lt;/p&gt;
-
-&lt;h4 id=&quot;336-statefulsets&quot;&gt;3.3.6 StatefulSets&lt;/h4&gt;
-
-&lt;p&gt;As we know, a ReplicaSet creates and manages Pods. If a Pod shuts down because a Node fails, a ReplicaSet can automatically replace the Pod on another Node. You should generally create a ReplicaSet through a Deployment rather than creating it directly, because it’s easier to update your app with a Deployment.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_States.png&quot; alt=&quot;States&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Sometimes your app will need to keep information about its state. You can think of state as the current status of your user’s interaction with your app. So in a video game it’s all the unique aspects of the user’s character at a point in time. What do you do when your app has state you need to keep track of? Use a StatefulSet.&lt;/p&gt;
-
-&lt;p&gt;Like a ReplicaSet, a StatefulSet manages deployment and scaling of a group of Pods based on a container spec. Unlike a Deployment, a StatefulSet’s Pods are not interchangeable. Each Pod has a unique, persistent identifier that the controller maintains over any rescheduling. StatefulSets for good for persistent, stateful backends like databases. The state information for the Pod is held in a Volume associated with the StatefulSet.&lt;/p&gt;
-
-&lt;h4 id=&quot;337-daemonsets&quot;&gt;3.3.7 DaemonSets&lt;/h4&gt;
-
-&lt;p&gt;DaemonSets are for continuous process. They run one Pod per Node. Each new Node added to the cluster automatically gets a Pod started by the DaemonSet. DaemonSets are useful for ongoing background tasks such as monitoring and log collection.
-StatefulSets and DaemonSets are not controlled by a Deployment. Although they are at the same level of abstraction as a ReplicaSet, there is not a higher level of abstraction for them in the current API.&lt;/p&gt;
-
-&lt;h4 id=&quot;338-etcd&quot;&gt;3.3.8 ETCD&lt;/h4&gt;
-
-&lt;p&gt;It stores the configuration information which can be used by each of the nodes in the cluster. It is a high availability key-value store that can be distributed among multiple nodes. It is accessible only by Kubernetes API server as it may have some sensitive information. It is a distributed key-value store which is accessible to all.
-ETCD is a distributed reliable key-value store used by Kubernetes to store all data used to manage the cluster. Think of it this way, when you have multiple nodes and multiple masters in your cluster, etcd stores all that information on all the nodes in the cluster in a distributed manner. ETCD is responsible for implementing locks within the cluster to ensure there are no conflicts between the Masters.&lt;/p&gt;
-
-&lt;h4 id=&quot;339-cluster-ip&quot;&gt;3.3.9 Cluster IP&lt;/h4&gt;
-
-&lt;p&gt;Only has a Virtual IP (also called Cluster IP). This service can be used within a cluster only Acts like a traffic router to your Pods inside the cluster. Each port exposed by a pod will need a service if you want a client to talk to it via that port. By default, the service port is the same as the port exposed by the Pod. Different methods to access this service: From any node inside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;cluster IP&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From the node where a replica of the Pod is running: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;pod IP&amp;gt;:&amp;lt;pod port&amp;gt;&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h4 id=&quot;3310-node-port&quot;&gt;3.3.10 Node Port&lt;/h4&gt;
-
-&lt;p&gt;For this service, a physical port on the node is mapped to the service port and the service connects to the Pod via the pod port. Remember, this will also have a Virtual IP (i.e. cluster IP). Different methods to access this service: From outside the cluster, if any node in the cluster has a public IP: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;node public IP&amp;gt;:&amp;lt;node port&amp;gt;&lt;/code&gt; From any node inside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;cluster IP&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From the node where a replica of the Pod is running: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;pod IP&amp;gt;:&amp;lt;pod port&amp;gt;&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h4 id=&quot;3311-load-balancer&quot;&gt;3.3.11 Load Balancer&lt;/h4&gt;
-
-&lt;p&gt;Giving public access to a node in your cluster is not a recommended method, When you want to give public access to a service, create a load balancer service (not getting into ingress at this stage). For each service that you want to give public access, you need to create a load balancer service, This type of service will generally work only in a cloud environment. Remember, this will also have a Virtual IP (i.e. cluster IP) This service will have a node port too Different methods to access this service: From outside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;load balancer dns&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From outside the cluster, if any node in the cluster has a public IP: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;node public IP&amp;gt;:&amp;lt;node port&amp;gt;&lt;/code&gt; From any node inside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;cluster IP&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From the node where a replica of the Pod is running: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;pod IP&amp;gt;:&amp;lt;pod port&amp;gt;&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h4 id=&quot;3312-external-name&quot;&gt;3.3.12 External Name&lt;/h4&gt;
-
-&lt;p&gt;This maps a service to endpoints completely outside of the cluster.&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&quot;40-befits-of-using-kubernetes&quot;&gt;4.0 Befits of using kubernetes&lt;/h2&gt;
-
-&lt;h3 id=&quot;41-kubernetes-will-keeping-your-containers-running&quot;&gt;4.1 Kubernetes will keeping your containers running&lt;/h3&gt;
-
-&lt;p&gt;Once the application is running, Kubernetes continuously makes sure that the deployed
-state of the application always matches the description you provided. For example, if
-you specify that you always want five instances of a web server running, Kubernetes will always keep exactly five instances running. If one of those instances stops working properly, like when its process crashes or when it stops responding, Kubernetes will restart it automatically. Similarly, if a whole worker node dies or becomes inaccessible, Kubernetes will select new nodes for all the containers that were running on the node and run them on the newly selected nodes.&lt;/p&gt;
-
-&lt;h3 id=&quot;42-scaling-the-number-of-copies&quot;&gt;4.2 Scaling the number of copies&lt;/h3&gt;
-
-&lt;p&gt;While the application is running, you can decide you want to increase or decrease the number of copies, and Kubernetes will spin up additional ones or stop the excess ones, respectively. You can even leave the job of deciding the optimal number of cop- ies to Kubernetes. It can automatically keep adjusting the number, based on real-time metrics, such as CPU load, memory consumption, queries per second, or any other metric your app exposes.&lt;/p&gt;
-
-&lt;h3 id=&quot;43-hitting-a-moving-target&quot;&gt;4.3 Hitting a moving target&lt;/h3&gt;
-
-&lt;p&gt;We’ve said that Kubernetes may need to move your containers around the cluster This can occur when the node they were running on has failed or because they were evicted from a node to make room for other containers. If the container is providing a service to external clients or other containers running in the cluster, how can they use the container properly if it’s constantly moving around the cluster? And how can clients connect to containers providing a service when those containers are replicated and spread across the whole cluster? To allow clients to easily find containers that provide a specific service, you can tell Kubernetes which containers provide the same service and Kubernetes will expose all of them at a single static IP address and expose that address to all applications run- ning in the cluster. This is done through environment variables, but clients can also look up the service IP through good old DNS. The kube-proxy will make sure connec- tions to the service are load balanced across all the containers that provide the service. The IP address of the service stays constant, so clients can always connect to its con- tainers, even when they’re moved around the cluster.&lt;/p&gt;
-
-&lt;h3 id=&quot;44-simplifying-application-deployment&quot;&gt;4.4 Simplifying application deployment&lt;/h3&gt;
-
-&lt;p&gt;Kubernetes exposes all its worker nodes as a single deployment platform,
-application developers can start deploying applications on their own and don’t need
-to know anything about the servers that make up the cluster. In essence, all the nodes are now a single bunch of computational resources that are waiting for applications to consume them. A developer doesn’t usually care what kind of server the application is running on, as long as the server can provide the application with adequate system resources. Certain cases do exist where the developer does care what kind of hardware the application should run on. ( Like some app needs SSD deployment instead of HDD )&lt;/p&gt;
-
-&lt;h3 id=&quot;45-achieving-better-utilization-of-hardware&quot;&gt;4.5 Achieving better utilization of hardware&lt;/h3&gt;
-
-&lt;p&gt;By setting up Kubernetes on your servers and using it to run your apps instead of running them manually, you’ve decoupled your app from the infrastructure. When you tell Kubernetes to run your application, you’re letting it choose the most appropriate node to run your application on based on the description of the application’s resource requirements and the available resources on each node. By using containers and not tying the app down to a specific node in your cluster, you’re allowing the app to freely move around the cluster at any time, so the different app components running on the cluster can be mixed and matched to be packed tightly onto the cluster nodes. This ensures the node’s hardware resources are utilized as best as possible.&lt;/p&gt;
-
-&lt;p&gt;The ability to move applications around the cluster at any time allows Kubernetes
-to utilize the infrastructure much better than what you can achieve manually.&lt;/p&gt;
-
-&lt;h3 id=&quot;46-health-checking-and-self-healing&quot;&gt;4.6 Health checking and self-healing&lt;/h3&gt;
-
-&lt;p&gt;Having a system that allows moving an application across the cluster at any time is also valuable in the event of server failures. As your cluster size increases, you’ll deal with failing computer components ever more frequently. Kubernetes monitors your app components and the nodes they run on and auto- matically reschedules them to other nodes in the event of a node failure. This frees the ops team from having to migrate app components manually and allows the team to immediately focus on fixing the node itself and returning it to the pool of available hardware resources instead of focusing on relocating the app.&lt;/p&gt;
-
-&lt;h3 id=&quot;47-automatic-scaling&quot;&gt;4.7 Automatic scaling&lt;/h3&gt;
-
-&lt;p&gt;Using Kubernetes to manage your deployed applications also means the ops team
-doesn’t need to constantly monitor the load of individual applications to react to sudden load spikes. As previously mentioned, Kubernetes can be told to monitor the resources used by each application and to keep adjusting the number of running instances of each application. If Kubernetes is running on cloud infrastructure, where adding additional nodes is as easy as requesting them through the cloud provider’s API, Kubernetes can even automatically scale the whole cluster size up or down based on the needs of the deployed applications.&lt;/p&gt;
-
-&lt;h3 id=&quot;48-simplifying-application-development&quot;&gt;4.8 Simplifying application development&lt;/h3&gt;
-
-&lt;p&gt;Then there’s the fact that developers don’t need to implement features that they would usually implement. This includes discovery of services and/or peers in a clustered application. Kubernetes does this instead of the app. Usually, the app only needs to look up certain environment variables or perform a DNS lookup. If that’s not enough, the application can query the Kubernetes API server directly to get that and/or other information. Querying the Kubernetes API server like that can even save developers from having to implement complicated mechanisms such as leader election.&lt;/p&gt;
-
-&lt;h3 id=&quot;49-storage-orchestration&quot;&gt;4.9 Storage orchestration&lt;/h3&gt;
-
-&lt;p&gt;Consequently, mount local or public cloud or network storage.&lt;/p&gt;
-
-&lt;h3 id=&quot;410-secret-and-configuration-management&quot;&gt;4.10 Secret and configuration management&lt;/h3&gt;
-
-&lt;p&gt;Create and update secrets and configs without rebuilding your image&lt;/p&gt;
-
-&lt;h3 id=&quot;411-horizontal-scaling&quot;&gt;4.11 Horizontal Scaling&lt;/h3&gt;
-
-&lt;p&gt;first, we need to know what are the horizontal and vertical scalings are:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Vertically Scaling : Adding more CPUs, memory, and other server components&lt;/li&gt;
-  &lt;li&gt;Horizontal Scaling : Setting up additional Servers and running multiple copies&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Kubernetes uses horizontal scaling, which provides greater flexibilities to the companies&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&quot;50-ways-to-spin-up-kubernetes-cluster&quot;&gt;5.0 Ways to spin up kubernetes cluster&lt;/h2&gt;
-
-&lt;h3 id=&quot;51-kubeadm&quot;&gt;5.1 Kubeadm&lt;/h3&gt;
-
-&lt;p&gt;The official CNCF tool for provisioning Kubernetes clusters in a variety of shapes and forms (e.g. single-node, multi-node, HA, self-hosted)&lt;/p&gt;
-
-&lt;h3 id=&quot;52-minikube&quot;&gt;5.2 Minikube&lt;/h3&gt;
-
-&lt;p&gt;Minikube can run on Windows and MacOS, because it relies on virtualization (e.g. Virtualbox) to deploy a kubernetes cluster in a Linux VM. You can also run minikube directly on linux with or without virtualization. It also has some developer-friendly features, like add-ons.&lt;/p&gt;
-
-&lt;p&gt;From a user perspective minikube is a very beginner friendly tool. You start the cluster using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;minikube start&lt;/code&gt;, wait a few minutes and your &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kubectl&lt;/code&gt; is ready to go. To specify a Kubernetes version you can use the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;--kubernetes-version&lt;/code&gt; flag.&lt;/p&gt;
-
-&lt;p&gt;If you are new to Kubernetes the first class support for its dashboard that minikube offers may help you. With a simple minikube dashboard the application will open up giving you a nice overview of everything that is going on in your cluster. This is being achieved by minikube’s addon system that helps you integrating things like, Helm, Nvidia GPUs and an image registry with your cluster.&lt;/p&gt;
-
-&lt;h3 id=&quot;53-microk8s&quot;&gt;5.3 MicroK8s&lt;/h3&gt;
-
-&lt;p&gt;MicroK8s is a Kubernetes distribution from Canonical that is designed for fast and simple deployment, which makes it a good choice to run Kubernetes locally.&lt;/p&gt;
-
-&lt;p&gt;Microk8s is similar to minikube in that it spins up a single-node Kubernetes cluster with its own set of add-ons. If MicroK8s runs on Linux, it also offers the advantage of not requiring VMs. On Windows and macOS, MicroK8s uses a VM framework called Multipass to create VMs for the Kubernetes cluster.&lt;/p&gt;
-
-&lt;p&gt;Like minikube, microk8s is limited to a single-node Kubernetes cluster, with the added limitation of only running on Linux and only on Linux where snap is installed.&lt;/p&gt;
-
-&lt;h3 id=&quot;54-k3s&quot;&gt;5.4 K3s&lt;/h3&gt;
-
-&lt;p&gt;K3s is a minified version of Kubernetes developed by Rancher Labs. By removing dispensable features (legacy, alpha, non-default, in-tree plugins) and using lightweight components (e.g. sqlite3 instead of etcd3) they achieved a significant downsizing. This results in a single binary with a size of around 60 MB.&lt;/p&gt;
-
-&lt;p&gt;K3s runs on any Linux distribution without any additional external dependencies or tools. It is marketed by Rancher as a lightweight Kubernetes offering suitable for edge environments, IoT devices, CI pipelines, and even ARM devices, like Raspberry Pi’s. K3s achieves its lightweight goal by stripping a bunch of features out of the Kubernetes binaries (e.g. legacy, alpha, and cloud-provider-specific features), replacing docker with containerd, and using sqlite3 as the default DB (instead of etcd). As a result, this lightweight Kubernetes only consumes 512 MB of RAM and 200 MB of disk space. K3s has some nice features, like Helm Chart support out-of-the-box.&lt;/p&gt;
-
-&lt;p&gt;Unlike the previous two offerings, K3s can do multiple node Kubernetes cluster. However, due to technical limitations of SQLite, K3s currently does not support High Availability (HA), as in running multiple master nodes.&lt;/p&gt;
-
-&lt;p&gt;One feature that stands out is called auto deployment. It allows you to deploy your Kubernetes manifests and Helm charts by putting them in a specific directory. K3s watches for changes and takes care of applying them without any further interaction. This is especially useful for CI pipelines and IoT devices (both target use cases of K3s). Just create/update your configuration and K3s makes sure to keep your deployments up to date.&lt;/p&gt;
-
-&lt;h3 id=&quot;55-kind&quot;&gt;5.5 Kind&lt;/h3&gt;
-
-&lt;p&gt;Kind (Kubernetes-in-Docker), as the name implies, runs Kubernetes clusters in Docker containers. This is the official tool used by Kubernetes maintainers for Kubernetes v1.11+ conformance testing. It supports multi-node clusters as well as HA clusters. Because it runs K8s in Docker, kind can run on Windows, Mac, and Linux.&lt;/p&gt;
-
-&lt;p&gt;Kind is optimized first and foremost for CI pipelines, so it may not have some of the developer-friendly features of other offerings. Kind leads to a significantly faster startup speed compared to spawning VM.&lt;/p&gt;
-
-&lt;p&gt;Creating a cluster is very similar to minikube’s approach. Executing kind create cluster, playing the waiting game and afterwards you are good to go. By using different names (–name) kind allows you to create multiple instances in parallel.&lt;/p&gt;
-
-&lt;p&gt;If you are looking for a way to programmatically create a Kubernetes cluster, kind kindly (you have been for waiting for this, don’t you ) publishes its Go packages that are used under the hood.&lt;/p&gt;
-
-&lt;h3 id=&quot;56-k3d&quot;&gt;5.6 K3d&lt;/h3&gt;
-
-&lt;p&gt;A new project that aims to bring K3s-in-Docker (similar to kind).&lt;/p&gt;
-
 &lt;hr /&gt;</content><author><name></name></author><category term="Kubernetes" /><summary type="html"></summary></entry><entry><title type="html">Step-By-Step Process To Deploy Kubernetes On Your Raspberry PIs</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html" rel="alternate" type="text/html" title="Step-By-Step Process To Deploy Kubernetes On Your Raspberry PIs" /><published>2020-09-15T00:00:00-05:00</published><updated>2020-09-15T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/09/15/MicroK8s-Installation-Guide.html">&lt;hr /&gt;
 
 &lt;h2 id=&quot;overview&quot;&gt;Overview&lt;/h2&gt;
@@ -2222,6 +2410,368 @@ spec:
 &lt;p&gt;You should now have an operational Kubernetes master and several worker nodes ready to accept workloads.&lt;/p&gt;
 
 &lt;p&gt;I hope MicroK8 will be a great help for newcomers into Kubernetes to try it out and learn Kubernetes by playing with it. If you gave it a shot &amp;amp; liked it, leave me a comment here!&lt;/p&gt;
+
+&lt;hr /&gt;</content><author><name></name></author><category term="Kubernetes" /><summary type="html"></summary></entry><entry><title type="html">Kubernetes 101</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/09/15/Kubernetes-Introduction.html" rel="alternate" type="text/html" title="Kubernetes 101" /><published>2020-09-15T00:00:00-05:00</published><updated>2020-09-15T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/09/15/Kubernetes-Introduction</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/09/15/Kubernetes-Introduction.html">&lt;hr /&gt;
+
+&lt;h2 id=&quot;10-what-is-kubernetes&quot;&gt;1.0 What is Kubernetes&lt;/h2&gt;
+
+&lt;p&gt;Kubernetes is an open-source platform/tool created by Google. It is written in GO-Lang. So currently Kubernetes is an open-source project under Apache 2.0 license. Sometimes in the industry, Kubernetes is also known as “K8s”. With Kubernetes, you can run any Linux container across private, public, and hybrid cloud environments. Kubernetes provides some edge functions, such as Loadbalancer, Service discovery, and Roled Based Access Control(RBAC).&lt;/p&gt;
+
+&lt;p&gt;Basically, kubernetes is a software that allows us to deploy, manage and scale applications. The applications will be packed in containers and kubernetes groups them into units. It allows us to span our application over thousands of servers while looking like one single unit.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Key Features of Kubernetes
+    &lt;ul&gt;
+      &lt;li&gt;Horizontal Scaling&lt;/li&gt;
+      &lt;li&gt;Auto Scaling&lt;/li&gt;
+      &lt;li&gt;Health check &amp;amp; Self-healing&lt;/li&gt;
+      &lt;li&gt;Load Balancer&lt;/li&gt;
+      &lt;li&gt;Service Discovery&lt;/li&gt;
+      &lt;li&gt;Automated rollbacks &amp;amp; rollouts&lt;/li&gt;
+      &lt;li&gt;Canary Deployment&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;20-why-we-need-kubernetes&quot;&gt;2.0 Why we need Kubernetes&lt;/h2&gt;
+
+&lt;p&gt;First, we need to familier with few terms:&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Monolithic Applications:&lt;/strong&gt; Years ago, most software applications were big monoliths, running either as a single process or as a small number of processes spread across a handful of servers. These legacy systems are still widespread today. They have slow release cycles and are updated relatively infrequently. At the end of every release cycle, developers pack- age up the whole system and hand it over to the ops team, who then deploys and monitors it. In case of hardware failures, the ops team manually migrates it to the remaining healthy servers. So these components that are all tightly coupled together and have to be developed, deployed, and managed as one entity, because they all run as a single OS process.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Problems with Monolithic Applications: Change of one part of the application require a redeployment of the whole application. Requires powerful servers, Uses Vertical Scaling ( which is Very Expensive ) and If one components creates problem, the whole application becomes unscalable.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;Microservices Applications:&lt;/strong&gt; Today, these big monolithic legacy applications are slowly being broken down into smaller, independently running components called microservices. Each microservice runs as an independent process and communicates with other microservices through simple, well defined interfaces ( APIs ). Microservices communicate through synchronous protocols such as HTTP, over which they usually expose RESTful (REpresentational State Transfer) APIs, or through asyn- chronous protocols such as AMQP (Advanced Message Queueing Protocol).&lt;/p&gt;
+
+&lt;p&gt;Microservices are decoupled from each other, they can be developed, deployed, updated,
+and scaled individually. This enables you to change components quickly and as often as
+necessary to keep up with today’s rapidly changing business requirements.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Problems with Microservices Based Applications: The bigger numbers of deployable components and increasingly larger datacenters, it becomes increasingly difficult to configure, manage, and keep the whole system running smoothly. It’s much harder to figure out where to put each of those components to achieve high resource utilization and thereby keep the hardware costs down and the one of biggest problem with scaling microservices is multiple apps that are running on same host mey have conflicting dependencies. One solution of this is applications could run in the exact same environment during development and in production so they have the exact same operating system, libraries, system configuration, networking environment, and everything else but this will not solve the conflicting, versions of libraries or different environment requirements to solve this issue we have great technology called containers. ( You are also provide Dedicated VM to particular service but it is not a ideal solution because it increases hardware cost and management)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Doing all this manually is hard work. We need automation, which includes automatic scheduling of those components to our servers, automatic configuration, supervision, and failure-handling. This is where Kubernetes comes in.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/MicroServices.png&quot; alt=&quot;Microservices&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Kubernetes provides you with a framework to run distributed systems resiliently. It takes care of scaling and failover for your application, provides deployment patterns, and more. For example, Kubernetes can easily manage a canary deployment for your system.&lt;/p&gt;
+
+&lt;p&gt;Before used Kubernetes, you need to prepare your infrastructure to deploy a new microservice. I believe it cost you a few days or weeks. Without Kubernetes, large teams would have to manually script the deployment workflows. With Kubernetes, you don’t need to create your deployment script manually and it will reduce the amount of time and resources spent on DevOps.&lt;/p&gt;
+
+&lt;h3 id=&quot;21-what-kubernetes-provides&quot;&gt;2.1 What kubernetes provides&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Service discovery and load balancing: Kubernetes can expose a container using the DNS name or using their own IP address. If traffic to a container is high, Kubernetes is able to load balance and distribute the network traffic so that the deployment is stable.&lt;/li&gt;
+  &lt;li&gt;Storage orchestration: Kubernetes allows you to automatically mount a storage system of your choice, such as local storages, public cloud providers, and more.
+Automated rollouts and rollbacks You can describe the desired state for your deployed containers using Kubernetes, and it can change the actual state to the desired state at a controlled rate. For example, you can automate Kubernetes to create new containers for your deployment, remove existing containers and adopt all their resources to the new container.&lt;/li&gt;
+  &lt;li&gt;Automatic bin packing: You provide Kubernetes with a cluster of nodes that it can use to run containerized tasks. You tell Kubernetes how much CPU and memory (RAM) each container needs. Kubernetes can fit containers onto your nodes to make the best use of your resources.&lt;/li&gt;
+  &lt;li&gt;Self-healing: Kubernetes restarts containers that fail, replaces containers, kills containers that don’t respond to your user-defined health check, and doesn’t advertise them to clients until they are ready to serve.&lt;/li&gt;
+  &lt;li&gt;Secret and configuration management: Kubernetes lets you store and manage sensitive information, such as passwords, OAuth tokens, and SSH keys. You can deploy and update secrets and application configuration without rebuilding your container images, and without exposing secrets in your stack configuration.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;22-what-kubernetes-not-provides&quot;&gt;2.2 What kubernetes not provides&lt;/h3&gt;
+
+&lt;p&gt;Kubernetes is a lot of good things, I hope to have been clear exposing all Kubernetes benefits. The main problem from Kubernetes newbie is that they discover it is not a PaaS (Platform as a Service) system like they suppose. Kubernetes is a lot of things but not an “all included” service. It is great and reduces the amount of work, especially on the sysadmin side, but doesn’t offer you any apart from the infrastructure.&lt;/p&gt;
+
+&lt;p&gt;Said that most of the things you are looking for in a fully-managed system are there: simplified deployments, scaling, load balancing, logging, and monitoring. Usually, you get a standard configuration from your hosting but you can theoretically customize it if you really need it.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;It does not limit the types of applications supported. Everything is written into the container so every container application, no matter on technology, can be run. The counterpart is that you still have to define the container by hand.&lt;/li&gt;
+  &lt;li&gt;It doesn’t offer an automated deployment. You just have to push to a docker repository your built images, no more. This is quite easy if you already work in a process with Continuous Integration, Delivery, and Deployment (CI/CD), but consider that without it will be quite tricky.&lt;/li&gt;
+  &lt;li&gt;It does not provide any application-level services, just infrastructure. If you need a database, you have to buy a service or run it into a dedicated container. Of course, taking charges of backups and so on.&lt;/li&gt;
+  &lt;li&gt;Most of the interactions with the system are by a command line that wraps API. That’s very good because it allows automating each setting. Commands syntax is very simple but, if you are looking to a system that is managed fully by a UI you are looking to the worst place.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;30-how-does-kubernetes-work&quot;&gt;3.0 How does Kubernetes work&lt;/h2&gt;
+
+&lt;p&gt;The system is composed of a master node and any number of worker nodes. When the developer submits a list of apps to the master, Kubernetes deploys them to the cluster of worker nodes. What node a component lands on doesn’t (and shouldn’t) matter—neither to the developer nor to the system administrator.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_Master.png&quot; alt=&quot;Kubernetes Master&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Kubernetes will run your containerized app somewhere in the cluster, provide information to its components on how to find each other, and keep all of them running.
+Because your application doesn’t care which node it’s running on, Kubernetes can
+relocate the app at any time, and by mixing and matching apps, achieve far better
+resource utilization than is possible with manual scheduling.&lt;/p&gt;
+
+&lt;h3 id=&quot;31-architecture-of-kubernetes-cluster&quot;&gt;3.1 Architecture of Kubernetes Cluster&lt;/h3&gt;
+
+&lt;p&gt;We’ve seen a bird’s-eye view of Kubernetes’ architecture. Now let’s take a closer look at what a Kubernetes cluster is composed of. At the hardware level, a Kubernetes cluster is composed of many nodes, which can be split into two types:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The master node, which hosts the Kubernetes Control Plane that controls and manages the whole Kubernetes system&lt;/li&gt;
+  &lt;li&gt;Worker nodes that run the actual applications you deploy&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_arch1.png&quot; alt=&quot;Kubernetes Architecture&quot; /&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;311-master--control-plane-&quot;&gt;3.1.1 Master ( Control Plane )&lt;/h4&gt;
+
+&lt;p&gt;The Control Plane is what controls the cluster and makes it function. It consists of
+multiple components that can run on a single master node or be split across multiple
+nodes and replicated to ensure high availability. These components are&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Kubernetes API Server&lt;/strong&gt;: The application that serves Kubernetes functionality through a RESTful interface and stores the state of the cluster ( which admin and other control plane communicated with ).&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Scheduler&lt;/strong&gt;: Scheduler watches API server for new Pod requests. It communicates with Nodes to create new pods and to assign work to nodes while allocating resources or imposing constraints.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Controller Manager&lt;/strong&gt;: Component on the master that runs controllers. Includes Node controller, Endpoint Controller, Namespace Controller, etc. ( Performs cluster-level functions, such as replicating components, keeping track of worker nodes, handling node failures, and so on )&lt;/p&gt;
+
+    &lt;ul&gt;
+      &lt;li&gt;Node Controller: Responsible for noticing and responding when nodes go down.&lt;/li&gt;
+      &lt;li&gt;Replication Controller: Responsible for maintaining the correct number of pods for every replication controller object in the system.&lt;/li&gt;
+      &lt;li&gt;Endpoints Controller: Populates the Endpoints object (that is, it joins Services and Pods).&lt;/li&gt;
+      &lt;li&gt;Service Account and Token Controllers: Create default accounts and API access tokens for new namespaces.&lt;/li&gt;
+      &lt;li&gt;Cloud-Controller-Manager: Cloud-controller-manager runs controllers that interact with the underlying cloud providers. The cloud-controller-manager binary is an alpha feature introduced in Kubernetes release 1.6. Cloud-controller-manager runs cloud-provider-specific controller loops only. You must disable these controller loops in the Kube-controller-manager. You can disable the controller loops by setting the –cloud-provider flag to external when starting the Kube-controller-manager.&lt;/li&gt;
+      &lt;li&gt;Node Controller: For checking the cloud provider to determine if a node has been deleted in the cloud after it stops responding.&lt;/li&gt;
+      &lt;li&gt;Route Controller: For setting up routes in the underlying cloud infrastructure.&lt;/li&gt;
+      &lt;li&gt;Service Controller: For creating, updating, and deleting cloud provider load balancers.&lt;/li&gt;
+      &lt;li&gt;Volume Controller: For creating, attaching, and mounting volumes, and interacting with the cloud provider to orchestrate volumes.&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;etcd&lt;/strong&gt;: A reliable distributed data store that persistently stores the cluster
+configuration.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The components of the Control Plane hold and control the state of the cluster, but
+they don’t run your applications. This is done by the (worker) nodes.&lt;/p&gt;
+
+&lt;h4 id=&quot;312-slave--worker-nodes-&quot;&gt;3.1.2 Slave ( Worker Nodes )&lt;/h4&gt;
+
+&lt;p&gt;The worker nodes are the machines that run your containerized applications. The
+task of running, monitoring, and providing services to your applications is done by
+the following components:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Docker, rkt, or another container runtime, which runs your containers&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Kubelet&lt;/strong&gt;: Kubectl registering the nodes with the cluster, watches for work assignments from the scheduler, instantiate new Pods, report back to the master.
+Container Engine: Responsible for managing containers, image pulling, stopping the container, starting the container, destroying the container, etc.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;&lt;strong&gt;Kube Proxy&lt;/strong&gt;: Responsible for forwarding app user requests to the right pod (load-balances network traffic between application components).&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The sequence of deployment: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DevOps -&amp;gt; API Server -&amp;gt; Scheduler -&amp;gt; Cluster -&amp;gt;Nodes -&amp;gt; Kubelet -&amp;gt; Container Engine -&amp;gt; Spawn Container in Pod&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The sequence of App user request: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;App user -&amp;gt; Kube proxy -&amp;gt; Pod -&amp;gt; Container(Your app is run here)&lt;/code&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;32-the-six-layers-of-k8s&quot;&gt;3.2 The Six Layers of K8s&lt;/h3&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_Abstraction.png&quot; alt=&quot;Kubernetes Abstrction&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Deployments create and manage ReplicaSets, which create and manage Pods, which run on Nodes, which have a container runtime, which run the app code you put in your Docker image.&lt;/p&gt;
+
+&lt;p&gt;The levels shaded blue are higher-level K8s abstractions. The green levels represent Nodes and Node subprocess that you should be aware of, but may not touch.&lt;/p&gt;
+
+&lt;h4 id=&quot;321-deployments&quot;&gt;3.2.1 Deployments&lt;/h4&gt;
+
+&lt;p&gt;Although pods are the basic unit of computation in Kubernetes, they are not typically directly launched on a cluster. Instead, pods are usually managed by one more layer of abstraction: the deployment. A deployment’s primary purpose is to declare how many replicas of a pod should be running at a time. When a deployment is added to the cluster, it will automatically spin up the requested number of pods, and then monitor them. If a pod dies, the deployment will automatically re-create it. Using a deployment, you don’t have to deal with pods manually. You can just declare the desired state of the system, and it will be managed for you automatically.&lt;/p&gt;
+
+&lt;h4 id=&quot;322-replicaset&quot;&gt;3.2.2 ReplicaSet&lt;/h4&gt;
+
+&lt;p&gt;The Deployment creates a ReplicaSet that will ensure your app has the desired number of Pods. ReplicaSets will create and scale Pods based on the triggers you specify in your Deployment. Replication Controllers perform the same function as ReplicaSets, but Replication Controllers are old school. ReplicaSets are the smart way to manage replicated Pods in 2019.&lt;/p&gt;
+
+&lt;h4 id=&quot;323-pods&quot;&gt;3.2.3 Pods&lt;/h4&gt;
+
+&lt;p&gt;All containers will run in a pod. Pods abstract the network and storage away from the underlying containers. Your app will run here. Each pod has one unique IP address assigned which means one pod can communicate with each other like a traditional container in a docker environment. Each container inside the pod can reach all other pods into the virtual network, but cannot deep to the other container on other pods. That’s important to guarantee the pod abstraction: nobody has to know how the Pods are composed internally. Moreover, the IP assigned is volatile so you must use always the service name (resolved to the right IP directly). Pods are used as the unit of replication in Kubernetes. If your application becomes too popular and a single pod instance can’t carry the load, Kubernetes can be configured to deploy new replicas of your pod to the cluster as necessary. Even when not under heavy load, it is standard to have multiple copies of a pod running at any time in a production system to allow load balancing and failure resistance. Pods handle Volumes, Secrets, and configuration for containers. Pods are ephemeral. They are intended to be restarted automatically when they die.&lt;/p&gt;
+
+&lt;p&gt;Note: Worker Node is already explained in above section&lt;/p&gt;
+
+&lt;h3 id=&quot;33-key-terms-used-with-kubernetes&quot;&gt;3.3 Key Terms used with Kubernetes&lt;/h3&gt;
+
+&lt;h4 id=&quot;331-services&quot;&gt;3.3.1 Services&lt;/h4&gt;
+
+&lt;p&gt;The name “service” in informatics science is overused. In Kubernetes scope think to a service like something you want to serve. A Kubernetes service involves a set of pods and may offer a complex feature or just expose a single Pod with a single container. So you can have a service that provides a CMS feature, with database and web server inside, or two different services, one for the database and one for the webserver. That’s up to you. Basically it is abstraction layer on top of a set of ephemeral pods (think of this as the ‘face’ of a set of pods)&lt;/p&gt;
+
+&lt;h4 id=&quot;332-ingress&quot;&gt;3.3.2 Ingress&lt;/h4&gt;
+
+&lt;p&gt;By default, Kubernetes provides isolation between pods and the outside world. If you want to communicate with a service running in a pod, you have to open up a channel for communication. This is referred to as ingress. To do this there is an ingress controller that does something similar to a load balancer. It virtually forwards traffic from outside to the services. During this step, based on the ingress implementation you have chosen, you can add HTTPS encryption, route traffic based on the hostname or URL segments. The only service can be linked to the ingress controller, not Pods. There are multiple ways to add ingress to your cluster. The most common ways are by adding either an Ingress controller, or a LoadBalancer.&lt;/p&gt;
+
+&lt;h4 id=&quot;333-volume&quot;&gt;3.3.3 Volume&lt;/h4&gt;
+
+&lt;p&gt;By default Pod storage is volatile. This is important to know because at the first restart you will lose everything. Kubernetes volumes allow mapping some part of the hard drive of containers to a safe place. That space can be shared between containers. The mount point can be any part of the container, but a volume cannot be mount into another one.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;PersistentVolumes and PersistentVolumeClaims&lt;/strong&gt;: To help abstract away infrastructure specifics, K8s developed PersistentVolumes and PersistentVolumeClaims. Unfortunately the names are a bit misleading, because vanilla Volumes can have persistent storage, as well. PersisententVolumes (PV) and PersisentVolumeClaims (PVC) add complexity compared to using Volumes alone. However, PVs are useful for managing storage resources for large projects. With PVs, a K8s user still ends up using a Volume, but two steps are required first.&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;A PersistentVolume is provisioned by a Cluster Administrator (or it’s provisioned dynamically).&lt;/li&gt;
+  &lt;li&gt;An individual Cluster user who needs storage for a Pod creates PersistentVolumeClaim manifest. It specifies how much and what type of storage they need. K8s then finds and reserves the storage needed.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The user then creates a Pod with a Volume that uses the PVC. PersistentVolumes have lifecycles independent of any Pod. In fact, the Pod doesn’t even know about the PV, just the PVC. PVCs consume PV resources, analogously to how Pods consume Node resources.&lt;/p&gt;
+
+&lt;h4 id=&quot;334-namespaces&quot;&gt;3.3.4 Namespaces&lt;/h4&gt;
+
+&lt;p&gt;Think to namespace like the feature that makes Kubernetes multitenant. The namespace is the tenant level. Each namespace can partitioning resources to isolate services, ingress, and many other things. This feature is good to have a strong separation between application, delegate safely to different teams, and have separated environments in a single infrastructure. It is a virtual cluster on top of an underlying physical cluster&lt;/p&gt;
+
+&lt;h4 id=&quot;335-labels-and-selectors&quot;&gt;3.3.5 Labels and Selectors&lt;/h4&gt;
+
+&lt;p&gt;Labels are key-value pairs used to tag objects. Objects are the items that you create in a Kubernetes cluster (pods, deployments, replica sets, services, volumes etc). Selectors are used to collect objects based on tags.&lt;/p&gt;
+
+&lt;h4 id=&quot;336-statefulsets&quot;&gt;3.3.6 StatefulSets&lt;/h4&gt;
+
+&lt;p&gt;As we know, a ReplicaSet creates and manages Pods. If a Pod shuts down because a Node fails, a ReplicaSet can automatically replace the Pod on another Node. You should generally create a ReplicaSet through a Deployment rather than creating it directly, because it’s easier to update your app with a Deployment.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/Kubernetes_States.png&quot; alt=&quot;States&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Sometimes your app will need to keep information about its state. You can think of state as the current status of your user’s interaction with your app. So in a video game it’s all the unique aspects of the user’s character at a point in time. What do you do when your app has state you need to keep track of? Use a StatefulSet.&lt;/p&gt;
+
+&lt;p&gt;Like a ReplicaSet, a StatefulSet manages deployment and scaling of a group of Pods based on a container spec. Unlike a Deployment, a StatefulSet’s Pods are not interchangeable. Each Pod has a unique, persistent identifier that the controller maintains over any rescheduling. StatefulSets for good for persistent, stateful backends like databases. The state information for the Pod is held in a Volume associated with the StatefulSet.&lt;/p&gt;
+
+&lt;h4 id=&quot;337-daemonsets&quot;&gt;3.3.7 DaemonSets&lt;/h4&gt;
+
+&lt;p&gt;DaemonSets are for continuous process. They run one Pod per Node. Each new Node added to the cluster automatically gets a Pod started by the DaemonSet. DaemonSets are useful for ongoing background tasks such as monitoring and log collection.
+StatefulSets and DaemonSets are not controlled by a Deployment. Although they are at the same level of abstraction as a ReplicaSet, there is not a higher level of abstraction for them in the current API.&lt;/p&gt;
+
+&lt;h4 id=&quot;338-etcd&quot;&gt;3.3.8 ETCD&lt;/h4&gt;
+
+&lt;p&gt;It stores the configuration information which can be used by each of the nodes in the cluster. It is a high availability key-value store that can be distributed among multiple nodes. It is accessible only by Kubernetes API server as it may have some sensitive information. It is a distributed key-value store which is accessible to all.
+ETCD is a distributed reliable key-value store used by Kubernetes to store all data used to manage the cluster. Think of it this way, when you have multiple nodes and multiple masters in your cluster, etcd stores all that information on all the nodes in the cluster in a distributed manner. ETCD is responsible for implementing locks within the cluster to ensure there are no conflicts between the Masters.&lt;/p&gt;
+
+&lt;h4 id=&quot;339-cluster-ip&quot;&gt;3.3.9 Cluster IP&lt;/h4&gt;
+
+&lt;p&gt;Only has a Virtual IP (also called Cluster IP). This service can be used within a cluster only Acts like a traffic router to your Pods inside the cluster. Each port exposed by a pod will need a service if you want a client to talk to it via that port. By default, the service port is the same as the port exposed by the Pod. Different methods to access this service: From any node inside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;cluster IP&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From the node where a replica of the Pod is running: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;pod IP&amp;gt;:&amp;lt;pod port&amp;gt;&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h4 id=&quot;3310-node-port&quot;&gt;3.3.10 Node Port&lt;/h4&gt;
+
+&lt;p&gt;For this service, a physical port on the node is mapped to the service port and the service connects to the Pod via the pod port. Remember, this will also have a Virtual IP (i.e. cluster IP). Different methods to access this service: From outside the cluster, if any node in the cluster has a public IP: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;node public IP&amp;gt;:&amp;lt;node port&amp;gt;&lt;/code&gt; From any node inside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;cluster IP&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From the node where a replica of the Pod is running: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;pod IP&amp;gt;:&amp;lt;pod port&amp;gt;&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h4 id=&quot;3311-load-balancer&quot;&gt;3.3.11 Load Balancer&lt;/h4&gt;
+
+&lt;p&gt;Giving public access to a node in your cluster is not a recommended method, When you want to give public access to a service, create a load balancer service (not getting into ingress at this stage). For each service that you want to give public access, you need to create a load balancer service, This type of service will generally work only in a cloud environment. Remember, this will also have a Virtual IP (i.e. cluster IP) This service will have a node port too Different methods to access this service: From outside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;load balancer dns&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From outside the cluster, if any node in the cluster has a public IP: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;node public IP&amp;gt;:&amp;lt;node port&amp;gt;&lt;/code&gt; From any node inside the cluster: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;cluster IP&amp;gt;:&amp;lt;service port&amp;gt;&lt;/code&gt; From the node where a replica of the Pod is running: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;pod IP&amp;gt;:&amp;lt;pod port&amp;gt;&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h4 id=&quot;3312-external-name&quot;&gt;3.3.12 External Name&lt;/h4&gt;
+
+&lt;p&gt;This maps a service to endpoints completely outside of the cluster.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;40-befits-of-using-kubernetes&quot;&gt;4.0 Befits of using kubernetes&lt;/h2&gt;
+
+&lt;h3 id=&quot;41-kubernetes-will-keeping-your-containers-running&quot;&gt;4.1 Kubernetes will keeping your containers running&lt;/h3&gt;
+
+&lt;p&gt;Once the application is running, Kubernetes continuously makes sure that the deployed
+state of the application always matches the description you provided. For example, if
+you specify that you always want five instances of a web server running, Kubernetes will always keep exactly five instances running. If one of those instances stops working properly, like when its process crashes or when it stops responding, Kubernetes will restart it automatically. Similarly, if a whole worker node dies or becomes inaccessible, Kubernetes will select new nodes for all the containers that were running on the node and run them on the newly selected nodes.&lt;/p&gt;
+
+&lt;h3 id=&quot;42-scaling-the-number-of-copies&quot;&gt;4.2 Scaling the number of copies&lt;/h3&gt;
+
+&lt;p&gt;While the application is running, you can decide you want to increase or decrease the number of copies, and Kubernetes will spin up additional ones or stop the excess ones, respectively. You can even leave the job of deciding the optimal number of cop- ies to Kubernetes. It can automatically keep adjusting the number, based on real-time metrics, such as CPU load, memory consumption, queries per second, or any other metric your app exposes.&lt;/p&gt;
+
+&lt;h3 id=&quot;43-hitting-a-moving-target&quot;&gt;4.3 Hitting a moving target&lt;/h3&gt;
+
+&lt;p&gt;We’ve said that Kubernetes may need to move your containers around the cluster This can occur when the node they were running on has failed or because they were evicted from a node to make room for other containers. If the container is providing a service to external clients or other containers running in the cluster, how can they use the container properly if it’s constantly moving around the cluster? And how can clients connect to containers providing a service when those containers are replicated and spread across the whole cluster? To allow clients to easily find containers that provide a specific service, you can tell Kubernetes which containers provide the same service and Kubernetes will expose all of them at a single static IP address and expose that address to all applications run- ning in the cluster. This is done through environment variables, but clients can also look up the service IP through good old DNS. The kube-proxy will make sure connec- tions to the service are load balanced across all the containers that provide the service. The IP address of the service stays constant, so clients can always connect to its con- tainers, even when they’re moved around the cluster.&lt;/p&gt;
+
+&lt;h3 id=&quot;44-simplifying-application-deployment&quot;&gt;4.4 Simplifying application deployment&lt;/h3&gt;
+
+&lt;p&gt;Kubernetes exposes all its worker nodes as a single deployment platform,
+application developers can start deploying applications on their own and don’t need
+to know anything about the servers that make up the cluster. In essence, all the nodes are now a single bunch of computational resources that are waiting for applications to consume them. A developer doesn’t usually care what kind of server the application is running on, as long as the server can provide the application with adequate system resources. Certain cases do exist where the developer does care what kind of hardware the application should run on. ( Like some app needs SSD deployment instead of HDD )&lt;/p&gt;
+
+&lt;h3 id=&quot;45-achieving-better-utilization-of-hardware&quot;&gt;4.5 Achieving better utilization of hardware&lt;/h3&gt;
+
+&lt;p&gt;By setting up Kubernetes on your servers and using it to run your apps instead of running them manually, you’ve decoupled your app from the infrastructure. When you tell Kubernetes to run your application, you’re letting it choose the most appropriate node to run your application on based on the description of the application’s resource requirements and the available resources on each node. By using containers and not tying the app down to a specific node in your cluster, you’re allowing the app to freely move around the cluster at any time, so the different app components running on the cluster can be mixed and matched to be packed tightly onto the cluster nodes. This ensures the node’s hardware resources are utilized as best as possible.&lt;/p&gt;
+
+&lt;p&gt;The ability to move applications around the cluster at any time allows Kubernetes
+to utilize the infrastructure much better than what you can achieve manually.&lt;/p&gt;
+
+&lt;h3 id=&quot;46-health-checking-and-self-healing&quot;&gt;4.6 Health checking and self-healing&lt;/h3&gt;
+
+&lt;p&gt;Having a system that allows moving an application across the cluster at any time is also valuable in the event of server failures. As your cluster size increases, you’ll deal with failing computer components ever more frequently. Kubernetes monitors your app components and the nodes they run on and auto- matically reschedules them to other nodes in the event of a node failure. This frees the ops team from having to migrate app components manually and allows the team to immediately focus on fixing the node itself and returning it to the pool of available hardware resources instead of focusing on relocating the app.&lt;/p&gt;
+
+&lt;h3 id=&quot;47-automatic-scaling&quot;&gt;4.7 Automatic scaling&lt;/h3&gt;
+
+&lt;p&gt;Using Kubernetes to manage your deployed applications also means the ops team
+doesn’t need to constantly monitor the load of individual applications to react to sudden load spikes. As previously mentioned, Kubernetes can be told to monitor the resources used by each application and to keep adjusting the number of running instances of each application. If Kubernetes is running on cloud infrastructure, where adding additional nodes is as easy as requesting them through the cloud provider’s API, Kubernetes can even automatically scale the whole cluster size up or down based on the needs of the deployed applications.&lt;/p&gt;
+
+&lt;h3 id=&quot;48-simplifying-application-development&quot;&gt;4.8 Simplifying application development&lt;/h3&gt;
+
+&lt;p&gt;Then there’s the fact that developers don’t need to implement features that they would usually implement. This includes discovery of services and/or peers in a clustered application. Kubernetes does this instead of the app. Usually, the app only needs to look up certain environment variables or perform a DNS lookup. If that’s not enough, the application can query the Kubernetes API server directly to get that and/or other information. Querying the Kubernetes API server like that can even save developers from having to implement complicated mechanisms such as leader election.&lt;/p&gt;
+
+&lt;h3 id=&quot;49-storage-orchestration&quot;&gt;4.9 Storage orchestration&lt;/h3&gt;
+
+&lt;p&gt;Consequently, mount local or public cloud or network storage.&lt;/p&gt;
+
+&lt;h3 id=&quot;410-secret-and-configuration-management&quot;&gt;4.10 Secret and configuration management&lt;/h3&gt;
+
+&lt;p&gt;Create and update secrets and configs without rebuilding your image&lt;/p&gt;
+
+&lt;h3 id=&quot;411-horizontal-scaling&quot;&gt;4.11 Horizontal Scaling&lt;/h3&gt;
+
+&lt;p&gt;first, we need to know what are the horizontal and vertical scalings are:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Vertically Scaling : Adding more CPUs, memory, and other server components&lt;/li&gt;
+  &lt;li&gt;Horizontal Scaling : Setting up additional Servers and running multiple copies&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Kubernetes uses horizontal scaling, which provides greater flexibilities to the companies&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;50-ways-to-spin-up-kubernetes-cluster&quot;&gt;5.0 Ways to spin up kubernetes cluster&lt;/h2&gt;
+
+&lt;h3 id=&quot;51-kubeadm&quot;&gt;5.1 Kubeadm&lt;/h3&gt;
+
+&lt;p&gt;The official CNCF tool for provisioning Kubernetes clusters in a variety of shapes and forms (e.g. single-node, multi-node, HA, self-hosted)&lt;/p&gt;
+
+&lt;h3 id=&quot;52-minikube&quot;&gt;5.2 Minikube&lt;/h3&gt;
+
+&lt;p&gt;Minikube can run on Windows and MacOS, because it relies on virtualization (e.g. Virtualbox) to deploy a kubernetes cluster in a Linux VM. You can also run minikube directly on linux with or without virtualization. It also has some developer-friendly features, like add-ons.&lt;/p&gt;
+
+&lt;p&gt;From a user perspective minikube is a very beginner friendly tool. You start the cluster using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;minikube start&lt;/code&gt;, wait a few minutes and your &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kubectl&lt;/code&gt; is ready to go. To specify a Kubernetes version you can use the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;--kubernetes-version&lt;/code&gt; flag.&lt;/p&gt;
+
+&lt;p&gt;If you are new to Kubernetes the first class support for its dashboard that minikube offers may help you. With a simple minikube dashboard the application will open up giving you a nice overview of everything that is going on in your cluster. This is being achieved by minikube’s addon system that helps you integrating things like, Helm, Nvidia GPUs and an image registry with your cluster.&lt;/p&gt;
+
+&lt;h3 id=&quot;53-microk8s&quot;&gt;5.3 MicroK8s&lt;/h3&gt;
+
+&lt;p&gt;MicroK8s is a Kubernetes distribution from Canonical that is designed for fast and simple deployment, which makes it a good choice to run Kubernetes locally.&lt;/p&gt;
+
+&lt;p&gt;Microk8s is similar to minikube in that it spins up a single-node Kubernetes cluster with its own set of add-ons. If MicroK8s runs on Linux, it also offers the advantage of not requiring VMs. On Windows and macOS, MicroK8s uses a VM framework called Multipass to create VMs for the Kubernetes cluster.&lt;/p&gt;
+
+&lt;p&gt;Like minikube, microk8s is limited to a single-node Kubernetes cluster, with the added limitation of only running on Linux and only on Linux where snap is installed.&lt;/p&gt;
+
+&lt;h3 id=&quot;54-k3s&quot;&gt;5.4 K3s&lt;/h3&gt;
+
+&lt;p&gt;K3s is a minified version of Kubernetes developed by Rancher Labs. By removing dispensable features (legacy, alpha, non-default, in-tree plugins) and using lightweight components (e.g. sqlite3 instead of etcd3) they achieved a significant downsizing. This results in a single binary with a size of around 60 MB.&lt;/p&gt;
+
+&lt;p&gt;K3s runs on any Linux distribution without any additional external dependencies or tools. It is marketed by Rancher as a lightweight Kubernetes offering suitable for edge environments, IoT devices, CI pipelines, and even ARM devices, like Raspberry Pi’s. K3s achieves its lightweight goal by stripping a bunch of features out of the Kubernetes binaries (e.g. legacy, alpha, and cloud-provider-specific features), replacing docker with containerd, and using sqlite3 as the default DB (instead of etcd). As a result, this lightweight Kubernetes only consumes 512 MB of RAM and 200 MB of disk space. K3s has some nice features, like Helm Chart support out-of-the-box.&lt;/p&gt;
+
+&lt;p&gt;Unlike the previous two offerings, K3s can do multiple node Kubernetes cluster. However, due to technical limitations of SQLite, K3s currently does not support High Availability (HA), as in running multiple master nodes.&lt;/p&gt;
+
+&lt;p&gt;One feature that stands out is called auto deployment. It allows you to deploy your Kubernetes manifests and Helm charts by putting them in a specific directory. K3s watches for changes and takes care of applying them without any further interaction. This is especially useful for CI pipelines and IoT devices (both target use cases of K3s). Just create/update your configuration and K3s makes sure to keep your deployments up to date.&lt;/p&gt;
+
+&lt;h3 id=&quot;55-kind&quot;&gt;5.5 Kind&lt;/h3&gt;
+
+&lt;p&gt;Kind (Kubernetes-in-Docker), as the name implies, runs Kubernetes clusters in Docker containers. This is the official tool used by Kubernetes maintainers for Kubernetes v1.11+ conformance testing. It supports multi-node clusters as well as HA clusters. Because it runs K8s in Docker, kind can run on Windows, Mac, and Linux.&lt;/p&gt;
+
+&lt;p&gt;Kind is optimized first and foremost for CI pipelines, so it may not have some of the developer-friendly features of other offerings. Kind leads to a significantly faster startup speed compared to spawning VM.&lt;/p&gt;
+
+&lt;p&gt;Creating a cluster is very similar to minikube’s approach. Executing kind create cluster, playing the waiting game and afterwards you are good to go. By using different names (–name) kind allows you to create multiple instances in parallel.&lt;/p&gt;
+
+&lt;p&gt;If you are looking for a way to programmatically create a Kubernetes cluster, kind kindly (you have been for waiting for this, don’t you ) publishes its Go packages that are used under the hood.&lt;/p&gt;
+
+&lt;h3 id=&quot;56-k3d&quot;&gt;5.6 K3d&lt;/h3&gt;
+
+&lt;p&gt;A new project that aims to bring K3s-in-Docker (similar to kind).&lt;/p&gt;
 
 &lt;hr /&gt;</content><author><name></name></author><category term="Kubernetes" /><summary type="html"></summary></entry><entry><title type="html">Docker Hard Parts [Part - 2]</title><link href="https://hacstac.github.io/Notes/docker/2020/09/01/Docker-Hard-Parts.html" rel="alternate" type="text/html" title="Docker Hard Parts [Part - 2]" /><published>2020-09-01T00:00:00-05:00</published><updated>2020-09-01T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/docker/2020/09/01/Docker-Hard-Parts</id><content type="html" xml:base="https://hacstac.github.io/Notes/docker/2020/09/01/Docker-Hard-Parts.html">&lt;h2 id=&quot;70-building-images-automatically-with-dockerfiles&quot;&gt;7.0 Building Images automatically with DockerFiles&lt;/h2&gt;
 
