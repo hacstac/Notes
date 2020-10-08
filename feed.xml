@@ -1,4 +1,362 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://hacstac.github.io/Notes/feed.xml" rel="self" type="application/atom+xml" /><link href="https://hacstac.github.io/Notes/" rel="alternate" type="text/html" /><updated>2020-09-29T12:45:11-05:00</updated><id>https://hacstac.github.io/Notes/feed.xml</id><title type="html">Notebook</title><subtitle>A Daily Notebook for @Akash</subtitle><entry><title type="html">Kubernetes Service Discovery</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/09/29/Kubernetes-Service-Discovery.html" rel="alternate" type="text/html" title="Kubernetes Service Discovery" /><published>2020-09-29T00:00:00-05:00</published><updated>2020-09-29T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/09/29/Kubernetes-Service-Discovery</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/09/29/Kubernetes-Service-Discovery.html">&lt;hr /&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://hacstac.github.io/Notes/feed.xml" rel="self" type="application/atom+xml" /><link href="https://hacstac.github.io/Notes/" rel="alternate" type="text/html" /><updated>2020-10-08T12:40:02-05:00</updated><id>https://hacstac.github.io/Notes/feed.xml</id><title type="html">Notebook</title><subtitle>A Daily Notebook for @Akash</subtitle><entry><title type="html">Kubernetes Volumes</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/10/08/Kubernetes-Volumes.html" rel="alternate" type="text/html" title="Kubernetes Volumes" /><published>2020-10-08T00:00:00-05:00</published><updated>2020-10-08T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/10/08/Kubernetes-Volumes</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/10/08/Kubernetes-Volumes.html">&lt;hr /&gt;
+
+&lt;h2 id=&quot;10-kubernetes-volumes-attaching-disk-storage-to-containers&quot;&gt;1.0 Kubernetes Volumes: Attaching disk storage to containers&lt;/h2&gt;
+
+&lt;p&gt;Kubernetes volumes are a component of a pod and are thus defined in the pod’s specification much like containers. They aren’t a standalone Kubernetes object and cannot be created or deleted on their own. A volume is available to all containers in the pod, but it must be mounted in each container that needs to access it. In each container, you can mount the volume in any location of its filesystem&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;11-why-we-need-persistant-volumes-with-pods&quot;&gt;1.1 Why we need persistant volumes with pods&lt;/h3&gt;
+
+&lt;p&gt;In kubernetes each container in a pod has its own isolated filesystem, because the filesystem comes from the container’s image. Every new container starts off with the exact set of files that was added to the image at build time. Combine this with the fact that containers in a pod get restarted (either because the process died or because the liveness probe signaled to Kubernetes that the container wasn’t healthy anymore) and you’ll realize that the new container will not see anything that was written to the filesystem by the previous container, even though the newly started container runs in the same pod.&lt;/p&gt;
+
+&lt;p&gt;In certain scenarios you want the new container to continue where the last one finished, such as when restarting a process on a physical machine. You may not need (or want) the whole filesystem to be persisted, but you do want to preserve the directories that hold actual data.&lt;/p&gt;
+
+&lt;p&gt;Kubernetes provides this by defining storage volumes. They aren’t top-level resources like pods, but are instead defined as a part of a pod and share the same lifecycle as the pod. This means a volume is created when the pod is started and is destroyed when the pod is deleted. Because of this, a volume’s contents will persist across container restarts. After a container is restarted, the new container can see all the files that were written to the volume by the previous container. Also, if a pod contains multiple containers, the volume can be used by all of them at once.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;12-volume-types&quot;&gt;1.2 Volume Types&lt;/h3&gt;
+
+&lt;p&gt;A wide variety of volume types is available. Several are generic, while others are specific to the actual storage technologies used underneath. Here’s a list of
+several of the available volume types:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;emptyDir&lt;/code&gt; — A simple empty directory used for storing transient data.&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;hostPath&lt;/code&gt; — Used for mounting directories from the worker node’s filesystem
+into the pod.&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gitRepo&lt;/code&gt; — A volume initialized by checking out the contents of a Git repository.&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;nfs&lt;/code&gt; — An NFS share mounted into the pod.&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gcePersistentDisk&lt;/code&gt; (Google Compute Engine Persistent Disk), &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;awsElasticBlockStore&lt;/code&gt; (Amazon Web Services Elastic Block Store Volume), &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;azureDisk&lt;/code&gt; (Microsoft Azure Disk Volume)—Used for mounting cloud provider-specific storage.&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cinder&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cephfs&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;iscsi&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;flocker&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;glusterfs&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;quobyte&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;rbd&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;flexVolume&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;vsphere-Volume&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;photonPersistentDisk&lt;/code&gt;, scaleIO—Used for mounting other types of network storage.&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;configMap&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;secret&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;downwardAPI&lt;/code&gt; — Special types of volumes used to expose certain Kubernetes resources and cluster information to the pod.&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;persistentVolumeClaim&lt;/code&gt; — A way to use a pre- or dynamically provisioned per`sistent storage.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;These volume types serve various purposes. You’ll learn about some of them in the
+following sections. Special types of volumes ( secret, downwardAPI, configMap) are covered in the next phases, because they aren’t used for storing data, but for exposing Kubernetes metadata to apps running in the pod.&lt;/p&gt;
+
+&lt;h4 id=&quot;121-emptydir-volume&quot;&gt;1.2.1 emptyDir Volume&lt;/h4&gt;
+
+&lt;p&gt;The simplest volume type is the emptyDir volume. The app running inside the pod can then write any files it needs to it. Because the volume’s lifetime is tied to that of the pod, the volume’s contents are lost when the pod is deleted. An emptyDir volume is especially useful for sharing files between containers running in the same pod. But it can also be used by a single container for when a container needs to write data to disk temporarily, such as when performing a sort operation on a large dataset, which can’t fit into the available memory. The data could also be written to the container’s filesystem itself (remember the top read-write layer in a container?), but subtle differences exist between the two options. A container’s filesystem may not even be writable.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Ex : The pod contains two containers and a single volume that’s mounted in both of them, yet at different paths. When the html-generator container starts, it starts writing the output of the fortune command to the /var/htdocs/index.html file every 10 seconds. Because the volume is mounted at /var/htdocs, the index.html file is writ- ten to the volume instead of the container’s top layer. As soon as the web-server container starts, it starts serving whatever HTML files are in the /usr/share/nginx/html directory (this is the default directory Nginx serves files from). Because you mounted the volume in that exact location, Nginx will serve the index.html file written there by the container running the fortune loop. The end effect is that a client sending an HTTP request to the pod on port 80 will receive the current fortune message as the response.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The emptyDir you used as the volume was created on the actual disk of the worker node hosting your pod, so its performance depends on the type of the node’s disks.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;---yaml&lt;/span&gt;
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fortune
+spec:
+  containers:
+  - image: luksa/fortune
+    name: html-generator
+    volumeMounts:
+    - name: html
+      mountPath: /var/htdocs
+  - image: nginx:alpine
+    name: web-server
+    volumeMounts:
+    - name: html
+      mountPath: /usr/share/nginx/html
+      readOnly: &lt;span class=&quot;nb&quot;&gt;true
+    &lt;/span&gt;ports:
+    - containerPort: 80
+      protocol: TCP
+    volumes:
+    - name: html
+    emptyDir: &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;---&lt;/span&gt;
+
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl apply &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; ./fortune.yaml
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl port-forward fortune 8080:80
+
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;curl http://localhost:8080
+Beware of a tall blond man with one black shoe.
+&lt;span class=&quot;c&quot;&gt;# If you wait a few seconds and send another request, you should receive a different message.&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# To use emptyDir on tmpfs ( on ram instead of disk )&lt;/span&gt;
+volumes:
+  - name: html
+    emptyDir:
+      medium: Memory
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;122-git-repo&quot;&gt;1.2.2 Git Repo&lt;/h4&gt;
+
+&lt;p&gt;A gitRepo volume is basically an emptyDir volume that gets populated by cloning a
+Git repository and checking out a specific revision when the pod is starting up (but
+before its containers are created).&lt;/p&gt;
+
+&lt;p&gt;For example, you can use a Git repository to store static HTML files of your website
+and create a pod containing a web server container and a gitRepo volume. Every time
+the pod is created, it pulls the latest version of your website and starts serving it. The only drawback to this is that you need to delete the pod every time you push changes to the gitRepo and want to start serving the new version of the website.&lt;/p&gt;
+
+&lt;p&gt;Note: You need a github repo for the website/App&lt;/p&gt;
+
+&lt;p&gt;When you create the pod, the volume is first initialized as an empty directory and then the specified Git repository is cloned into it. If you hadn’t set the directory to . (dot), the repository would have been cloned into the kubia-website-example subdirectory, which isn’t what you want. You want the repo to be cloned into the root directory of your volume. Along with the repository, you also specified you want Kubernetes to check out whatever revision the master branch is pointing to at the time the volume is created.&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nn&quot;&gt;---&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;apiVersion&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;v1&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;kind&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Pod&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;metadata&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;gitrepo-volume-pod&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;spec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;containers&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;image&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;nginx:alpine&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;web-server&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;volumeMounts&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;html&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;mountPath&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/usr/share/nginx/html&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;readOnly&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;true&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;ports&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;containerPort&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;80&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;protocol&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;TCP&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;volumes&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;html&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;gitRepo&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;repository&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;https://github.com/luksa/kubia-website-example.git&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;revision&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;master&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;directory&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;.&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;To keep your app sync with github, you’ll need a sidecar container because git sync process shouldn’t run in the same container as the Nginx web server, but in a second container: a sidecar container. A sidecar container is a container that augments the operation of the main container of the pod. You add a sidecar to a pod so you can use an existing container image instead of cramming additional logic into the main app’s code, which would make it overly complex and less reusable. To find an existing container image, which keeps a local directory synchronized with a Git repository, go to Docker Hub and search for “git sync.” You’ll find many images that do that. Then use the image in a new container in the pod from the previous example, mount the pod’s existing gitRepo volume in the new container, and configure the Git sync container to keep the files in sync with your Git repo. If you set everything up correctly, you should see that the files the web server is serving are kept in sync with your GitHub repo.&lt;/p&gt;
+
+&lt;p&gt;A gitRepo volume, like the emptyDir volume, is basically a dedicated directory created specifically for, and used exclusively by, the pod that contains the volume. When the pod is deleted, the volume and its contents are deleted. Other types of volumes, however, don’t create a new directory, but instead mount an existing external directory into the pod’s container’s filesystem. The contents of that volume can survive multiple pod instantiations.&lt;/p&gt;
+
+&lt;h4 id=&quot;123-hostpath-volume&quot;&gt;1.2.3 hostPath Volume&lt;/h4&gt;
+
+&lt;p&gt;Most pods should be oblivious of their host node, so they shouldn’t access any files on the node’s filesystem. But certain system-level pods (remember, these will usually be managed by a DaemonSet) do need to either read the node’s files or use the node’s
+filesystem to access the node’s devices through the filesystem. Kubernetes makes this
+possible through a hostPath volume. A hostPath volume points to a specific file or directory on the node’s filesystem.&lt;/p&gt;
+
+&lt;p&gt;hostPath volumes are the first type of persistent storage we’re introducing, because both the gitRepo and emptyDir volumes’ contents get deleted when a pod is torn down, whereas a hostPath volume’s contents don’t. If a pod is deleted and the next pod uses a hostPath volume pointing to the same path on the host, the new pod will see whatever was left behind by the previous pod, but only if it’s scheduled to the same node as the first pod.&lt;/p&gt;
+
+&lt;p&gt;If you’re thinking of using a hostPath volume as the place to store a database’s data directory, think again. Because the volume’s contents are stored on a specific node’s filesystem, when the database pod gets rescheduled to another node, it will no longer see the data. This explains why it’s not a good idea to use a hostPath volume for regular pods, because it makes the pod sensitive to what node it’s scheduled to.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# To check existing pods using the hostPath or not&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl describe pod kubia-x-x &lt;span class=&quot;nt&quot;&gt;--namespace&lt;/span&gt; kube-system
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;124-persistent-storage&quot;&gt;1.2.4 Persistent Storage&lt;/h4&gt;
+
+&lt;p&gt;When an application running in a pod needs to persist data to disk and have that same data available even when the pod is rescheduled to another node, you can’t use any of the volume types we’ve mentioned so far. Because this data needs to be accessible from any cluster node, it must be stored on some type of network-attached storage (NAS).&lt;/p&gt;
+
+&lt;p&gt;To learn about volumes that allow persisting data, you’ll create a pod that will run the MongoDB document-oriented NoSQL database. Running a database pod without a volume or with a non-persistent volume doesn’t make sense, except for testing purposes, so you’ll add an appropriate type of volume to the pod and mount it in the MongoDB container.&lt;/p&gt;
+
+&lt;p&gt;for example : we can use google kubernetes engine, where we can use GCE persistent disk as underlying storage mechanism.&lt;/p&gt;
+
+&lt;p&gt;Ex : Creating a GCE Persistent Disk in a pod volume&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# Create a cluster&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;gcloud compute disks create &lt;span class=&quot;nt&quot;&gt;--size&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;1GB &lt;span class=&quot;nt&quot;&gt;--zone&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;southeast-asia1-a mongodb
+
+&lt;span class=&quot;c&quot;&gt;# Create a pod using gcePersistentDisk&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;---yaml&lt;/span&gt;
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mongodb
+spec:
+  volumes:
+  - name: mongodb-data
+    gcePersistentDisk:
+    pdName: mongodb
+    fsType: ext4
+  containers:
+  - image: mongo
+    name: mongodb
+    volumeMounts:
+    - name: mongodb-data
+      mountPath: /data/db
+    ports:
+    - containerPort: 27017
+      protocol: TCP
+
+&lt;span class=&quot;c&quot;&gt;# Spin up the pod&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl apply &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; ./mongodb.yaml
+
+&lt;span class=&quot;c&quot;&gt;# Entering the mongoDB Shell&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl &lt;span class=&quot;nb&quot;&gt;exec&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-it&lt;/span&gt; mongodb mongo
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;If you delete the pod and recreate it. Mongo uses exact same data, because it uses the persistent disk. This is an example of GCE, If your Kubernetes cluster is running on Amazon’s AWS EC2, for example, you can use an awsElasticBlockStore volume to provide persistent storage for your pods. If your cluster runs on Microsoft Azure, you can use the azureFile or the azureDisk volume.&lt;/p&gt;
+
+&lt;h4 id=&quot;125-nfs-storage&quot;&gt;1.2.5 NFS Storage&lt;/h4&gt;
+
+&lt;p&gt;If your cluster is running on your own set of servers, you have a vast array of other sup- ported options for mounting external storage inside your volume. For example, to mount a simple NFS share, you only need to specify the NFS server and the path exported by the server.&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;volumes&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;mongodb-data&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;nfs&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;server&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;11.151.150.124&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/some/path&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;126-other-storage-technologies&quot;&gt;1.2.6 Other Storage Technologies&lt;/h4&gt;
+
+&lt;p&gt;Other supported options include iscsi for mounting an ISCSI disk resource, glusterfs for a GlusterFS mount, rbd for a RADOS Block Device, flexVolume , cinder, cephfs, flocker, fc (Fibre Channel), and others. You don’t need to know all of them if you’re not using them. They’re mentioned here to show you that Kubernetes supports a broad range of storage technologies and you can use whichever you prefer and are used to.&lt;/p&gt;
+
+&lt;p&gt;To see details on what properties you need to set for each of these volume types,
+you can either turn to the Kubernetes API definitions in the Kubernetes API refer-
+ence or look up the information through kubectl explain.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;13-deepdive-with-kubernetes-storage-technology&quot;&gt;1.3 DeepDive with Kubernetes Storage Technology&lt;/h3&gt;
+
+&lt;p&gt;To enable apps to request storage in a Kubernetes cluster without having to deal with infrastructure specifics, two new resources were introduced. They are PersistentVolumes and PersistentVolumeClaims. The names may be a bit misleading, because as you’ve seen in the previous few sections, even regular Kubernetes volumes can be used to store persistent data.&lt;/p&gt;
+
+&lt;p&gt;Using a PersistentVolume inside a pod is a little more complex than using a regular
+pod volume, so let’s illustrate how pods, PersistentVolumeClaims, PersistentVolumes,
+and the actual underlying storage relate to each other.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/PersistentStorage.png&quot; alt=&quot;PersistentVolume&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Explaination&lt;/strong&gt;: Instead of the developer adding a technology-specific volume to their pod, it’s the cluster administrator who sets up the underlying storage and then registers it in Kubernetes by creating a PersistentVolume resource through the Kubernetes API server. When creating the PersistentVolume, the admin specifies its size and the access modes it supports. When a cluster user needs to use persistent storage in one of their pods, they first create a PersistentVolumeClaim manifest, specifying the minimum size and the access mode they require. The user then submits the PersistentVolumeClaim manifest to the Kubernetes API server, and Kubernetes finds the appropriate PersistentVolume and binds the volume to the claim. The PersistentVolumeClaim can then be used as one of the volumes inside a pod. Other users cannot use the same PersistentVolume until it has been released by deleting the bound PersistentVolumeClaim.&lt;/p&gt;
+
+&lt;h4 id=&quot;131-creating-a-persistentvolume&quot;&gt;1.3.1 Creating a PersistentVolume&lt;/h4&gt;
+
+&lt;p&gt;When creating a PersistentVolume, the administrator needs to tell Kubernetes what its capacity is and whether it can be read from and/or written to by a single node or by multiple nodes at the same time. They also need to tell Kubernetes what to do with the PersistentVolume when it’s released (when the PersistentVolumeClaim it’s bound to is deleted. And last, but certainly not least, they need to specify the type, location, and other properties of the actual storage this PersistentVolume is backed by.&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;apiVersion&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;v1&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;kind&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;PersistentVolume&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;metadata&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;mongodb-pv&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;spec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;capacity&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;storage&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;1Gi&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;accessModes&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ReadWriteOnce&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ReadOnlyMany&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;persistentVolumeReclaimPolicy&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Retain&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;gcePersistentDisk&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;pdName&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;monodb&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;fsType&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ext4&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Note: PersistentVolumes don’t belong to any namespaces&lt;/p&gt;
+
+&lt;h4 id=&quot;132-persistentvolumeclaim&quot;&gt;1.3.2 PersistentVolumeClaim&lt;/h4&gt;
+
+&lt;p&gt;Now let’s lay down our admin hats and put our developer hats back on. Say you need to deploy a pod that requires persistent storage. You’ll use the PersistentVolume you created earlier. But you can’t use it directly in the pod. You need to claim it first. Claiming a PersistentVolume is a completely separate process from creating a pod, because you want the same PersistentVolumeClaim to stay available even if the pod is rescheduled (remember, rescheduling means the previous pod is deleted and a new one is created).&lt;/p&gt;
+
+&lt;p&gt;As soon as you create the claim, Kubernetes finds the appropriate PersistentVolume and binds it to the claim. The PersistentVolume’s capacity must be large enough to accommodate what the claim requests. Additionally, the volume’s access modes must include the access modes requested by the claim. In your case, the claim requests 1 GiB of storage and a ReadWriteOnce access mode. The PersistentVolume you created earlier matches those two requirements so it is bound to your claim.&lt;/p&gt;
+
+&lt;p&gt;The claim is shown as Bound to PersistentVolume mongodb-pv. Note the abbreviations
+used for the access modes:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;RWO—ReadWriteOnce—Only a single node can mount the volume for reading and writing.&lt;/li&gt;
+  &lt;li&gt;ROX—ReadOnlyMany—Multiple nodes can mount the volume for reading.&lt;/li&gt;
+  &lt;li&gt;RWX—ReadWriteMany—Multiple nodes can mount the volume for both reading and writing.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;apiVersion&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;v1&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;kind&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;PersistentVolumeClaim&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;metadata&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;mongodb-pvc&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;spec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;resources&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;requests&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;storage&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;1Gi&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;accessModes&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ReadWriteOnce&lt;/span&gt;
+  &lt;span class=&quot;s&quot;&gt;storageClassName:&quot;&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;133-create-a-pod-using-pvc&quot;&gt;1.3.3 Create a Pod using PVC&lt;/h4&gt;
+
+&lt;p&gt;The PersistentVolume is now yours to use. Nobody else can claim the same volume
+until you release it. To use it inside a pod, you need to reference the Persistent-
+VolumeClaim by name inside the pod’s volume (yes, the PersistentVolumeClaim, not
+the PersistentVolume directly!).&lt;/p&gt;
+
+&lt;div class=&quot;language-yaml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;apiVersion&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;v1&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;kind&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Pod&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;metadata&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;mongodb&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;spec&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;containers&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;image&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;mongo&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;mongodb&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;volumeMounts&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;mongodb-data&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;mountPath&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/data/db&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;ports&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;containerPort&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;27017&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;protocol&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;TCP&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;volumes&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;mongodb-data&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;persistentVolumeClaim&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;na&quot;&gt;claimName&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;mongodb-pvc&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# List out the PersistentVolumes&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl get pv
+
+&lt;span class=&quot;c&quot;&gt;# List out the PersistentVolumesClaims&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl get pvc
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h4 id=&quot;134-recycling-persistentvolumes&quot;&gt;1.3.4 Recycling PersistentVolumes&lt;/h4&gt;
+
+&lt;p&gt;If you delete the pod and the pvc and create a new PVC on it, It will show a pending state because The STATUS column shows the PersistentVolume as Released, not Available like before. Because you’ve already used the volume, it may contain data and shouldn’t be bound to a completely new claim without giving the cluster admin a chance to clean it up. Without this, a new pod using the same PersistentVolume could read the data stored there by the previous pod, even if the claim and pod were created in a different namespace (and thus likely belong to a different cluster tenant).&lt;/p&gt;
+
+&lt;p&gt;To reclaim the pv, there are two policies exist: Recycle and Delete. The first one deletes
+the volume’s contents and makes the volume available to be claimed again. This way, the PersistentVolume can be reused multiple times by different PersistentVolumeClaims and different pods. The Delete policy, on the other hand, deletes the underlying storage. Note that the Recycle option is currently not available for GCE Persistent Disks.&lt;/p&gt;
+
+&lt;p&gt;A PersistentVolume only supports the Retain or Delete policies. Other PersistentVolume types may or may not support each of these options, so before creating your own PersistentVolume, be sure to check what reclaim policies are supported for the specific underlying storage you’ll use in the volume.&lt;/p&gt;
+
+&lt;h4 id=&quot;135-dynamic-provisioning-of-persistentvolumes&quot;&gt;1.3.5 Dynamic provisioning of PersistentVolumes&lt;/h4&gt;
+
+&lt;p&gt;You’ve seen how using PersistentVolumes and PersistentVolumeClaims makes it easy to obtain persistent storage without the developer having to deal with the actual stor- age technology used underneath. But this still requires a cluster administrator to pro- vision the actual storage up front. Luckily, Kubernetes can also perform this job automatically through dynamic provisioning of PersistentVolumes. The cluster admin, instead of creating PersistentVolumes, can deploy a Persistent- Volume provisioner and define one or more StorageClass objects to let users choose what type of PersistentVolume they want. The users can refer to the StorageClass in their PersistentVolumeClaims and the provisioner will take that into account when provisioning the persistent storage.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://s3.ap-south-1.amazonaws.com/akash.r/Devops_Notes_screenshots/Kubernetes/dynamicPV.png&quot; alt=&quot;dynamicPeristentVolume&quot; /&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;---storageClass&lt;/span&gt;.yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast
+provisioner: kubernetes.io/gce-pd
+parameters:
+  &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;: pd-ssd
+  zone: asia-southest1-b
+
+&lt;span class=&quot;nt&quot;&gt;---PersistentVolume&lt;/span&gt;.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-pvc
+spec:
+  storageClassName: fast
+  resources:
+    requests:
+      storage: 100Mi
+  accessModes:
+    - ReadWriteOnce
+
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl get sc
+NAME                     TYPE
+fast                     kubernetes.io/gce-pd
+standard &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;default&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;       kubernetes.io/gce-pd
+
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl get pv
+NAME          CAPACITY      ACCESSMODES      RECLAIMPOLICY      STATUS      STORAGECLASS
+mongodb-pv    1Gi           RWO,ROX          Retain             Released
+pvc-1e6bc048  1Gi           RWO              Delete             Bound       fast
+
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;kubectl get pvc mongodb-pvc
+NAME         STATUS      VOLUME       CAPACITY      ACCESSMODES      STORAGECLASS
+mongodb-pvc  Bound      pvc-1e6bc048  1Gi           RWO              fast
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;hr /&gt;</content><author><name></name></author><category term="Kubernetes" /><summary type="html"></summary></entry><entry><title type="html">Kubernetes Service Discovery</title><link href="https://hacstac.github.io/Notes/kubernetes/2020/09/29/Kubernetes-Service-Discovery.html" rel="alternate" type="text/html" title="Kubernetes Service Discovery" /><published>2020-09-29T00:00:00-05:00</published><updated>2020-09-29T00:00:00-05:00</updated><id>https://hacstac.github.io/Notes/kubernetes/2020/09/29/Kubernetes-Service-Discovery</id><content type="html" xml:base="https://hacstac.github.io/Notes/kubernetes/2020/09/29/Kubernetes-Service-Discovery.html">&lt;hr /&gt;
 
 &lt;h2 id=&quot;11-what-is-service-discovery&quot;&gt;1.1 What is Service Discovery&lt;/h2&gt;
 
